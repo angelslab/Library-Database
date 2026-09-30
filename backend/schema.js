@@ -46,6 +46,7 @@ db.query(`
             console.error("Error creating devices: ", err);
             return;
         }
+
         console.log('Device table created');
     })    
 
@@ -64,5 +65,74 @@ db.query(`
             console.error("Error creating faculty:", err);
             return;
         }
+
         console.log('Faculty table created');
+    })
+
+db.query(`
+        CREATE TABLE librarian(
+            userID INT PRIMARY KEY NOT NULL
+        
+        )
+
+    `, (err) => {
+        if (err) {
+            console.error("Error creating librarian:", err);
+            return;
+        }
+        console.log('Librarian table created');
+    })
+
+db.query(`
+        CREATE TABLE loans(
+            loanID INT PRIMARY KEY NOT NULL,
+            userID INT NOT NULL,
+            itemID INT NOT NULL,
+            due_date INT NOT NULL,
+            returned_date DATE,
+            status VARCHAR(20) NOT NULL
+            
+        )
+
+    `, (err) => {
+        if (err) {
+            console.error("Error creating loans:", err);
+            return;
+        }
+
+        console.log('Loans table created');
+    })
+
+db.query(`
+        CREATE TABLE media(
+            author VARCHAR(100),
+            itemID INT PRIMARY KEY NOT NULL
+
+        )
+    
+    `, (err) => {
+        if (err) {
+            console.error("Error creating media:", err);
+            return;
+        }
+
+        console.log('Media table created');
+    })
+
+db.query(`
+        CREATE TABLE student(
+            userID INT NOT NULL,
+            studentID  INT PRIMARY KEY NOT NULL,
+            major VARCHAR(50),
+            max_limit INT DEFAULT '3'
+        
+        )
+
+    `, (err) => {
+        if (err) {
+            console.error("Error creating student:", err);
+            return;
+        }
+
+        console.log('Student table created');
     })
