@@ -73,3 +73,5 @@ async function editMedia(itemID, title, totalCopies, author) {
     [author, itemID],
   );
 }
+
+module.exports = { fetchMedia, addMedia, deleteMedia, editMedia };

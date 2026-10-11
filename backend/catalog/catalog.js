@@ -38,3 +38,5 @@ async function getItemByID(itemID) {
 
   return rows;
 }
+
+module.exports = { fetchAllItems, getItemByID };

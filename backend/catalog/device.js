@@ -74,3 +74,6 @@ async function editDevice(itemID, title, totalCopies, brand, deviceType) {
     [deviceType, brand],
   );
 }
+
+
+module.exports = { fetchDevices, addDevice, deleteDevice, editDevice };
