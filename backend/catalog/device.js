@@ -1,0 +1,76 @@
+const db = require("../db");
+
+async function fetchDevices() {
+  const results = await db.query(`
+        SELECT
+            items.itemID,
+            items.title,
+            items.item_type,
+            items.total_copies,
+            items.available_copies,
+
+            device.device_type,
+            device.brand
+        FROM items, device
+        WHERE items.itemID = device.itemID
+        `);
+
+  const rows = results[0];
+
+  return rows;
+}
+
+async function addDevice(title, totalCopies, brand, deviceType) {
+  // item table
+  const results = await db.query(
+    `
+      INSERT into items(title, item_type, total_copies)
+      VALUES ('?', 'Device', ?)
+    
+    `,
+    [title, totalCopies],
+  );
+
+  const itemID = results.insertId;
+
+  //device table
+  await db.query(
+    `
+    INSERT into device(itemID, device_type, brand)
+    VALUES(?, ?, ?)
+    `,
+    [itemID, deviceType, brand],
+  );
+}
+
+async function deleteDevice(itemID) {
+  await db.query(
+    `
+    DELETE FROM items 
+    WHERE item_id = ?
+    `,
+    [itemID],
+  );
+}
+
+async function editDevice(itemID, title, totalCopies, brand, deviceType) {
+  // items table
+  await db.query(
+    `
+      UPDATE items
+      SET title = ? , total_copies = ?
+      WHERE itemID = ?
+    `,
+    [title, totalCopies, itemID],
+  );
+
+  //device
+  await db.query(
+    `
+      UPDATE device
+      SET device_type =? , brand = ?
+      WHERE itemID = ?
+    `,
+    [deviceType, brand],
+  );
+}
