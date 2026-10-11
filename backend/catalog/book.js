@@ -76,3 +76,5 @@ async function editBook(
     [author, isbn, publication_year, itemID],
   );
 }
+
+module.exports = { fetchBooks, addBook, deleteBook, editBook };
