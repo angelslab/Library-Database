@@ -28,7 +28,7 @@ async function addBook(title, author, isbn, publication_year, totalCopies) {
     [title, totalCopies, totalCopies],
   );
 
-  const itemID = result.insertId;
+  const itemID = result[0].insertId;
 
   //book table
   await db.query(
@@ -36,17 +36,21 @@ async function addBook(title, author, isbn, publication_year, totalCopies) {
     VALUES (?, ?, ?, ?)`,
     [author, itemID, isbn, publication_year],
   );
+
+  return itemID;
 }
 
 async function deleteBook(itemID) {
-  await db.query(
+  const result = await db.query(
     `DELETE FROM items 
     WHERE itemID = ?`,
     [itemID],
   );
+
+  return result[0].affectedRows;
 }
 
-async function editBook(
+async function updateBook(
   itemID,
   title,
   author,
@@ -76,3 +80,5 @@ async function editBook(
     [author, isbn, publication_year, itemID],
   );
 }
+
+module.exports = { fetchBooks, addBook, deleteBook, updateBook };

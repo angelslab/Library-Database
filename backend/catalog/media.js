@@ -29,7 +29,7 @@ async function addMedia(title, totalCopies, author) {
     [title, totalCopies],
   );
 
-  const itemID = result.insertId;
+  const itemID = result[0].insertId;
 
   //media table
 
@@ -41,15 +41,21 @@ async function addMedia(title, totalCopies, author) {
     `,
     [author, itemID],
   );
+
+  return itemID;
 }
 
 async function deleteMedia(itemID) {
-  await db.query(
+  const result = await db.query(
     `
     DELETE from items
     WHERE itemID = ?`,
     [itemID],
   );
+
+  return result[0].affectedRows;
+
+
 }
 
 async function editMedia(itemID, title, totalCopies, author) {
@@ -73,3 +79,5 @@ async function editMedia(itemID, title, totalCopies, author) {
     [author, itemID],
   );
 }
+
+module.exports = { fetchMedia, addMedia, deleteMedia, editMedia };
