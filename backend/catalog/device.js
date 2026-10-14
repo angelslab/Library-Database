@@ -31,7 +31,7 @@ async function addDevice(title, totalCopies, brand, deviceType) {
     [title, totalCopies],
   );
 
-  const itemID = results.insertId;
+  const itemID = results[0].insertId;
 
   //device table
   await db.query(
