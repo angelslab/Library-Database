@@ -14,16 +14,17 @@ async function initDB() {
 
   console.log("Users table created");
 
-  //user_credientials
+  //user_credentials (one password per user)
   await db.query(`
-      CREATE TABLE IF NOT EXISTS users_credentials(
-        userID INT NOT NULL PRIMARY KEY,
-        password_hash VARCHAR(50),
+    CREATE TABLE IF NOT EXISTS user_credentials (
+      userID INT PRIMARY KEY NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      FOREIGN KEY (userID) REFERENCES users(userID)
+    ON DELETE CASCADE
+    )
+  `);
 
-        FOREIGN KEY (userID) REFERENCES users(userID)
-        ON DELETE = CASCADE      
-      )   
-    `);
+  console.log("User_credentials table created");
 
   //items
   await db.query(`
