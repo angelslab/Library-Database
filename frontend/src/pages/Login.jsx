@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import Register from './Register'
 function Login({onLogin}) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [showRegister, setShowRegister] = useState(false)
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
@@ -22,6 +24,9 @@ function Login({onLogin}) {
         setError('Cannot reach server: '+ err.message)
     }
 }
+if (showRegister) {
+    return <Register onLogin={onLogin} onBack={() => setShowRegister(false)} />
+}
 return(
     <form
     onSubmit={handleSubmit}
@@ -33,6 +38,7 @@ return(
     <input type="password" placeholder="Enter your password" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
     {error && <p style={{ color: '#ff6b6b', margin: 0 }}>{error}</p>}
     <button type="submit">Login</button>
+    <button type="button" onClick={() => setShowRegister(true)}>Create an account</button>
     </form>
 )
 }
