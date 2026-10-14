@@ -4,6 +4,15 @@ const { fetchAllItems, getItemByID } = require("./catalog/catalog")
 const { addBook, deleteBook, fetchBooks, updateBook } = require("./catalog/book")
 const { fetchMedia, addMedia, deleteMedia } = require("./catalog/media")
 const { fetchDevices } = require("./catalog/device");
+const { login } = require("./auth/auth");
+const { getProfile } = require("./user/user");
+
+// lets the React app (different port) call the API
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+};
 
 const hostname = "127.0.0.1";
 const PORT = 3000;
@@ -16,6 +25,13 @@ async function startServer() {
     console.log("Database initialized successfully");
 
     const server = http.createServer(async (req, res) => {
+
+      // browser asks permission before sending JSON from another port
+      if (req.method === "OPTIONS") {
+        res.writeHead(204, CORS_HEADERS);
+        res.end();
+        return;
+      }
 
       if (req.method === "GET" && req.url === "/") {
 
@@ -432,6 +448,111 @@ async function startServer() {
             message: "Failed to delete Media"
           }));
         }
+      }
+
+      //login
+      if (req.method === "POST" && req.url === "/api/login") {
+        try {
+          let body = "";
+
+          for await (const chunk of req) {
+            body += chunk;
+          }
+
+          const data = JSON.parse(body);
+
+          const user = await login(data.email, data.password);
+
+          if (user === null) {
+            res.writeHead(401, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS
+            });
+
+            res.end(JSON.stringify({
+              error: "Wrong email or password"
+            }));
+
+            return;
+          }
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS
+          });
+
+          res.end(JSON.stringify(user));
+
+        } catch (error) {
+          console.error("Error logging in:", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS
+          });
+
+          res.end(JSON.stringify({
+            error: "Failed to log in"
+          }));
+        }
+
+        return;
+      }
+
+      //profile
+      if (req.method === "GET" && req.url.startsWith("/api/profile/")) {
+        try {
+          const userID = Number(req.url.split("/")[3]);
+
+          if (!Number.isInteger(userID) || userID <= 0) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS
+            });
+
+            res.end(JSON.stringify({
+              error: "Invalid userID"
+            }));
+
+            return;
+          }
+
+          const data = await getProfile(userID);
+
+          if (data === null) {
+            res.writeHead(404, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS
+            });
+
+            res.end(JSON.stringify({
+              error: "User not found"
+            }));
+
+            return;
+          }
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS
+          });
+
+          res.end(JSON.stringify(data));
+
+        } catch (error) {
+          console.error("Error load profile:", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS
+          });
+
+          res.end(JSON.stringify({
+            error: "Failed to load profile"
+          }));
+        }
+
+        return;
       }
 
       //continue from here (editing MEdia)
