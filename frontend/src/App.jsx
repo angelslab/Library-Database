@@ -24,7 +24,7 @@ function App() {
     <div style={{ padding: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <UserMenu name={currentUser.first_name} 
-        onNavigate={(page) => console.log(page)} 
+        onNavigate={setPage} 
         onLogout= {handleLogout} 
         />
           
@@ -35,9 +35,9 @@ function App() {
       {page === 'profile' && <Profile user={currentUser} />}
       {page === 'notification' && <Notification user={currentUser} />}
 
-      {currentUser.role === 'student' && <StudentHome user={currentUser} />}
-      {currentUser.role === 'faculty' && <FacultyHome user={currentUser} />}
-      {currentUser.role === 'librarian' && <LibrarianHome user={currentUser} />}
+      {page === 'home' && currentUser.role === 'student' && <StudentHome user={currentUser} />}
+      {page === 'home' && currentUser.role === 'faculty' && <FacultyHome user={currentUser} />}
+      {page === 'home' && currentUser.role === 'librarian' && <LibrarianHome user={currentUser} />}
     </div>
   )
 }

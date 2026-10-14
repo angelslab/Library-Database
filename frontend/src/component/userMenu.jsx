@@ -16,6 +16,7 @@ return (
         {open &&(
             <div
             style={{ position: 'absolute', top: '100%', marginTop: 6, display: 'flex', flexDirection: 'column', gap:4, padding:8, background: 'white', border: '1px solid #555', borderRadius: 6, zIndex:10, }}>
+                <button onClick={() => choose('home')}>Home</button>
                 <button onClick={() => choose('profile')}>Profile</button>
                 <button onClick={() => choose('notification')}>Notification</button>
                 <button onClick={() => { onLogout(); setOpen(false); }}>log out</button>
