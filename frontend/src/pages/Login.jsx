@@ -2,8 +2,10 @@ import { useState } from 'react'
 function Login({onLogin}) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
         try {
         const res = await fetch('http://localhost:3000/api/login', {
             method: 'POST',
@@ -14,10 +16,10 @@ function Login({onLogin}) {
         if (res.ok) {
             onLogin(data)
         } else {
-            alert(data.error)
+            setError(data.error)
         }
     } catch (err){
-        alert('Cannot reach server: '+ err.message)
+        setError('Cannot reach server: '+ err.message)
     }
 }
 return(
@@ -27,8 +29,9 @@ return(
     >
     <h1> library log in </h1>
     <input type="email" placeholder="Enter your email"
-    value={email} onChange={(e) => setEmail(e.target.value)}/>
-    <input type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} />
+    value={email} onChange={(e) => { setEmail(e.target.value); setError('') }}/>
+    <input type="password" placeholder="Enter your password" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
+    {error && <p style={{ color: '#ff6b6b', margin: 0 }}>{error}</p>}
     <button type="submit">Login</button>
     </form>
 )
