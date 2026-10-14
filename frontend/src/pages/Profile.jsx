@@ -32,7 +32,9 @@ function Profile({ user }) {
       {profile.max_limit !== null && (
         <p><b>Borrowed:</b> {profile.current_loans} / {profile.max_limit} items</p>
       )}
-      <p><b>Unpaid fines:</b> ${Number(profile.unpaid_fines).toFixed(2)}</p>
+      {profile.role !== 'librarian' && (
+        <p><b>Unpaid fines:</b> ${Number(profile.unpaid_fines).toFixed(2)}</p>
+      )}
     </div>
   )
 }
