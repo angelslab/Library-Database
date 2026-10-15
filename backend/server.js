@@ -7,8 +7,13 @@ const {
   fetchBooks,
   updateBook,
 } = require("./catalog/book");
-const { fetchMedia, addMedia, deleteMedia } = require("./catalog/media");
-const { fetchDevices } = require("./catalog/device");
+const {
+  fetchMedia,
+  addMedia,
+  deleteMedia,
+  editMedia,
+} = require("./catalog/media");
+const { fetchDevices, addDevice, deleteDevice } = require("./catalog/device");
 const { login } = require("./auth/auth");
 const { getProfile } = require("./user/user");
 
@@ -150,31 +155,6 @@ async function startServer() {
           );
 
           return;
-        }
-      }
-
-      //fetch all devices
-      if (req.method === "GET" && req.url === "/device") {
-        try {
-          const device = await fetchDevices();
-
-          res.writeHead(200, {
-            "Content-Type": "application/json",
-          });
-
-          res.end(JSON.stringify(device));
-        } catch (error) {
-          console.error("Error retrieving devices", error);
-
-          res.writeHead(500, {
-            "Content-Type": "application/json",
-          });
-
-          res.end(
-            JSON.stringify({
-              message: "Failed to retrieve devices",
-            }),
-          );
         }
       }
 
@@ -473,6 +453,224 @@ async function startServer() {
         }
       }
 
+      //editMedia
+      if (req.method === "PUT" && req.url.startsWith("/media/")) {
+        const itemID = Number(req.url.split("/")[2]);
+
+        if (!Number.isInteger(itemID) || itemID <= 0) {
+          res.writeHead(400, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              error: "Invalid media ID",
+            }),
+          );
+
+          return;
+        }
+
+        try {
+          let body = "";
+
+          for await (const chunk of req) {
+            body += chunk;
+          }
+
+          const data = JSON.parse(body);
+
+          if (
+            typeof data.title != "string" ||
+            !data.title.trim() ||
+            typeof data.author != "string" ||
+            !data.author.trim() ||
+            !Number.isInteger(data.total_copies) ||
+            data.total_copies < 1
+          ) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+            });
+
+            res.end(
+              JSON.stringify({
+                error: "Invalid media data",
+              }),
+            );
+            return;
+          }
+
+          const edited = await editMedia(
+            itemID,
+            data.title,
+            data.total_copies,
+            data.author,
+          );
+
+          if (!edited) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+            });
+
+            res.end(
+              JSON.stringify({
+                error: "Media item not found",
+              }),
+            );
+          }
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Media updated successfully",
+            }),
+          );
+        } catch (error) {
+          console.error(error);
+
+          res.writeHead(500, {
+            "content-type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Failed to update media",
+            }),
+          );
+        }
+      }
+
+      //fetch all devices
+      if (req.method === "GET" && req.url === "/device") {
+        try {
+          const device = await fetchDevices();
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(JSON.stringify(device));
+        } catch (error) {
+          console.error("Error retrieving devices", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Failed to retrieve devices",
+            }),
+          );
+        }
+      }
+
+      //device addition
+      if (req.method === "POST" && req.url === "/device") {
+        try {
+          let body = "";
+
+          for await (const chunk of req) {
+            body += chunk;
+          }
+
+          const device = JSON.parse(body);
+
+          const itemID = await addDevice(
+            device.title,
+            device.total_copies,
+            device.brand,
+            device.device_type,
+          );
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Device added successfully",
+              itemID: itemID,
+            }),
+          );
+        } catch (error) {
+          console.error("Error adding device", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Failed to add device",
+            }),
+          );
+        }
+      }
+
+      //delete device
+      if (req.method === "DELETE" && req.url.startsWith("/device/")) {
+        try {
+          const itemID = Number(req.url.split("/", [2]));
+
+          if (!Number.isInteger(itemID) || itemID <= 0) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+            });
+
+            res.end(
+              JSON.stringify({
+                message: "Invalid deviceID",
+              }),
+            );
+
+            return;
+          }
+
+          const affectedRows = await deleteDevice(itemID);
+
+          if (affectedRows === 0) {
+            res.writeHead(404, {
+              "Content-Type": "application/json",
+            });
+
+            res.end(
+              JSON.stringify({
+                message: "Device not found",
+              }),
+            );
+
+            return;
+          }
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Device deleted successfully",
+              itemID: itemID,
+            }),
+          );
+        } catch (error) {
+          console.error("Error deleting Device:", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Failed to delete Device",
+            }),
+          );
+        }
+      }
+
       //login
       if (req.method === "POST" && req.url === "/api/login") {
         try {
@@ -585,8 +783,6 @@ async function startServer() {
 
         return;
       }
-
-      //continue from here (editing MEdia)
     });
 
     server.listen(PORT, () => {
