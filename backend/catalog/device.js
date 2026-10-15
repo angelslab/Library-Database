@@ -41,16 +41,20 @@ async function addDevice(title, totalCopies, brand, deviceType) {
     `,
     [itemID, deviceType, brand],
   );
+
+  return itemID;
 }
 
 async function deleteDevice(itemID) {
-  await db.query(
+  const result = await db.query(
     `
     DELETE FROM items 
     WHERE item_id = ?
     `,
     [itemID],
   );
+
+  return result[0].affectedRows;
 }
 
 async function editDevice(itemID, title, totalCopies, brand, deviceType) {
@@ -74,6 +78,5 @@ async function editDevice(itemID, title, totalCopies, brand, deviceType) {
     [deviceType, brand],
   );
 }
-
 
 module.exports = { fetchDevices, addDevice, deleteDevice, editDevice };
