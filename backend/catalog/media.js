@@ -54,19 +54,21 @@ async function deleteMedia(itemID) {
   );
 
   return result[0].affectedRows;
-
-
 }
 
 async function editMedia(itemID, title, totalCopies, author) {
   //items table
-  await db.query(
+  const itemResult = await db.query(
     `UPDATE items
      SET title= ?, total_copies=?
      WHERE itemID = ?
     `,
     [title, totalCopies, itemID],
   );
+
+  if (itemResult[0].affectedRows === 0) {
+    return false;
+  }
 
   //media
   await db.query(
@@ -78,6 +80,8 @@ async function editMedia(itemID, title, totalCopies, author) {
     `,
     [author, itemID],
   );
+
+  return true;
 }
 
 module.exports = { fetchMedia, addMedia, deleteMedia, editMedia };
