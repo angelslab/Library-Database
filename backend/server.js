@@ -14,7 +14,7 @@ const {
   editMedia,
 } = require("./catalog/media");
 const { fetchDevices, addDevice, deleteDevice, editDevice } = require("./catalog/device");
-const { login } = require("./auth/auth");
+const { login, register } = require("./auth/auth");
 const { getProfile } = require("./user/user");
 
 // lets the React app (different port) call the API
@@ -800,6 +800,58 @@ async function startServer() {
           res.end(
             JSON.stringify({
               error: "Failed to log in",
+            }),
+          );
+        }
+
+        return;
+      }
+
+      //register
+      if (req.method === "POST" && req.url === "/api/register") {
+        try {
+          let body = "";
+
+          for await (const chunk of req) {
+            body += chunk;
+          }
+
+          const data = JSON.parse(body);
+
+          const result = await register(data);
+
+          if (result.error) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS,
+            });
+
+            res.end(
+              JSON.stringify({
+                error: result.error,
+              }),
+            );
+
+            return;
+          }
+
+          res.writeHead(201, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+
+          res.end(JSON.stringify(result.user));
+        } catch (error) {
+          console.error("Error registering:", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+
+          res.end(
+            JSON.stringify({
+              error: "Failed to register",
             }),
           );
         }
