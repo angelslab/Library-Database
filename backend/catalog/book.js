@@ -59,7 +59,7 @@ async function updateBook(
   totalCopies,
 ) {
   // updating items table
-  await db.query(
+  const result = await db.query(
     `
       UPDATE items 
       SET title = ?, total_copies = ?, available_copies = ?
@@ -69,16 +69,22 @@ async function updateBook(
     [title, totalCopies, totalCopies, itemID],
   );
 
+  if (result[0].affectedRows === 0) {
+    return false;
+  }
+
   //updating books table
   await db.query(
     `
-      UPDATE book(
+      UPDATE book
         SET author = ?, isbn = ?, publication_year = ?
         WHERE itemID = ?
-      )
+      
     `,
     [author, isbn, publication_year, itemID],
   );
+
+  return true;
 }
 
 module.exports = { fetchBooks, addBook, deleteBook, updateBook };
