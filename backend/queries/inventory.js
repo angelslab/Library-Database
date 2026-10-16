@@ -21,4 +21,3 @@ async function searchItems(q) {
 
 module.exports = { searchItems };
 
-searchItems("Maria").then(console.log).then(() => process.exit());
