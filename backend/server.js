@@ -24,6 +24,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
+
 const hostname = "127.0.0.1";
 const PORT = 3000;
 
@@ -46,6 +47,26 @@ async function startServer() {
         res.writeHead(200, { "Content-Type": "text/plain" });
 
         res.end("Server is running");
+        return;
+      }
+
+      // Allow requests from the React frontend
+      res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+
+      res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, OPTIONS"
+      );
+
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type"
+      );
+
+      // Handle CORS preflight requests
+      if (req.method === "OPTIONS") {
+        res.writeHead(204);
+        res.end();
         return;
       }
 

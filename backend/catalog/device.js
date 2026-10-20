@@ -25,7 +25,7 @@ async function addDevice(title, totalCopies, brand, deviceType) {
   const results = await db.query(
     `
       INSERT into items(title, item_type, total_copies)
-      VALUES ('?', 'Device', ?)
+      VALUES (?, 'Device', ?)
     
     `,
     [title, totalCopies],
