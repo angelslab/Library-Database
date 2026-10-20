@@ -3,7 +3,7 @@ const db = require("../db");
 async function searchItems(q) {
     const term = `%${q}%`;
     const [rows] = await db.query(`
-    SELECT i.itemID, i.title, b.author, b.isbn, i.total_copies, i.available_copies
+    SELECT i.itemID, i.title, b.author, b.isbn, i.total_copies, i.available_copies, d.device_type, d.brand
     FROM items i
     LEFT JOIN book   b ON b.itemID = i.itemID
     LEFT JOIN media  m ON m.itemID = i.itemID
