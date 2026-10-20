@@ -23,7 +23,7 @@ async function addMedia(title, totalCopies, author) {
   const result = await db.query(
     `
             INSERT into items (title, item_type, total_copies)
-            VALUES (?, 'Media', ?, ?)
+            VALUES (?, 'Media', ?)
         
         `,
     [title, totalCopies],
