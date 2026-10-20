@@ -32,7 +32,7 @@ return(
     onSubmit={handleSubmit}
     style={{ display: 'flex', flexDirection: 'column', gap: 10, width:300, margin: '40px auto' }}
     >
-    <h1> library log in </h1>
+    <h1 style={{ fontSize: 40, lineHeight: 1.2 }}> library log in </h1>
     <input type="email" placeholder="Enter your email"
     value={email} onChange={(e) => { setEmail(e.target.value); setError('') }}/>
     <input type="password" placeholder="Enter your password" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />

@@ -40,7 +40,7 @@ function Register({ onLogin, onBack }) {
             onSubmit={handleSubmit}
             style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 300, margin: '40px auto' }}
         >
-            <h1> create account </h1>
+            <h1 style={{ fontSize: 40, lineHeight: 1.2 }}> create account </h1>
             <input placeholder="First name" value={form.first_name} onChange={update('first_name')} required />
             <input placeholder="Last name" value={form.last_name} onChange={update('last_name')} required />
             <input type="email" placeholder="Email" value={form.email} onChange={update('email')} required />

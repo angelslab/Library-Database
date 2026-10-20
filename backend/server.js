@@ -13,8 +13,8 @@ const {
   deleteMedia,
   editMedia,
 } = require("./catalog/media");
-const { fetchDevices, addDevice, deleteDevice } = require("./catalog/device");
-const { login } = require("./auth/auth");
+const { fetchDevices, addDevice, deleteDevice, editDevice } = require("./catalog/device");
+const { login, register } = require("./auth/auth");
 const { getProfile } = require("./user/user");
 
 const { searchItems } = require("./queries/inventory");
@@ -269,7 +269,7 @@ async function startServer() {
       }
 
       //updateBook
-      if (req.method === "PUT" && req.url.startsWith === "/books/") {
+      if (req.method === "PUT" && req.url.startsWith("/books/")) {
         try {
           const itemID = Number(req.url.split("/")[2]);
 
@@ -295,7 +295,7 @@ async function startServer() {
 
           const book = JSON.parse(body);
 
-          await updateBook(
+          const result = await updateBook(
             itemID,
             book.title,
             book.author,
@@ -303,6 +303,18 @@ async function startServer() {
             book.publication_year,
             book.total_copies,
           );
+
+          if (!result) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+            });
+
+            res.end(
+              JSON.stringify({
+                error: "Device item not found",
+              }),
+            );
+          }
 
           res.writeHead(200, {
             "Content-Type": "application/json",
@@ -675,6 +687,78 @@ async function startServer() {
         }
       }
 
+      //editDevice
+      if (req.method === "PUT" && req.url.startsWith("/device/")) {
+
+        try {
+          const itemID = Number(req.url.split("/")[2]);
+
+          if (!Number.isInteger(itemID) || itemID <= 0) {
+            res.writeHead(400, {
+              "Content-Type": "application/json"
+            });
+
+            res.end(JSON.stringify({
+              error: "Invalid deviceID"
+            }));
+
+            return;
+          }
+
+          let body = "";
+
+          for await (chunk of req) {
+            body += chunk;
+          }
+
+          const data = JSON.parse(body);
+
+          const result = await editDevice(
+            itemID,
+            data.title,
+            data.total_copies,
+            data.brand,
+            data.deviceType
+          )
+
+          if (!result) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+            });
+
+            res.end(
+              JSON.stringify({
+                error: "Device item not found",
+              }),
+            );
+          }
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Device updated successfully",
+            }),
+          );
+
+        } catch (error) {
+
+          console.error(error);
+
+          res.writeHead(500, {
+            "content-type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              message: "Failed to update device",
+            }),
+          );
+        }
+      }
+
       //login
       if (req.method === "POST" && req.url === "/api/login") {
         try {
@@ -720,6 +804,58 @@ async function startServer() {
           res.end(
             JSON.stringify({
               error: "Failed to log in",
+            }),
+          );
+        }
+
+        return;
+      }
+
+      //register
+      if (req.method === "POST" && req.url === "/api/register") {
+        try {
+          let body = "";
+
+          for await (const chunk of req) {
+            body += chunk;
+          }
+
+          const data = JSON.parse(body);
+
+          const result = await register(data);
+
+          if (result.error) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS,
+            });
+
+            res.end(
+              JSON.stringify({
+                error: result.error,
+              }),
+            );
+
+            return;
+          }
+
+          res.writeHead(201, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+
+          res.end(JSON.stringify(result.user));
+        } catch (error) {
+          console.error("Error registering:", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+
+          res.end(
+            JSON.stringify({
+              error: "Failed to register",
             }),
           );
         }

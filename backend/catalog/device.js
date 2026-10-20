@@ -59,7 +59,7 @@ async function deleteDevice(itemID) {
 
 async function editDevice(itemID, title, totalCopies, brand, deviceType) {
   // items table
-  await db.query(
+  const itemResult = await db.query(
     `
       UPDATE items
       SET title = ? , total_copies = ?
@@ -67,6 +67,10 @@ async function editDevice(itemID, title, totalCopies, brand, deviceType) {
     `,
     [title, totalCopies, itemID],
   );
+
+  if (itemResult[0].affectedRows === 0) {
+    return false;
+  }
 
   //device
   await db.query(
@@ -77,6 +81,8 @@ async function editDevice(itemID, title, totalCopies, brand, deviceType) {
     `,
     [deviceType, brand],
   );
+
+  return true;
 }
 
 module.exports = { fetchDevices, addDevice, deleteDevice, editDevice };
