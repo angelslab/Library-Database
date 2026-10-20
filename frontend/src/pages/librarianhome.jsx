@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import BookSearch from '../component/BookSearch'
+import Inventory from '../component/InventorySearch'
 import UserManagment from '../component/userManage'
 
 function LibrarianHome({ user }) {
@@ -11,7 +11,7 @@ function LibrarianHome({ user }) {
 
       {view === 'menu' && (
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <button onClick={() => setView('books')}>Manage Inventory</button>
+          <button onClick={() => setView('inventory')}>Manage Inventory</button>
           <button onClick={() => setView('users')}>Manage users</button>
         </div>
       )}
@@ -20,7 +20,7 @@ function LibrarianHome({ user }) {
         <button onClick={() => setView('menu')}>← Back</button>
       )}
 
-      {view === 'books' && <BookSearch />}
+      {view === 'inventory' && <Inventory />}
       {view === 'users' && <UserManagment />}
     </div>
   )
