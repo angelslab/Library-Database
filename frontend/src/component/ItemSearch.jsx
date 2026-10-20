@@ -23,7 +23,7 @@ function ItemSearch({ items, onSelectItem, onSearchChange }) {
 
       <input
         type="text"
-        placeholder="Search by book title or author"
+        placeholder="Search books, items, media"
         value={keyword}
         onChange={(e) => handleSearchChange(e.target.value)}
         style={{ width: "100%", padding: 8 }}
