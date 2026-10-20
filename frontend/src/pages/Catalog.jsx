@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ItemCard from "../component/ItemCard";
-import BookSearch from "../component/BookSearch";
+import ItemSearch from "../component/ItemSearch";
 
 function Catalog({ onSelectItem }) {
   const [items, setItems] = useState([]);
@@ -50,7 +50,7 @@ function Catalog({ onSelectItem }) {
     <div>
       <p>Browse books, media and devices.</p>
 
-      <BookSearch
+      <ItemSearch
         items={items}
         onSelectItem={onSelectItem}
         onSearchChange={setIsSearching}
