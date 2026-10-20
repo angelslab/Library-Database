@@ -11,24 +11,55 @@ import ItemDetails from "./pages/ItemDetails";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [page, setPage] = useState("catalog");
+  const [page, setPage] = useState("catalog"); // catalog is the homepage for everyone
   const [selectedItemID, setSelectedItemID] = useState(null);
+  const [message, setMessage] = useState("");
+
+  // change page and clear any old message
+  function goTo(nextPage) {
+    setMessage("");
+    setPage(nextPage);
+  }
 
   function handleSelectItems(itemID) {
     setSelectedItemID(itemID);
-    setPage("itemDetails");
+    goTo("itemDetails");
+  }
+
+  // Borrow button: guests must log in first
+  function handleBorrow(item) {
+    if (!currentUser) {
+      setMessage(`Please log in to borrow "${item.title}".`);
+      setPage("login");
+      return;
+    }
+
+    // TODO (loans): call POST /api/loans with
+    // { userID: currentUser.userID, itemID: item.itemID }
+    setMessage(`Borrow "${item.title}": loans API not connected yet.`);
+  }
+
+  function handleLogin(user) {
+    setCurrentUser(user);
+    goTo("catalog");
   }
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setPage("home");
+    goTo("catalog");
   };
-  // if not login -> login page
-  if (!currentUser) {
-    return <Login onLogin={setCurrentUser} />;
+
+  // login page (only when the user asks for it or tries to borrow)
+  if (page === "login") {
+    return (
+      <Login
+        onLogin={handleLogin}
+        message={message}
+        onBack={() => goTo("catalog")}
+      />
+    );
   }
 
-  // if logged in -> top bar + page according to role
   return (
     <div style={{ padding: 20 }}>
       <div
@@ -38,11 +69,15 @@ function App() {
           alignItems: "flex-start",
         }}
       >
-        <UserMenu
-          name={currentUser.first_name}
-          onNavigate={setPage}
-          onLogout={handleLogout}
-        />
+        {currentUser ? (
+          <UserMenu
+            name={currentUser.first_name}
+            onNavigate={goTo}
+            onLogout={handleLogout}
+          />
+        ) : (
+          <h1 style={{ margin: 0, fontSize: 20 }}>Library</h1>
+        )}
 
         <div
           style={{
@@ -52,30 +87,42 @@ function App() {
             gap: 8,
           }}
         >
-          <span>Role: {currentUser.role}</span>
+          {currentUser ? (
+            <span>Role: {currentUser.role}</span>
+          ) : (
+            <button onClick={() => goTo("login")}>Log in</button>
+          )}
         </div>
       </div>
 
-      {page === "profile" && <Profile user={currentUser} />}
-      {page === "notification" && <Notification user={currentUser} />}
+      {message && <p>{message}</p>}
 
-      {page === "home" && currentUser.role === "student" && (
+      {/* pages that need a logged-in user */}
+      {currentUser && page === "profile" && <Profile user={currentUser} />}
+      {currentUser && page === "notification" && (
+        <Notification user={currentUser} />
+      )}
+
+      {currentUser && page === "home" && currentUser.role === "student" && (
         <StudentHome user={currentUser} onSelectItem={handleSelectItems} />
       )}
-      {page === "home" && currentUser.role === "faculty" && (
+      {currentUser && page === "home" && currentUser.role === "faculty" && (
         <FacultyHome user={currentUser} />
       )}
-      {page === "home" && currentUser.role === "librarian" && (
+      {currentUser && page === "home" && currentUser.role === "librarian" && (
         <LibrarianHome user={currentUser} />
       )}
 
-      {page === "catalog" && <Catalog onSelectItem={handleSelectItems} />}
+      {/* pages everyone can see */}
+      {page === "catalog" && (
+        <Catalog onSelectItem={handleSelectItems} onBorrow={handleBorrow} />
+      )}
 
       {page === "itemDetails" && (
         <ItemDetails
           itemID={selectedItemID}
           user={currentUser}
-          onBack={() => setPage("catalog")}
+          onBack={() => goTo("catalog")}
         />
       )}
     </div>

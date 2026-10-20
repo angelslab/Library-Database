@@ -10,10 +10,17 @@ async function login(email, password) {
         users.last_name,
         users.email,
         users.role,
-        user_credentials.password_hash
+        user_credentials.password_hash,
+
+        student.studentID,
+        student.major,
+        faculty.facultyID,
+        faculty.department
 
       FROM users
       JOIN user_credentials ON user_credentials.userID = users.userID
+      LEFT JOIN student ON student.userID = users.userID
+      LEFT JOIN faculty ON faculty.userID = users.userID
       WHERE users.email = ?`,
     [email],
   );
@@ -118,7 +125,13 @@ async function register(data) {
     await conn.commit();
 
     return {
-      user: { userID, first_name, last_name, email, role },
+      user: {
+        userID, first_name, last_name, email, role,
+        studentID: role === "student" ? data.studentID : null,
+        major: role === "student" ? data.major.trim().toUpperCase() : null,
+        facultyID: role === "faculty" ? data.facultyID : null,
+        department: role === "faculty" ? data.department : null,
+      },
     };
   } catch (error) {
     await conn.rollback();

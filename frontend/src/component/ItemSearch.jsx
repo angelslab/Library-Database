@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ItemCard from "./ItemCard";
 
-function ItemSearch({ items, onSelectItem, onSearchChange }) {
+function ItemSearch({ items, onSelectItem, onBorrow, onSearchChange }) {
   const [keyword, setKeyword] = useState("");
 
   const search = keyword.trim().toLowerCase();
@@ -40,6 +40,7 @@ function ItemSearch({ items, onSelectItem, onSearchChange }) {
               key={book.itemID}
               item={book}
               onSelectItem={onSelectItem}
+              onBorrow={onBorrow}
             />
           ))}
         </div>
