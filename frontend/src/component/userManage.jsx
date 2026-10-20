@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import UserDetail from './UserDetail'
 
-function UserManagemt( onSelect ) {
+function UserManagment( {onSelect} ) {
     const [keyword, setKeyword] = useState('')
     const [results, setResults] = useState([])
     const [searched, setSearched] = useState(false)
+    const [selectedUserID, setSelectedUserID] = useState(null)
 
     const handleSearch = async (e) => {
     e.preventDefault()
@@ -27,6 +29,14 @@ function UserManagemt( onSelect ) {
 const cell = {
     padding: '8px 12px',
     borderBottom: '1px solid rgba(128,128,128,0.4)',
+}
+if (selectedUserID !== null) {
+    return (
+    <div>
+        <button onClick={() => setSelectedUserID(null)}>← Back to search</button>
+        <UserDetail userID={selectedUserID} />
+    </div>
+    )
 }
     return (
         <div style={{ marginTop: 20 }}>
@@ -71,7 +81,7 @@ const cell = {
             {results.map((user) => (
             
             <tr key={user.userID}
-                on onClick={() => onSelect(user.userID)}
+                onClick={() => setSelectedUserID(user.userID)}
                 style={{ cursor: 'pointer' }}>
                 <td style={cell}>{user.id_number}</td>
                 <td style={cell}>{user.first_name} {user.last_name}</td>
@@ -83,10 +93,10 @@ const cell = {
         </tbody>
         </table>
     )}
-    </div>
     
+    </div>
     )
-
+    
 }
 
-export default UserManagemt
+export default UserManagment
