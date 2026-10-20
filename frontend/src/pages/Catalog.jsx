@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ItemCard from "../component/ItemCard";
 import ItemSearch from "../component/ItemSearch";
 
-function Catalog({ onSelectItem }) {
+function Catalog({ onSelectItem, onBorrow }) {
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -53,13 +53,14 @@ function Catalog({ onSelectItem }) {
       <ItemSearch
         items={items}
         onSelectItem={onSelectItem}
+        onBorrow={onBorrow}
         onSearchChange={setIsSearching}
       />
 
       {!isSearching && (
         <>
           {/* Category buttons */}
-          <div className="category-btn">
+          <div className="category-btn" style={{ display: "flex", gap: 12, justifyContent: "center", margin: "12px 0 24px" }}>
             {["All", "Book", "Media", "Device"].map((type) => (
               <button key={type} onClick={() => setCategory(type)}>
                 {type === "All" ? "All items" : `${type}'s`}
@@ -74,6 +75,7 @@ function Catalog({ onSelectItem }) {
                 key={item.itemID}
                 item={item}
                 onSelectItem={onSelectItem}
+                onBorrow={onBorrow}
               />
             ))}
           </div>
