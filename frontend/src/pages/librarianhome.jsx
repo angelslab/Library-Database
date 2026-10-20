@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import BookSearch from '../component/BookSearch'
-import UserManagemt from '../component/userManage'
+import UserManagment from '../component/userManage'
 
 function LibrarianHome({ user }) {
   const [view, setView] = useState('menu')
@@ -21,7 +21,7 @@ function LibrarianHome({ user }) {
       )}
 
       {view === 'books' && <BookSearch />}
-      {view === 'users' && <UserManagemt />}
+      {view === 'users' && <UserManagment />}
     </div>
   )
 }
