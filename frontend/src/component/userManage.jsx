@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function UserManagemt() {
+function UserManagemt( onSelect ) {
     const [keyword, setKeyword] = useState('')
     const [results, setResults] = useState([])
     const [searched, setSearched] = useState(false)
@@ -30,6 +30,7 @@ const cell = {
 }
     return (
         <div style={{ marginTop: 20 }}>
+
     <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8 }}>
         <input
         type="text"
@@ -56,7 +57,7 @@ const cell = {
             borderCollapse: 'collapse',
             textAlign: 'left',
         }}
-        >
+        > 
         <thead>
             <tr>
             <th style={cell}>UserID</th>
@@ -68,7 +69,10 @@ const cell = {
         </thead>
         <tbody>
             {results.map((user) => (
-            <tr key={user.userID}>
+            
+            <tr key={user.userID}
+                on onClick={() => onSelect(user.userID)}
+                style={{ cursor: 'pointer' }}>
                 <td style={cell}>{user.id_number}</td>
                 <td style={cell}>{user.first_name} {user.last_name}</td>
                 <td style={cell}>{user.email}</td>
@@ -80,7 +84,7 @@ const cell = {
         </table>
     )}
     </div>
-
+    
     )
 
 }
