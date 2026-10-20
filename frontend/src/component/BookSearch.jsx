@@ -35,8 +35,6 @@ function BookSearch({ items, onSelectItem, onSearchChange }) {
 
       {search !== "" && results.length > 0 && (
         <div>
-          {/* <h3>Search Results</h3> */}
-
           {results.map((book) => (
             <ItemCard
               key={book.itemID}
