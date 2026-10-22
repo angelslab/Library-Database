@@ -41,7 +41,7 @@ function App() {
 
   function handleLogin(user) {
     setCurrentUser(user);
-    goTo("catalog");
+    goTo(user.role === "librarian" ? "home" : "catalog");
   }
 
   const handleLogout = () => {
@@ -72,6 +72,7 @@ function App() {
         {currentUser ? (
           <UserMenu
             name={currentUser.first_name}
+            role={currentUser.role}
             onNavigate={goTo}
             onLogout={handleLogout}
           />
