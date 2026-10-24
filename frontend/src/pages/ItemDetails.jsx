@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import "../styles/ItemDetails.css";
 
-function ItemDetails({ itemID, user, onBack }) {
+function ItemDetails({ itemID, user, onBack, onBorrow }) {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -8,7 +9,8 @@ function ItemDetails({ itemID, user, onBack }) {
   useEffect(() => {
     async function fetchItem() {
       try {
-        (setLoading(true), setError(""));
+        setLoading(true);
+        setError("");
         setItem(null);
 
         const response = await fetch(`http://localhost:3000/items/${itemID}`);
@@ -18,7 +20,6 @@ function ItemDetails({ itemID, user, onBack }) {
         }
 
         const data = await response.json();
-
         setItem(data);
       } catch (error) {
         setError(error.message);
@@ -27,58 +28,140 @@ function ItemDetails({ itemID, user, onBack }) {
       }
     }
 
-    if (itemID !== null) {
+    if (itemID != null) {
       fetchItem();
     }
   }, [itemID]);
 
   if (loading) {
-    return <p>Loading item details...</p>;
+    return (
+      <div className="item-details-message">
+        <p>Loading item details...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <p>Error: {error}</p>;
+    return (
+      <div className="item-details-message">
+        <p>Error: {error}</p>
+        <button onClick={onBack}>Back to Catalog</button>
+      </div>
+    );
   }
 
   if (!item) {
-    return <p>Item not found.</p>;
+    return (
+      <div className="item-details-message">
+        <p>Item not found.</p>
+        <button onClick={onBack}>Back to Catalog</button>
+      </div>
+    );
   }
 
+  const author = item.book_author || item.media_author || item.device_author;
+
+  const isAvailable = item.available_copies > 0;
+
   return (
-    <div>
-      <button onClick={onBack}>Back to Catalog</button>
+    <main className="item-details-page">
+      <button type="button" className="item-details-back" onClick={onBack}>
+        ← Back to Catalog
+      </button>
 
-      <h1>{item.title}</h1>
+      <section className="item-details-card">
+        <div
+          className={`item-details-cover item-details-cover-${(
+            item.item_type || "default"
+          ).toLowerCase()}`}
+        >
+          <span className="item-details-type">{item.item_type}</span>
 
-      {/* <p>ItemID: {item.itemID}</p> */}
-      <p>Type: {item.item_type}</p>
-      <p>Total Copies: {item.total_copies}</p>
-      <p>Available Copies: {item.available_copies}</p>
-
-      {item.item_type === "Book" && (
-        <div>
-          <h2>Book Details</h2>
-          <p>Author: {item.book_author}</p>
-          <p>ISBN: {item.isbn}</p>
-          <p>Publication_year: {item.publication_year}</p>
+          <div className="item-details-cover-title">
+            <h1>{item.title}</h1>
+          </div>
         </div>
-      )}
 
-      {item.item_type === "Device" && (
-        <div>
-          <h2>Device Details</h2>
-          <p>Device Type: {item.device_type}</p>
-          <p>Brand: {item.brand}</p>
-        </div>
-      )}
+        <div className="item-details-content">
+          <span className="item-details-category">{item.item_type}</span>
 
-      {item.item_type === "Media" && (
-        <div>
-          <h2>Media Details</h2>
-          <p>Media Type: {item.media_author}</p>
+          <h1 className="item-details-title">{item.title}</h1>
+
+          {author && <p className="item-details-author">By {author}</p>}
+
+          <div className="item-details-stock">
+            <span
+              className={`item-details-status ${
+                isAvailable ? "is-available" : "is-unavailable"
+              }`}
+            >
+              {isAvailable ? "Available" : "Currently unavailable"}
+            </span>
+
+            <p>
+              {item.available_copies} of {item.total_copies} copies available
+            </p>
+          </div>
+
+          <div className="item-details-information">
+            <h2>Item Information</h2>
+
+            {item.item_type === "Book" && (
+              <>
+                <div className="item-details-row">
+                  <span>Author</span>
+                  <span>{item.book_author || "Not provided"}</span>
+                </div>
+
+                <div className="item-details-row">
+                  <span>ISBN</span>
+                  <span>{item.isbn || "Not provided"}</span>
+                </div>
+
+                <div className="item-details-row">
+                  <span>Publication Year</span>
+                  <span>{item.publication_year || "Not provided"}</span>
+                </div>
+              </>
+            )}
+
+            {item.item_type === "Media" && (
+              <div className="item-details-row">
+                <span>Author</span>
+                <span>{item.media_author || "Not provided"}</span>
+              </div>
+            )}
+
+            {item.item_type === "Device" && (
+              <>
+                <div className="item-details-row">
+                  <span>Device Type</span>
+                  <span>{item.device_type || "Not provided"}</span>
+                </div>
+
+                <div className="item-details-row">
+                  <span>Brand</span>
+                  <span>{item.brand || "Not provided"}</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="item-details-borrow"
+            disabled={!isAvailable || !onBorrow}
+            onClick={() => onBorrow(item)}
+          >
+            {!isAvailable
+              ? "Unavailable"
+              : onBorrow
+                ? "Borrow Item"
+                : "Borrowing unavailable"}
+          </button>
         </div>
-      )}
-    </div>
+      </section>
+    </main>
   );
 }
 

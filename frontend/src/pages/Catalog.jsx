@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import ItemCard from "../component/ItemCard";
 import ItemSearch from "../component/ItemSearch";
+import "../styles/Catalog.css";
 
-function Catalog({ onSelectItem, onBorrow }) {
+function Catalog({ onSelectItem, onBorrow, onAddItem, user, onEdit }) {
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  const filters = ["All", "Book", "Media", "Device"];
 
   const filteredItems =
     category === "All"
@@ -15,7 +18,6 @@ function Catalog({ onSelectItem, onBorrow }) {
       : items.filter((item) => item.item_type === category);
 
   useEffect(() => {
-    //fetch all items from backend
     async function fetchCatalog() {
       try {
         const response = await fetch("http://localhost:3000/items");
@@ -36,49 +38,99 @@ function Catalog({ onSelectItem, onBorrow }) {
     fetchCatalog();
   }, []);
 
-  //show loading message while fetching
   if (loading) {
-    return <p>Loading catalog...</p>;
+    return <p className="catalog-message">Loading catalog...</p>;
   }
 
-  //show error if request fails
   if (error) {
-    return <p>Error: {error}</p>;
+    return <p className="catalog-error">Error: {error}</p>;
   }
 
   return (
-    <div>
-      <p>Browse books, media and devices.</p>
+    <div className="catalog-container">
+      {/* Search */}
+      <section className="catalog-search-section">
+        <div className="library-search catalog-search">
+          <ItemSearch
+            items={items}
+            onSelectItem={onSelectItem}
+            onBorrow={onBorrow}
+            onSearchChange={setIsSearching}
+          />
+        </div>
+      </section>
 
-      <ItemSearch
-        items={items}
-        onSelectItem={onSelectItem}
-        onBorrow={onBorrow}
-        onSearchChange={setIsSearching}
-      />
-
+      {/* Category and catalog */}
       {!isSearching && (
         <>
-          {/* Category buttons */}
-          <div className="category-btn" style={{ display: "flex", gap: 12, justifyContent: "center", margin: "12px 0 24px" }}>
-            {["All", "Book", "Media", "Device"].map((type) => (
-              <button key={type} onClick={() => setCategory(type)}>
-                {type === "All" ? "All items" : `${type}'s`}
-              </button>
-            ))}
-          </div>
+          <section className="catalog-category-section">
+            <h2 className="catalog-section-label">Browse categories</h2>
 
-          {/* Regular catalog */}
-          <div>
-            {filteredItems.map((item) => (
-              <ItemCard
-                key={item.itemID}
-                item={item}
-                onSelectItem={onSelectItem}
-                onBorrow={onBorrow}
-              />
-            ))}
-          </div>
+            <div className="catalog-toolbar">
+              <div className="catalog-filters">
+                {filters.map((item) => {
+                  const active = category === item;
+
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setCategory(item)}
+                      aria-pressed={active}
+                      className={`catalog-filter ${
+                        active ? "catalog-filter-active" : ""
+                      }`}
+                    >
+                      {item === "All" ? "All items" : `${item}s`}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {user?.role === "librarian" && (
+                <div className="catalog-add-container">
+                  <button
+                    type="button"
+                    className="catalog-filter catalog-add-button"
+                    onClick={onAddItem}
+                  >
+                    Add Item
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Catalog heading */}
+          <section className="catalog-results-section">
+            <div className="catalog-results-heading">
+              <h2 className="catalog-title">
+                {category === "All" ? "All items" : `${category}s`}
+              </h2>
+
+              <span className="catalog-results-count">
+                {filteredItems.length} results
+              </span>
+            </div>
+
+            {/* Item cards */}
+            {filteredItems.length > 0 ? (
+              <div className="catalog-grid">
+                {filteredItems.map((item) => (
+                  <ItemCard
+                    key={item.itemID}
+                    item={item}
+                    onSelectItem={onSelectItem}
+                    onBorrow={onBorrow}
+                    onEdit={onEdit}
+                    user={user}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="catalog-empty">No items found in this category.</p>
+            )}
+          </section>
         </>
       )}
     </div>
