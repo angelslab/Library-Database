@@ -13,6 +13,7 @@ function LibrarianHome({ user }) {
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
           <button onClick={() => setView('inventory')}>Manage Inventory</button>
           <button onClick={() => setView('users')}>Manage users</button>
+          <button onClick={() => setView('reports')}>Reports</button>
         </div>
       )}
 
@@ -22,6 +23,7 @@ function LibrarianHome({ user }) {
 
       {view === 'inventory' && <Inventory />}
       {view === 'users' && <UserManagment />}
+      {view === 'reports' && 'coming soon'}
     </div>
   )
 }
