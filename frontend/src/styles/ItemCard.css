@@ -1,0 +1,241 @@
+/* Item card */
+.item-card {
+  min-width: 0;
+}
+
+/* Three-dot menu */
+.item-card {
+  position: relative;
+}
+
+.item-card-menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.item-card-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #263e59;
+  border-radius: 8px;
+  background: #10253e;
+  color: #e6ecf2;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.item-card-menu-trigger:hover {
+  background: #193550;
+}
+
+/* Dropdown */
+.item-card-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 120px;
+  padding: 5px;
+  background: #10253e;
+  border: 1px solid #263e59;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 25%);
+  z-index: 20;
+}
+
+.item-card-dropdown-delete {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #f14d4c;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.item-card-dropdown-delete:hover {
+  background: rgb(241 77 76 / 12%);
+}
+
+/* Book, Media, and Device cover */
+.item-cover {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: 2 / 3;
+  min-width: 0;
+  overflow: hidden;
+  padding: 20px;
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 20%);
+  transition: transform 200ms ease;
+}
+
+.item-card:hover .item-cover {
+  transform: translateY(-4px);
+}
+
+/* Cover colors */
+.item-cover-book {
+  background-color: #193550;
+}
+
+.item-cover-media {
+  background-color: #4075aa;
+}
+
+.item-cover-device {
+  background-color: #39445d;
+}
+
+.item-cover-default {
+  background-color: var(--card);
+}
+
+/* Decorative left edge */
+.item-cover-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  background-color: rgb(0 0 0 / 15%);
+}
+
+/* Item type badge */
+.item-type-label {
+  position: relative;
+  align-self: flex-start;
+  padding: 4px 8px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 4px;
+  background-color: rgb(0 0 0 / 10%);
+  color: rgb(255 255 255 / 80%);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+/* Cover title and author */
+.item-cover-info {
+  position: relative;
+  min-width: 0;
+}
+
+.item-cover-title {
+  margin: 0;
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.item-cover-author {
+  margin: 8px 0 0;
+  color: rgb(255 255 255 / 70%);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  overflow-wrap: anywhere;
+}
+
+/* Availability row */
+.item-availability {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.item-availability-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.item-title {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.item-type {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.item-stock {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
+.item-stock-low {
+  color: var(--accent);
+}
+
+.item-stock-media {
+  color: var(--muted-foreground);
+}
+
+/* Buttons row */
+.item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.item-button {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    opacity 200ms ease;
+}
+
+.item-button-details {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.item-button-details:hover {
+  background-color: var(--secondary);
+}
+
+.item-button-borrow {
+  border: 1px solid transparent;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.item-button-borrow:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.item-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
