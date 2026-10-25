@@ -49,7 +49,7 @@ async function deleteDevice(itemID) {
   const result = await db.query(
     `
     DELETE FROM items 
-    WHERE item_id = ?
+    WHERE itemID = ?
     `,
     [itemID],
   );

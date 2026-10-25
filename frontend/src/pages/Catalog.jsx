@@ -3,7 +3,14 @@ import ItemCard from "../component/ItemCard";
 import ItemSearch from "../component/ItemSearch";
 import "../styles/Catalog.css";
 
-function Catalog({ onSelectItem, onBorrow, onAddItem, user, onEdit }) {
+function Catalog({
+  onSelectItem,
+  onBorrow,
+  onAddItem,
+  user,
+  onEdit,
+  onDelete,
+}) {
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -124,6 +131,7 @@ function Catalog({ onSelectItem, onBorrow, onAddItem, user, onEdit }) {
                     onBorrow={onBorrow}
                     onEdit={onEdit}
                     user={user}
+                    onDelete={onDelete}
                   />
                 ))}
               </div>
