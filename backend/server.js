@@ -17,6 +17,10 @@ const { fetchDevices, addDevice, deleteDevice, editDevice } = require("./catalog
 const { login, register } = require("./auth/auth");
 const { getProfile } = require("./user/user");
 
+const { searchItems } = require("./queries/inventory");
+const { manageUsers } = require("./queries/users")
+const { getUserDetails } = require("./queries/manageUsers")
+
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -940,7 +944,72 @@ async function startServer() {
 
         return;
       }
-    });
+
+          // librarian item search
+if (req.method === "GET" && req.url.startsWith("/api/items")) {
+  try {
+    const url = new URL(req.url, "http://localhost");
+    const q = (url.searchParams.get("q") || "").trim();
+
+    const rows = await searchItems(q);
+
+    res.writeHead(200, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify(rows));
+  } catch (error) {
+    console.error("Error searching item:", error);
+    res.writeHead(500, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify({ error: "Failed to search item" }));
+  }
+  return;
+}
+// librian find user
+if (req.method === "GET" && req.url.startsWith("/api/users?")) {
+    try {
+    const url = new URL(req.url, "http://localhost");
+    const q = (url.searchParams.get("q") || "").trim();
+
+    const rows = await manageUsers(q);
+
+    res.writeHead(200, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify(rows));
+  } catch (error) {
+    console.error("Error searching user:", error);
+    res.writeHead(500, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify({ error: "Failed to search user" }));
+  }
+  return;
+  }
+// detail about selected user
+  if (req.method === "GET" && req.url.startsWith("/api/users/")) {
+  try {
+    const userID = Number(req.url.split("/")[3]);
+
+    if (!Number.isInteger(userID) || userID < 1) {
+      res.writeHead(400, { "Content-Type": "application/json", ...CORS_HEADERS });
+      res.end(JSON.stringify({ error: "Invalid userID" }));
+      return;
+    }
+
+    const rows = await getUserDetails(userID);
+
+    if (rows.length === 0) {
+      res.writeHead(404, { "Content-Type": "application/json", ...CORS_HEADERS });
+      res.end(JSON.stringify({ error: "User not found" }));
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify(rows));
+  } catch (error) {
+    console.error("Error getting user detail:", error);
+    res.writeHead(500, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify({ error: "Failed to get user detail" }));
+  }
+  return;
+}
+});
+
+
 
     server.listen(PORT, () => {
       console.log(`Server running at PORT: `, PORT);
