@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ItemCard from "./ItemCard";
+import "../styles/ItemSearch.css";
 
 function ItemSearch({ items, onSelectItem, onBorrow, onSearchChange }) {
   const [keyword, setKeyword] = useState("");
@@ -14,31 +15,36 @@ function ItemSearch({ items, onSelectItem, onBorrow, onSearchChange }) {
   const results = items.filter((item) => {
     return (
       item.title?.toLowerCase().includes(search) ||
-      item.author?.toLowerCase().includes(search)
+      item.author?.toLowerCase().includes(search) ||
+      item.book_author?.toLowerCase().includes(search) ||
+      item.media_author?.toLowerCase().includes(search) ||
+      item.device_type?.toLowerCase().includes(search)
     );
   });
-  return (
-    <div style={{ marginTop: 20 }}>
-      <h2>Search Books</h2>
 
+  return (
+    <div className="item-search">
       <input
+        className="item-search-input"
         type="text"
         placeholder="Search books, items, media"
         value={keyword}
         onChange={(e) => handleSearchChange(e.target.value)}
-        style={{ width: "100%", padding: 8 }}
+        aria-label="Search library catalog"
       />
 
       {search !== "" && results.length === 0 && (
-        <p>No books found for "{keyword}". Try another keyword.</p>
+        <p className="item-search-message">
+          No items found for "{keyword}". Try another keyword.
+        </p>
       )}
 
       {search !== "" && results.length > 0 && (
-        <div>
-          {results.map((book) => (
+        <div className="item-search-results">
+          {results.map((item) => (
             <ItemCard
-              key={book.itemID}
-              item={book}
+              key={item.itemID}
+              item={item}
               onSelectItem={onSelectItem}
               onBorrow={onBorrow}
             />

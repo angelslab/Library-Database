@@ -1,0 +1,204 @@
+/* AddItemForm.css */
+
+.add-item-form-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
+  color: var(--foreground, inherit);
+}
+
+.add-item-form-container h2 {
+  margin: 0 0 28px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.add-item-form-container * {
+  box-sizing: border-box;
+}
+
+.add-item-form-container form {
+  width: 100%;
+}
+
+.add-item-form-container label {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.add-item-type-section {
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border, #394354);
+}
+
+.add-item-type-section select {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border, #394354);
+  border-radius: 6px;
+  background: var(--card, #202b3c);
+  color: var(--card-foreground, inherit);
+  font: inherit;
+  cursor: pointer;
+}
+
+.add-item-section {
+  padding: 28px 0;
+}
+
+.add-item-section h3 {
+  margin: 0 0 22px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.add-item-details-section {
+  border-top: 1px solid var(--border, #394354);
+}
+
+.add-item-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 18px;
+}
+
+.add-item-field {
+  min-width: 0;
+}
+
+.add-item-field input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--input, var(--border, #394354));
+  border-radius: 6px;
+  background: var(--card, transparent);
+  color: var(--card-foreground, inherit);
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.add-item-field input::placeholder {
+  color: var(--muted-foreground, #929aaa);
+  opacity: 0.8;
+}
+
+.add-item-field input:focus,
+.add-item-type-section select:focus {
+  outline: none;
+  border-color: var(--accent, #c4a46b);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--accent, #c4a46b) 20%, transparent);
+}
+
+.add-item-message {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border, #394354);
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.add-item-success {
+  border-color: #477a5a;
+  background: rgba(55, 130, 80, 0.1);
+  color: #68b783;
+}
+
+.add-item-error {
+  border-color: #9b5151;
+  background: rgba(180, 65, 65, 0.1);
+  color: #e18484;
+}
+
+.add-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border, #394354);
+}
+
+.add-item-clear-button,
+.add-item-submit-button {
+  min-height: 46px;
+  padding: 11px 22px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.add-item-clear-button {
+  background: transparent;
+  color: var(--muted-foreground, inherit);
+}
+
+.add-item-clear-button:hover {
+  background: var(--secondary, rgba(128, 128, 128, 0.12));
+}
+
+.add-item-submit-button {
+  min-width: 130px;
+  background: var(--accent, #c4a46b);
+  color: var(--accent-foreground, #172033);
+}
+
+.add-item-submit-button:hover {
+  opacity: 0.88;
+}
+
+.add-item-clear-button:focus-visible,
+.add-item-submit-button:focus-visible {
+  outline: 2px solid var(--accent, #c4a46b);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .add-item-form-container {
+    padding: 16px;
+  }
+
+  .add-item-form-container h2 {
+    font-size: 26px;
+  }
+
+  .add-item-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .add-item-type-section select {
+    max-width: 100%;
+  }
+
+  .add-item-actions {
+    align-items: stretch;
+  }
+
+  .add-item-clear-button,
+  .add-item-submit-button {
+    flex: 1;
+  }
+}
