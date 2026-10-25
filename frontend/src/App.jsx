@@ -92,6 +92,15 @@ function App() {
     }
   };
 
+  const userMenu = currentUser && (
+    <UserMenu
+      name={currentUser.first_name}
+      role={currentUser.role}
+      onNavigate={goTo}
+      onLogout={handleLogout}
+    />
+  );
+
   if (page === "login") {
     return (
       <Login
@@ -106,10 +115,20 @@ function App() {
     <div className="app-container">
       {message && <p className="app-message">{message}</p>}
 
-      {currentUser && page === "profile" && <Profile user={currentUser} />}
+      {currentUser && page === "profile" && (
+        <div className="profile-page">
+          <div className="profile-page-menu">{userMenu}</div>
+          <Profile user={currentUser} />
+        </div>
+      )}
 
       {currentUser && page === "notification" && (
-        <Notification user={currentUser} />
+        <div className="profile-page">
+          <div className="profile-page-menu">{userMenu}</div>
+          <main>
+            <Notification user={currentUser} />
+          </main>
+        </div>
       )}
 
       {currentUser && page === "home" && currentUser.role === "student" && (
@@ -144,12 +163,7 @@ function App() {
         <div className="library-layout">
           <aside className="library-nav">
             {currentUser ? (
-              <UserMenu
-                name={currentUser.first_name}
-                role={currentUser.role}
-                onNavigate={goTo}
-                onLogout={handleLogout}
-              />
+              userMenu
             ) : (
               <button
                 className="user-menu-button"

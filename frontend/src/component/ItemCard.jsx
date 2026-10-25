@@ -94,7 +94,11 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
           <span className="item-type">{item.item_type}</span>
         </div>
 
-        <span className={`item-stock ${isLowStock ? "item-stock-low" : ""}`}>
+        <span
+          className={`item-stock ${
+            isLowStock ? "item-stock-low" : ""
+          } ${item.item_type === "Media" ? "item-stock-media" : ""}`}
+        >
           {item.available_copies}/{item.total_copies} available
         </span>
       </div>
