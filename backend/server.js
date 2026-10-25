@@ -1007,6 +1007,33 @@ if (req.method === "GET" && req.url.startsWith("/api/users?")) {
   }
   return;
 }
+
+//fines report
+  if (req.method === "GET" && req.url.startsWith("/api/reports/revenue")) {
+  try {
+    const params = new URL(req.url, "http://localhost").searchParams;
+
+    const type = params.get("type") || null;
+    const from = params.get("from") || null;
+    const to = params.get("to") || null;
+    const paidRaw = params.get("paid");
+    const paid = paidRaw === "0" || paidRaw === "1" ? Number(paidRaw) : null;
+
+    const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+    if (!dateOk(from) || !dateOk(to) || (paidRaw && paid === null)) {
+      sendJSON(res, 400, { error: "Invalid filter" });
+      return;
+    }
+
+    const rows = await getRevenueReport({ type, paid, from, to });
+    sendJSON(res, 200, rows);
+  } catch (error) {
+    console.error("Error running revenue report:", error);
+    sendJSON(res, 500, { error: "Failed to run revenue report" });
+  }
+  return;
+}
+
 });
 
 
