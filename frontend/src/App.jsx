@@ -54,6 +54,44 @@ function App() {
     goTo("catalog");
   }
 
+  const handleDeleteItem = async (item) => {
+    const itemType = item.item_type?.toLowerCase();
+
+    const endpoints = {
+      book: "books",
+      media: "media",
+      device: "device",
+    };
+
+    const endpoint = endpoints[itemType];
+
+    if (!endpoint) {
+      setMessage("Unable to determine the item type");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/${endpoint}/${item.itemID}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete item.");
+      }
+      setMessage("Item deleted successfully.");
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      setMessage(error.message || "Failed to delete item.");
+    }
+  };
+
   if (page === "login") {
     return (
       <Login
@@ -130,6 +168,7 @@ function App() {
               onBorrow={handleBorrow}
               onEdit={handleEditItem}
               onAddItem={() => goTo("addItems")}
+              onDelete={handleDeleteItem}
             />
           </main>
         </div>
