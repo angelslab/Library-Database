@@ -1,36 +1,80 @@
-import { useState } from 'react';
+import "../styles/UserMenu.css";
+
 function UserMenu({ name, role, onNavigate, onLogout }) {
-    const [open, setOpen] = useState(false);
-    const choose =(page) =>{ // let the app know that user not choosing any page
-      onNavigate(page)
-      setOpen(false);// close Menu
-}
-return (
-    <div style={{position: ' relative'}}>
-        <h1
-        onClick={() => setOpen(!open)}
-        style={{ margin: 0, fontSize: 20, cursor: 'pointer' }}
+  const menuItems =
+    role === "librarian"
+      ? [
+          {
+            label: "Dashboard",
+            page: "home",
+          },
+          {
+            label: "Catalog",
+            page: "catalog",
+          },
+        ]
+      : [
+          {
+            label: "Home",
+            page: "catalog",
+          },
+        ];
+
+  return (
+    <div className="user-menu-container">
+      <div className="user-menu-header">
+        <h2 className="user-menu-welcome">Welcome, {name || "User"}!</h2>
+
+        <p className="user-menu-role">
+          {role ? role.charAt(0).toUpperCase() + role.slice(1) : ""}
+        </p>
+      </div>
+
+      <nav className="user-menu-grid" aria-label="Main navigation">
+        {menuItems.map((item) => (
+          <button
+            key={item.page}
+            type="button"
+            className="user-menu-button"
+            onClick={() => onNavigate(item.page)}
+          >
+            <span className="user-menu-icon" aria-hidden="true">
+              {item.icon}
+            </span>
+
+            <span>{item.label}</span>
+          </button>
+        ))}
+
+        <button
+          type="button"
+          className="user-menu-button"
+          onClick={() => onNavigate("profile")}
         >
-            Welcome, {name}! 
-        </h1>
-        {open &&(
-            <div
-            style={{ position: 'absolute', top: '100%', marginTop: 6, display: 'flex', flexDirection: 'column', gap:4, padding:8, background: 'white', border: '1px solid #555', borderRadius: 6, zIndex:10, }}>
-                {role === 'librarian' ? (
-                    <>
-                        <button onClick={() => choose('home')}>Dashboard</button>
-                        <button onClick={() => choose('catalog')}>Catalog</button>
-                    </>
-                ) : (
-                    <button onClick={() => choose('catalog')}>Home</button>
-                )}
-                <button onClick={() => choose('profile')}>Profile</button>
-                <button onClick={() => choose('notification')}>Notification</button>
-                <button onClick={() => { onLogout(); setOpen(false); }}>log out</button>
-            </div>
-            
-        )}
+          <span className="user-menu-icon" aria-hidden="true"></span>
+          <span>Profile</span>
+        </button>
+
+        <button
+          type="button"
+          className="user-menu-button"
+          onClick={() => onNavigate("notification")}
+        >
+          <span className="user-menu-icon" aria-hidden="true"></span>
+          <span>Notifications</span>
+        </button>
+
+        <button
+          type="button"
+          className="user-menu-button user-menu-logout"
+          onClick={onLogout}
+        >
+          <span className="user-menu-icon" aria-hidden="true"></span>
+          <span>Log Out</span>
+        </button>
+      </nav>
     </div>
-)
+  );
 }
+
 export default UserMenu;
