@@ -8,14 +8,17 @@ import LibrarianHome from "./pages/librarianhome";
 import UserMenu from "./component/userMenu";
 import Catalog from "./pages/Catalog";
 import ItemDetails from "./pages/ItemDetails";
+import AddItemForm from "./component/AddItemForm";
+import EditItemForm from "./component/EditItemForm";
+import "./App.css";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [page, setPage] = useState("catalog"); // catalog is the homepage for everyone
+  const [page, setPage] = useState("catalog");
   const [selectedItemID, setSelectedItemID] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [message, setMessage] = useState("");
 
-  // change page and clear any old message
   function goTo(nextPage) {
     setMessage("");
     setPage(nextPage);
@@ -26,7 +29,11 @@ function App() {
     goTo("itemDetails");
   }
 
-  // Borrow button: guests must log in first
+  function handleEditItem(item) {
+    setSelectedItem(item);
+    goTo("editItem");
+  }
+
   function handleBorrow(item) {
     if (!currentUser) {
       setMessage(`Please log in to borrow "${item.title}".`);
@@ -34,8 +41,6 @@ function App() {
       return;
     }
 
-    // TODO (loans): call POST /api/loans with
-    // { userID: currentUser.userID, itemID: item.itemID }
     setMessage(`Borrow "${item.title}": loans API not connected yet.`);
   }
 
@@ -44,12 +49,58 @@ function App() {
     goTo(user.role === "librarian" ? "home" : "catalog");
   }
 
-  const handleLogout = () => {
+  function handleLogout() {
     setCurrentUser(null);
     goTo("catalog");
+  }
+
+  const handleDeleteItem = async (item) => {
+    const itemType = item.item_type?.toLowerCase();
+
+    const endpoints = {
+      book: "books",
+      media: "media",
+      device: "device",
+    };
+
+    const endpoint = endpoints[itemType];
+
+    if (!endpoint) {
+      setMessage("Unable to determine the item type");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/${endpoint}/${item.itemID}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete item.");
+      }
+      setMessage("Item deleted successfully.");
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      setMessage(error.message || "Failed to delete item.");
+    }
   };
 
-  // login page (only when the user asks for it or tries to borrow)
+  const userMenu = currentUser && (
+    <UserMenu
+      name={currentUser.first_name}
+      role={currentUser.role}
+      onNavigate={goTo}
+      onLogout={handleLogout}
+    />
+  );
+
   if (page === "login") {
     return (
       <Login
@@ -61,62 +112,80 @@ function App() {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
-        {currentUser ? (
-          <UserMenu
-            name={currentUser.first_name}
-            role={currentUser.role}
-            onNavigate={goTo}
-            onLogout={handleLogout}
-          />
-        ) : (
-          <h1 style={{ margin: 0, fontSize: 20 }}>Library</h1>
-        )}
+    <div className="app-container">
+      {message && <p className="app-message">{message}</p>}
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: 8,
-          }}
-        >
-          {currentUser ? (
-            <span>Role: {currentUser.role}</span>
-          ) : (
-            <button onClick={() => goTo("login")}>Log in</button>
-          )}
+      {currentUser && page === "profile" && (
+        <div className="profile-page">
+          <div className="profile-page-menu">{userMenu}</div>
+          <Profile user={currentUser} />
         </div>
-      </div>
+      )}
 
-      {message && <p>{message}</p>}
-
-      {/* pages that need a logged-in user */}
-      {currentUser && page === "profile" && <Profile user={currentUser} />}
       {currentUser && page === "notification" && (
-        <Notification user={currentUser} />
+        <div className="profile-page">
+          <div className="profile-page-menu">{userMenu}</div>
+          <main>
+            <Notification user={currentUser} />
+          </main>
+        </div>
       )}
 
       {currentUser && page === "home" && currentUser.role === "student" && (
         <StudentHome user={currentUser} onSelectItem={handleSelectItems} />
       )}
+
       {currentUser && page === "home" && currentUser.role === "faculty" && (
         <FacultyHome user={currentUser} />
       )}
+
       {currentUser && page === "home" && currentUser.role === "librarian" && (
-        <LibrarianHome user={currentUser} />
+        <LibrarianHome user={currentUser} onNavigate={goTo} />
       )}
 
-      {/* pages everyone can see */}
+      {currentUser &&
+        currentUser.role === "librarian" &&
+        page === "addItems" && (
+          <div className="page-container">
+            <button
+              className="back-button"
+              type="button"
+              onClick={() => goTo("catalog")}
+            >
+              Back to Catalog
+            </button>
+
+            <AddItemForm />
+          </div>
+        )}
+
       {page === "catalog" && (
-        <Catalog onSelectItem={handleSelectItems} onBorrow={handleBorrow} />
+        <div className="library-layout">
+          <aside className="library-nav">
+            {currentUser ? (
+              userMenu
+            ) : (
+              <button
+                className="user-menu-button"
+                type="button"
+                onClick={() => goTo("login")}
+              >
+                Log In
+              </button>
+            )}
+          </aside>
+
+          <main className="library-content">
+            <Catalog
+              user={currentUser}
+              onSelectItem={handleSelectItems}
+              onBorrow={handleBorrow}
+              onEdit={handleEditItem}
+              onAddItem={() => goTo("addItems")}
+              onDelete={handleDeleteItem}
+            />
+          </main>
+        </div>
       )}
 
       {page === "itemDetails" && (
@@ -124,6 +193,14 @@ function App() {
           itemID={selectedItemID}
           user={currentUser}
           onBack={() => goTo("catalog")}
+        />
+      )}
+
+      {page === "editItem" && selectedItem && (
+        <EditItemForm
+          item={selectedItem}
+          onBack={() => goTo("catalog")}
+          onItemUpdated={() => goTo("catalog")}
         />
       )}
     </div>

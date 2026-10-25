@@ -1,0 +1,180 @@
+/* ========================================
+   USER MENU CONTAINER
+======================================== */
+
+.user-menu-container {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  color: #e6ecf2;
+  z-index: 2;
+}
+
+.user-menu-header {
+  margin: 0;
+}
+
+.user-menu-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 0;
+  color: #e6ecf2;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.user-menu-welcome:focus-visible {
+  outline: 2px solid #4075aa;
+  outline-offset: 3px;
+}
+
+.user-menu-chevron {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+/* ========================================
+   MENU BUTTON ARRANGEMENT
+   Desktop: vertical list
+======================================== */
+
+.user-menu-grid {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  background: #0b1b31;
+  border: 1px solid #263e59;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 35%);
+}
+
+.user-menu-grid[hidden] {
+  display: none;
+}
+
+/* ========================================
+   NAVIGATION BUTTONS
+======================================== */
+
+.user-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px;
+  box-sizing: border-box;
+
+  color: #e6ecf2;
+  background: #10253e;
+  border: 1px solid #263e59;
+  border-radius: 12px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.user-menu-button:hover {
+  background: #193550;
+  border-color: #4075aa;
+}
+
+.user-menu-button:focus-visible {
+  outline: 2px solid #4075aa;
+  outline-offset: 3px;
+}
+
+.user-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* ========================================
+   LOGOUT BUTTON
+======================================== */
+
+.user-menu-logout {
+  margin-top: 12px;
+}
+
+.user-menu-logout:hover {
+  background: #39445d;
+  border-color: #596780;
+}
+
+/* ========================================
+   GUEST MENU
+======================================== */
+
+.guest-menu {
+  width: 100%;
+}
+
+.guest-menu h2 {
+  margin: 0 0 20px;
+  color: #e6ecf2;
+  font-size: 22px;
+}
+
+.guest-menu .user-menu-button {
+  justify-content: center;
+  background: #193550;
+  border-color: #263e59;
+}
+
+.guest-menu .user-menu-button:hover {
+  background: #4075aa;
+}
+
+/* ========================================
+   RESPONSIVE MENU
+   Mobile: two columns of buttons
+======================================== */
+
+@media (max-width: 650px) {
+  .user-menu-grid {
+    gap: 8px;
+  }
+
+  .user-menu-button {
+    min-height: 44px;
+    padding: 10px;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .user-menu-logout {
+    margin-top: 0;
+  }
+}
