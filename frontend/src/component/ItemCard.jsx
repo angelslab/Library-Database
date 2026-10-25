@@ -1,7 +1,11 @@
+import { useState, useEffect, useRef } from "react";
 import "../styles/ItemCard.css";
 
-function ItemCard({ item, onSelectItem, onBorrow, onEdit, user }) {
+function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
   const isLowStock = item.available_copies <= 1;
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const coverColors = {
     Book: "item-cover-book",
@@ -9,10 +13,55 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user }) {
     Device: "item-cover-device",
   };
 
+  //closing menu when clicking outside
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleDelete = () => {
+    setMenuOpen(false);
+
+    if (window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
+      onDelete?.(item);
+    }
+  };
+
   const coverColor = coverColors[item.item_type] || "item-cover-default";
 
   return (
     <article className="item-card">
+      <div className="item-card-menu" ref={menuRef}>
+        <button
+          type="button"
+          className="item-card-menu-trigger"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          &#8942;
+        </button>
+
+        {menuOpen && (
+          <div className="item-card-dropdown">
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="item-card-dropdown-delete"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
       <div className={`item-cover ${coverColor}`}>
         <div className="item-cover-edge" />
 
