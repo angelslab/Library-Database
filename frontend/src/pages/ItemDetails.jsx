@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/ItemDetails.css";
 
-function ItemDetails({ itemID, user, onBack, onBorrow }) {
+function ItemDetails({ itemID, user, onBack, onBorrow, refreshKey }) {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,7 +31,7 @@ function ItemDetails({ itemID, user, onBack, onBorrow }) {
     if (itemID != null) {
       fetchItem();
     }
-  }, [itemID]);
+  }, [itemID, refreshKey]);
 
   if (loading) {
     return (
