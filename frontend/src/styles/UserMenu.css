@@ -1,6 +1,6 @@
-/* ========================================
+/*
    USER MENU CONTAINER
-======================================== */
+*/
 
 .user-menu-container {
   position: relative;
@@ -43,10 +43,10 @@
   font-size: 16px;
 }
 
-/* ========================================
+/*
    MENU BUTTON ARRANGEMENT
    Desktop: vertical list
-======================================== */
+*/
 
 .user-menu-grid {
   position: absolute;
@@ -70,9 +70,9 @@
   display: none;
 }
 
-/* ========================================
+/*
    NAVIGATION BUTTONS
-======================================== */
+*/
 
 .user-menu-button {
   display: flex;
@@ -120,9 +120,9 @@
   line-height: 1;
 }
 
-/* ========================================
+/*
    LOGOUT BUTTON
-======================================== */
+*/
 
 .user-menu-logout {
   margin-top: 12px;
@@ -133,9 +133,9 @@
   border-color: #596780;
 }
 
-/* ========================================
+/*
    GUEST MENU
-======================================== */
+*/
 
 .guest-menu {
   width: 100%;
@@ -157,10 +157,10 @@
   background: #4075aa;
 }
 
-/* ========================================
+/*
    RESPONSIVE MENU
    Mobile: two columns of buttons
-======================================== */
+*/
 
 @media (max-width: 650px) {
   .user-menu-grid {
@@ -177,4 +177,22 @@
   .user-menu-logout {
     margin-top: 0;
   }
+}
+
+/* UNREAD NOTIFICATION BADGE */
+
+.user-menu-badge {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 6px;
+  color: #0b152c;
+  background: #e5bf6d;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
