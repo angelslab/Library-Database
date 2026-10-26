@@ -26,6 +26,7 @@ const { searchItems } = require("./queries/inventory");
 const { manageUsers } = require("./queries/users");
 const { getUserDetails } = require("./queries/manageUsers");
 const { getFinesReport } = require("./reports/fines");
+const { getLoansReport } = require("./reports/loans");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -1061,6 +1062,40 @@ async function startServer() {
         } catch (error) {
           console.error("Error running fines report:", error);
           sendJSON(res, 500, { error: "Failed to run fines report" });
+        }
+        return;
+      }
+            // loans by role and item type report
+      if (req.method === "GET" && req.url.startsWith("/api/reports/loans")) {
+        try {
+          const params = new URL(req.url, "http://localhost").searchParams;
+
+          const from = params.get("from") || null;
+          const to = params.get("to") || null;
+          const role = params.get("role") || null;
+          const itemType = params.get("itemType") || null;
+          const status = params.get("status") || null;
+          const dept = (params.get("dept") || "").trim() || null;
+
+          const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+          if (
+            !dateOk(from) ||
+            !dateOk(to) ||
+            (from && to && from > to) ||
+            (role && !["student", "faculty"].includes(role)) ||
+            (itemType && !["Book", "Media", "Device"].includes(itemType)) ||
+            (status && !["out", "returned"].includes(status)) ||
+            (dept && (dept.length < 2 || dept.length > 50))
+          ) {
+            sendJSON(res, 400, { error: "Invalid filter" });
+            return;
+          }
+
+          const rows = await getLoansReport({ from, to, role, itemType, status, dept });
+          sendJSON(res, 200, rows);
+        } catch (error) {
+          console.error("Error running loans report:", error);
+          sendJSON(res, 500, { error: "Failed to run loans report" });
         }
         return;
       }
