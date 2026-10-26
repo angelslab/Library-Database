@@ -44,7 +44,7 @@ function sendJSON(res, status, body) {
 }
 
 const hostname = "127.0.0.1";
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
@@ -69,7 +69,7 @@ async function startServer() {
       }
 
       // Allow requests from the React frontend
-      res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.setHeader("Access-Control-Allow-Origin", "*");
 
       res.setHeader(
         "Access-Control-Allow-Methods",
@@ -1073,7 +1073,7 @@ async function startServer() {
         }
         return;
       }
-            // loans by role and item type report
+      // loans by role and item type report
       if (req.method === "GET" && req.url.startsWith("/api/reports/loans")) {
         try {
           const params = new URL(req.url, "http://localhost").searchParams;
@@ -1109,53 +1109,46 @@ async function startServer() {
       }
 
       // Inventory and Circulation report
-if (req.method === "GET" && req.url.startsWith("/api/reports/inventory")) {
-  try {
-    const params = new URL(req.url, "http://localhost").searchParams;
+      if (req.method === "GET" && req.url.startsWith("/api/reports/inventory")) {
+        try {
+          const params = new URL(req.url, "http://localhost").searchParams;
 
-    const itemType = params.get("itemType") || null;
-    const from = params.get("from") || null;
-    const to = params.get("to") || null;
-    const outOnlyRaw = params.get("outOnly");
-    const outOnly = outOnlyRaw === "1" ? 1 : 0;
+          const itemType = params.get("itemType") || null;
+          const from = params.get("from") || null;
+          const to = params.get("to") || null;
+          const outOnlyRaw = params.get("outOnly");
+          const outOnly = outOnlyRaw === "1" ? 1 : null;
 
-    const dateOk = (d) =>
-      d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+          const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
 
-    if (
-      !dateOk(from) ||
-      !dateOk(to) ||
-      (from && to && from > to) ||
-      (itemType && !["Book", "Media", "Device"].includes(itemType)) ||
-      (outOnlyRaw !== null && !["0", "1"].includes(outOnlyRaw))
-    ) {
-      sendJSON(res, 400, { error: "Invalid filter" });
-      return;
-    }
+          if (
+            !dateOk(from) ||
+            !dateOk(to) ||
+            (from && to && from > to) ||
+            (itemType && !["Book", "Media", "Device"].includes(itemType)) ||
+            (outOnlyRaw !== null && !["0", "1"].includes(outOnlyRaw))
+          ) {
+            sendJSON(res, 400, { error: "Invalid filter" });
+            return;
+          }
 
-    const rows = await getInventoryReport({
-      from,
-      to,
-      itemType,
-      outOnly,
+          const rows = await getInventoryReport({ from, to, itemType, outOnly });
+          sendJSON(res, 200, rows);
+        } catch (error) {
+          console.error("Error running inventory report:", error);
+          sendJSON(res, 500, { error: "Failed to run inventory report" });
+        }
+        return;
+      }
+
+      // nothing above answered this request, so reply instead of leaving it hanging
+      if (!res.headersSent && !res.writableEnded) {
+        res.writeHead(404, { "Content-Type": "application/json", ...CORS_HEADERS });
+        res.end(JSON.stringify({ error: "Not found" }));
+      }
     });
 
-    sendJSON(res, 200, rows);
-  } catch (error) {
-    console.error("Error running inventory report:", error);
-    sendJSON(res, 500, {
-      error: "Failed to run inventory report",
-    });
-  }
-
-  return;
-}
-
-});
-
-
-
-    server.listen(PORT, () => {
+    server.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running at PORT: `, PORT);
     });
   } catch (err) {
