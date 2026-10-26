@@ -191,6 +191,10 @@
   color: var(--accent);
 }
 
+.item-stock-media {
+  color: var(--muted-foreground);
+}
+
 /* Buttons row */
 .item-actions {
   display: flex;

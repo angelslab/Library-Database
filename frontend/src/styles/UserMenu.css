@@ -1,50 +1,78 @@
-/* ========================================
+/*
    USER MENU CONTAINER
-======================================== */
+*/
 
 .user-menu-container {
+  position: relative;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   color: #e6ecf2;
+  z-index: 2;
 }
 
 .user-menu-header {
-  margin-bottom: 24px;
+  margin: 0;
 }
 
 .user-menu-welcome {
-  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 0;
   color: #e6ecf2;
   font-size: 22px;
   font-weight: 600;
   line-height: 1.4;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
   overflow-wrap: anywhere;
 }
 
-.user-menu-role {
-  margin: 0;
-  color: #a9b9cc;
-  font-size: 14px;
-  text-transform: capitalize;
+.user-menu-welcome:focus-visible {
+  outline: 2px solid #4075aa;
+  outline-offset: 3px;
 }
 
-/* ========================================
+.user-menu-chevron {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+/*
    MENU BUTTON ARRANGEMENT
    Desktop: vertical list
-======================================== */
+*/
 
 .user-menu-grid {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
   width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  background: #0b1b31;
+  border: 1px solid #263e59;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 35%);
 }
 
-/* ========================================
+.user-menu-grid[hidden] {
+  display: none;
+}
+
+/*
    NAVIGATION BUTTONS
-======================================== */
+*/
 
 .user-menu-button {
   display: flex;
@@ -92,9 +120,9 @@
   line-height: 1;
 }
 
-/* ========================================
+/*
    LOGOUT BUTTON
-======================================== */
+*/
 
 .user-menu-logout {
   margin-top: 12px;
@@ -105,9 +133,9 @@
   border-color: #596780;
 }
 
-/* ========================================
+/*
    GUEST MENU
-======================================== */
+*/
 
 .guest-menu {
   width: 100%;
@@ -129,19 +157,13 @@
   background: #4075aa;
 }
 
-/* ========================================
+/*
    RESPONSIVE MENU
    Mobile: two columns of buttons
-======================================== */
+*/
 
 @media (max-width: 650px) {
-  .user-menu-header {
-    margin-bottom: 16px;
-  }
-
   .user-menu-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -155,4 +177,22 @@
   .user-menu-logout {
     margin-top: 0;
   }
+}
+
+/* UNREAD NOTIFICATION BADGE */
+
+.user-menu-badge {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 6px;
+  color: #0b152c;
+  background: #e5bf6d;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
