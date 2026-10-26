@@ -146,7 +146,16 @@ async function initDB() {
   );
 
   if (loanIdColumn.length > 0 && !/auto_increment/i.test(loanIdColumn[0].EXTRA)) {
-    await db.query("ALTER TABLE loans MODIFY loanID INT NOT NULL AUTO_INCREMENT");
+    // fines/notifications have foreign keys to loans.loanID, so MySQL blocks the
+    // ALTER unless foreign key checks are off. Use one connection so the SET applies.
+    const conn = await db.getConnection();
+    try {
+      await conn.query("SET FOREIGN_KEY_CHECKS = 0");
+      await conn.query("ALTER TABLE loans MODIFY loanID INT NOT NULL AUTO_INCREMENT");
+    } finally {
+      await conn.query("SET FOREIGN_KEY_CHECKS = 1");
+      conn.release();
+    }
   }
 
   console.log("Loans table created");
