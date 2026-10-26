@@ -1,5 +1,6 @@
 const http = require("http");
 const initDB = require("./schema");
+
 const { fetchAllItems, getItemByID } = require("./catalog/catalog");
 const {
   addBook,
@@ -28,6 +29,7 @@ const { getUserDetails } = require("./queries/manageUsers");
 const { getFinesReport } = require("./reports/fines");
 const { getLoansReport } = require("./reports/loans");
 const { getInventoryReport } = require("./reports/inventory");
+const { handleLoanRoutes } = require("./loans/routes");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -80,6 +82,11 @@ async function startServer() {
       if (req.method === "OPTIONS") {
         res.writeHead(204);
         res.end();
+        return;
+      }
+
+      // borrowing, returns and notifications
+      if (await handleLoanRoutes(req, res, CORS_HEADERS)) {
         return;
       }
 
