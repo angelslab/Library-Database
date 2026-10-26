@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Inventory from "../component/InventorySearch";
 import UserManagment from "../component/userManage";
+import Reports from "../component/reportsPage";
 
 function LibrarianHome({ user, onNavigate }) {
   const [view, setView] = useState("menu");
@@ -24,7 +25,7 @@ function LibrarianHome({ user, onNavigate }) {
 
       {view === "inventory" && <Inventory />}
       {view === "users" && <UserManagment />}
-      {view === "reports" && <p>Reports coming soon</p>}
+      {view === "reports" && <Reports />}
     </div>
   );
 }
