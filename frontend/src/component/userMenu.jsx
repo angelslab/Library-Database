@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "../styles/UserMenu.css";
 
-function UserMenu({ name, role, onNavigate, onLogout }) {
+function UserMenu({ name, role, onNavigate, onLogout, unreadCount = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -16,11 +16,19 @@ function UserMenu({ name, role, onNavigate, onLogout }) {
             label: "Catalog",
             page: "catalog",
           },
+          {
+            label: "Loans",
+            page: "librarianLoans",
+          },
         ]
       : [
           {
             label: "Home",
             page: "catalog",
+          },
+          {
+            label: "Loans",
+            page: "loans",
           },
         ];
 
@@ -69,6 +77,7 @@ function UserMenu({ name, role, onNavigate, onLogout }) {
           onClick={() => setIsOpen((open) => !open)}
         >
           <span>Welcome, {name || "User"}!</span>
+          {unreadCount > 0 && !isOpen && (<span className="user-menu-badge">{unreadCount}</span>)}
           <span className="user-menu-chevron" aria-hidden="true">
             {isOpen ? "▴" : "▾"}
           </span>
@@ -112,6 +121,7 @@ function UserMenu({ name, role, onNavigate, onLogout }) {
         >
           <span className="user-menu-icon" aria-hidden="true"></span>
           <span>Notifications</span>
+          {unreadCount > 0 && <span className="user-menu-badge">{unreadCount}</span>}
         </button>
 
         <button
