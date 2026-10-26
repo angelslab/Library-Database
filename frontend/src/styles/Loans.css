@@ -1,0 +1,296 @@
+.loans-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.loans-header {
+  margin-bottom: 24px;
+}
+
+.loans-title {
+  margin: 0 0 4px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 36px;
+  line-height: 1.2;
+}
+
+.loans-subtitle {
+  margin: 0;
+  color: #97a7b7;
+  font-size: 15px;
+}
+
+/* Summary cards */
+
+.loans-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.loans-stat {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #10253e;
+  border: 1px solid #263e59;
+  border-radius: 10px;
+}
+
+.loans-stat-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: #6fb3e8;
+  background: rgb(64 117 170 / 20%);
+  border-radius: 10px;
+}
+
+.loans-stat-icon-holds {
+  color: #e5bf6d;
+  background: rgb(229 191 109 / 15%);
+}
+
+.loans-stat-label {
+  display: block;
+  color: #97a7b7;
+  font-size: 14px;
+}
+
+.loans-stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.loans-stat-limit {
+  color: #97a7b7;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+/* Table */
+
+.loans-table-wrap {
+  overflow-x: auto;
+  background: #10253e;
+  border: 1px solid #263e59;
+  border-radius: 10px;
+}
+
+.loans-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.loans-table th {
+  padding: 14px 20px;
+  color: #97a7b7;
+  background: #0f2037;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.loans-table td {
+  padding: 14px 20px;
+  border-top: 1px solid #263e59;
+  vertical-align: middle;
+}
+
+.loans-book {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.loans-cover {
+  flex-shrink: 0;
+  width: 40px;
+  height: 54px;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgb(0 0 0 / 30%);
+}
+
+.loans-cover-book {
+  background: #193550;
+}
+
+.loans-cover-media {
+  background: #4075aa;
+}
+
+.loans-cover-device {
+  background: #39445d;
+}
+
+.loans-cover-default {
+  background: #1c2f46;
+}
+
+.loans-book-title {
+  display: block;
+  font-weight: 700;
+}
+
+.loans-book-author {
+  display: block;
+  color: #97a7b7;
+  font-size: 14px;
+}
+
+/* Status */
+
+.loans-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loans-status-dot {
+  width: 9px;
+  height: 9px;
+  background: currentcolor;
+  border-radius: 50%;
+}
+
+.loans-status-ok {
+  color: #5fbf8a;
+}
+
+.loans-status-soon {
+  color: #e5bf6d;
+}
+
+.loans-status-overdue {
+  color: #f14d4c;
+}
+
+.loans-status-requested {
+  color: #6fb3e8;
+}
+
+/* Return button and messages */
+
+.loans-return-button {
+  padding: 8px 16px;
+  color: #e6ecf2;
+  background: #4075aa;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 180ms ease;
+}
+
+.loans-return-button:hover:not(:disabled) {
+  background: #4f86bd;
+}
+
+.loans-return-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loans-notice,
+.loans-action-error {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.loans-notice {
+  color: #5fbf8a;
+  background: rgb(95 191 138 / 12%);
+  border: 1px solid #2f7a55;
+}
+
+.loans-action-error {
+  color: #f8f8f8;
+  background: rgb(241 77 76 / 18%);
+  border: 1px solid #f14d4c;
+}
+
+/* Empty state */
+
+.loans-empty {
+  padding: 40px 20px;
+  text-align: center;
+  background: #10253e;
+  border: 1px dashed #263e59;
+  border-radius: 10px;
+}
+
+.loans-empty p {
+  margin: 0 0 16px;
+  color: #97a7b7;
+}
+
+.loans-browse-button {
+  padding: 10px 18px;
+  color: #e6ecf2;
+  background: #4075aa;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.loans-browse-button:hover {
+  background: #4f86bd;
+}
+
+/* Small screens */
+
+@media (max-width: 650px) {
+  .loans-title {
+    font-size: 28px;
+  }
+
+  .loans-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .loans-table thead {
+    display: none;
+  }
+
+  .loans-table,
+  .loans-table tbody,
+  .loans-table tr,
+  .loans-table td {
+    display: block;
+  }
+
+  .loans-table tr {
+    padding: 12px 16px;
+    border-top: 1px solid #263e59;
+  }
+
+  .loans-table tr:first-child {
+    border-top: 0;
+  }
+
+  .loans-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-top: 0;
+  }
+
+  .loans-table td[data-label]::before {
+    content: attr(data-label);
+    color: #97a7b7;
+  }
+
+  .loans-table td:last-child {
+    justify-content: flex-end;
+  }
+}
