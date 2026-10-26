@@ -118,7 +118,7 @@ async function register(data) {
       await conn.query(
         `INSERT INTO faculty (userID, facultyID, department)
           VALUES (?, ?, ?)`,
-        [userID, data.facultyID, data.department],
+        [userID, data.facultyID, data.department.trim().toUpperCase()],
       );
     }
 
@@ -130,7 +130,7 @@ async function register(data) {
         studentID: role === "student" ? data.studentID : null,
         major: role === "student" ? data.major.trim().toUpperCase() : null,
         facultyID: role === "faculty" ? data.facultyID : null,
-        department: role === "faculty" ? data.department : null,
+        department: role === "faculty" ? data.department.trim().toUpperCase() : null,
       },
     };
   } catch (error) {
