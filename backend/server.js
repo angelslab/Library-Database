@@ -1038,6 +1038,12 @@ async function startServer() {
         }
         return;
       }
+
+      // nothing above answered this request, so reply instead of leaving it hanging
+      if (!res.headersSent && !res.writableEnded) {
+        res.writeHead(404, { "Content-Type": "application/json", ...CORS_HEADERS });
+        res.end(JSON.stringify({ error: "Not found" }));
+      }
       });
 
       server.listen(PORT, "0.0.0.0", () => {
