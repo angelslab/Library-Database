@@ -1,5 +1,6 @@
 const http = require("http");
 const initDB = require("./schema");
+
 const { fetchAllItems, getItemByID } = require("./catalog/catalog");
 const {
   addBook,
@@ -25,6 +26,7 @@ const { getProfile } = require("./user/user");
 const { searchItems } = require("./queries/inventory");
 const { manageUsers } = require("./queries/users");
 const { getUserDetails } = require("./queries/manageUsers");
+const { handleLoanRoutes } = require("./loans/routes");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -34,7 +36,7 @@ const CORS_HEADERS = {
 };
 
 const hostname = "127.0.0.1";
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
@@ -59,7 +61,7 @@ async function startServer() {
       }
 
       // Allow requests from the React frontend
-      res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.setHeader("Access-Control-Allow-Origin", "*");
 
       res.setHeader(
         "Access-Control-Allow-Methods",
@@ -72,6 +74,11 @@ async function startServer() {
       if (req.method === "OPTIONS") {
         res.writeHead(204);
         res.end();
+        return;
+      }
+
+      // borrowing, returns and notifications
+      if (await handleLoanRoutes(req, res, CORS_HEADERS)) {
         return;
       }
 
@@ -1027,18 +1034,24 @@ async function startServer() {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
-          res.end(JSON.stringify({ error: "Failed to get user detail" }));
+                    res.end(JSON.stringify({ error: "Failed to get user detail" }));
         }
         return;
       }
-    });
 
-    server.listen(PORT, () => {
-      console.log(`Server running at PORT: `, PORT);
-    });
-  } catch (err) {
-    console.error("Server startup failed:", err.message);
-  }
+      // nothing above answered this request, so reply instead of leaving it hanging
+      if (!res.headersSent && !res.writableEnded) {
+        res.writeHead(404, { "Content-Type": "application/json", ...CORS_HEADERS });
+        res.end(JSON.stringify({ error: "Not found" }));
+      }
+      });
+
+      server.listen(PORT, "0.0.0.0", () => {
+        console.log(`Server running at PORT: `, PORT);
+      });
+      } catch (err) {
+        console.error("Server startup failed:", err.message);
+      }
 }
 
 startServer();

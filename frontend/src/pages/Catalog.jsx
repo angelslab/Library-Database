@@ -10,6 +10,7 @@ function Catalog({
   user,
   onEdit,
   onDelete,
+  refreshKey,
 }) {
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState("All");
@@ -43,7 +44,7 @@ function Catalog({
     }
 
     fetchCatalog();
-  }, []);
+    }, [refreshKey]);
 
   if (loading) {
     return <p className="catalog-message">Loading catalog...</p>;
