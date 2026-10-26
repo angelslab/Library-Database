@@ -1,29 +1,28 @@
 import { useState } from "react";
 import FinesReport from "./FinesReport";
 import LoansReport from "./LoansReport";
+import InventoryReport from "./InventoryReport";
 
-// Add a report here as it gets built: set `ready: true` and give it a component.
+// Add a report here as it gets built: give it a component.
 const REPORTS = [
-  {
-    key: "fines",
-    label: "Fines and Charges",
-    ready: true,
-    Component: FinesReport,
-  },
+  { key: "fines", label: "Fines and Charges", Component: FinesReport },
   {
     key: "loans",
     label: "Loans by Role and Item Type",
-    ready: true,
     Component: LoansReport,
   },
-  { key: "inventory", label: "Inventory and Circulation", ready: false },
+  {
+    key: "inventory",
+    label: "Inventory and Circulation",
+    Component: InventoryReport,
+  },
 ];
 
 function Reports() {
   const [active, setActive] = useState(null);
 
   const current = REPORTS.find((r) => r.key === active);
-  if (current && current.Component) {
+  if (current) {
     const ReportComponent = current.Component;
     return <ReportComponent onBack={() => setActive(null)} />;
   }
@@ -42,12 +41,10 @@ function Reports() {
         {REPORTS.map((r) => (
           <button
             key={r.key}
-            disabled={!r.ready}
             onClick={() => setActive(r.key)}
             style={{ textAlign: "left", padding: "10px 14px" }}
           >
             {r.label}
-            {!r.ready && " (coming soon)"}
           </button>
         ))}
       </div>

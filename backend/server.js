@@ -27,6 +27,7 @@ const { manageUsers } = require("./queries/users");
 const { getUserDetails } = require("./queries/manageUsers");
 const { getFinesReport } = require("./reports/fines");
 const { getLoansReport } = require("./reports/loans");
+const { getInventoryReport } = require("./reports/inventory");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -1099,6 +1100,49 @@ async function startServer() {
         }
         return;
       }
+
+      // Inventory and Circulation report
+if (req.method === "GET" && req.url.startsWith("/api/reports/inventory")) {
+  try {
+    const params = new URL(req.url, "http://localhost").searchParams;
+
+    const itemType = params.get("itemType") || null;
+    const from = params.get("from") || null;
+    const to = params.get("to") || null;
+    const outOnlyRaw = params.get("outOnly");
+    const outOnly = outOnlyRaw === "1" ? 1 : 0;
+
+    const dateOk = (d) =>
+      d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+
+    if (
+      !dateOk(from) ||
+      !dateOk(to) ||
+      (from && to && from > to) ||
+      (itemType && !["Book", "Media", "Device"].includes(itemType)) ||
+      (outOnlyRaw !== null && !["0", "1"].includes(outOnlyRaw))
+    ) {
+      sendJSON(res, 400, { error: "Invalid filter" });
+      return;
+    }
+
+    const rows = await getInventoryReport({
+      from,
+      to,
+      itemType,
+      outOnly,
+    });
+
+    sendJSON(res, 200, rows);
+  } catch (error) {
+    console.error("Error running inventory report:", error);
+    sendJSON(res, 500, {
+      error: "Failed to run inventory report",
+    });
+  }
+
+  return;
+}
 
 });
 
