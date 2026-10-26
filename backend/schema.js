@@ -121,7 +121,7 @@ async function initDB() {
   //loans
   await db.query(`
     CREATE TABLE IF NOT EXISTS loans (
-      loanID INT PRIMARY KEY NOT NULL,
+      loanID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
       userID INT NOT NULL,
       itemID INT NOT NULL,
       borrow_date DATE NOT NULL,
@@ -137,6 +137,17 @@ async function initDB() {
 
     )
   `);
+
+  const [loanIdColumn] = await db.query(
+    `SELECT EXTRA FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'loans'
+      AND COLUMN_NAME = 'loanID'`,
+  );
+
+  if (loanIdColumn.length > 0 && !/auto_increment/i.test(loanIdColumn[0].EXTRA)) {
+    await db.query("ALTER TABLE loans MODIFY loanID INT NOT NULL AUTO_INCREMENT");
+  }
 
   console.log("Loans table created");
 
@@ -179,6 +190,29 @@ async function initDB() {
   `);
 
   console.log("Fines table created");
+
+  //notifications (return requests for librarians, approvals for students/faculty)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      notificationID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+      userID INT NOT NULL,
+      type VARCHAR(30) NOT NULL,
+      message VARCHAR(500) NOT NULL,
+      loanID INT,
+      itemID INT,
+      is_read TINYINT(1) NOT NULL DEFAULT 0,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+      FOREIGN KEY (userID) REFERENCES users(userID)
+      ON DELETE CASCADE,
+
+      FOREIGN KEY (loanID) REFERENCES loans(loanID)
+      ON DELETE CASCADE
+    )
+  `);
+
+  console.log("Notifications table created");
+
 }
 
 module.exports = initDB;
