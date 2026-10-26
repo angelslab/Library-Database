@@ -1,4 +1,5 @@
 const db = require("../db");
+const { getLoanPolicy } = require("../loans/loans");
 
 // profile: basic info + student/faculty details + loan and fine totals
 async function getProfile(userID) {
@@ -37,7 +38,13 @@ async function getProfile(userID) {
     return null;
   }
 
-  return rows[0];
+    const profile = rows[0];
+
+  // the borrow limit comes from the loan rules (students 3, faculty 5)
+  const policy = getLoanPolicy(profile.role);
+  profile.max_limit = policy ? policy.maxLoans : null;
+
+  return profile;
 }
 
 module.exports = { getProfile };

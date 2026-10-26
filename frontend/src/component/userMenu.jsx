@@ -1,6 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import "../styles/UserMenu.css";
 
-function UserMenu({ name, role, onNavigate, onLogout }) {
+function UserMenu({ name, role, onNavigate, onLogout, unreadCount = 0 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
   const menuItems =
     role === "librarian"
       ? [
@@ -12,31 +16,86 @@ function UserMenu({ name, role, onNavigate, onLogout }) {
             label: "Catalog",
             page: "catalog",
           },
+          {
+            label: "Loans",
+            page: "librarianLoans",
+          },
         ]
       : [
           {
             label: "Home",
             page: "catalog",
           },
+          {
+            label: "Loans",
+            page: "loans",
+          },
         ];
 
-  return (
-    <div className="user-menu-container">
-      <div className="user-menu-header">
-        <h2 className="user-menu-welcome">Welcome, {name || "User"}!</h2>
+  useEffect(() => {
+    if (!isOpen) return undefined;
 
-        <p className="user-menu-role">
-          {role ? role.charAt(0).toUpperCase() + role.slice(1) : ""}
-        </p>
+    function closeMenuOnOutsideClick(event) {
+      if (!menuRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    function closeMenuOnEscape(event) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeMenuOnOutsideClick);
+    document.addEventListener("keydown", closeMenuOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeMenuOnOutsideClick);
+      document.removeEventListener("keydown", closeMenuOnEscape);
+    };
+  }, [isOpen]);
+
+  function navigateTo(page) {
+    setIsOpen(false);
+    onNavigate(page);
+  }
+
+  function logOut() {
+    setIsOpen(false);
+    onLogout();
+  }
+
+  return (
+    <div className="user-menu-container" ref={menuRef}>
+      <div className="user-menu-header">
+        <button
+          type="button"
+          className="user-menu-welcome"
+          aria-expanded={isOpen}
+          aria-controls="user-navigation-menu"
+          onClick={() => setIsOpen((open) => !open)}
+        >
+          <span>Welcome, {name || "User"}!</span>
+          {unreadCount > 0 && !isOpen && (<span className="user-menu-badge">{unreadCount}</span>)}
+          <span className="user-menu-chevron" aria-hidden="true">
+            {isOpen ? "▴" : "▾"}
+          </span>
+        </button>
       </div>
 
-      <nav className="user-menu-grid" aria-label="Main navigation">
+      <nav
+        id="user-navigation-menu"
+        className="user-menu-grid"
+        aria-label="Main navigation"
+        hidden={!isOpen}
+      >
         {menuItems.map((item) => (
           <button
             key={item.page}
             type="button"
             className="user-menu-button"
-            onClick={() => onNavigate(item.page)}
+            onClick={() => navigateTo(item.page)}
           >
             <span className="user-menu-icon" aria-hidden="true">
               {item.icon}
@@ -49,7 +108,7 @@ function UserMenu({ name, role, onNavigate, onLogout }) {
         <button
           type="button"
           className="user-menu-button"
-          onClick={() => onNavigate("profile")}
+          onClick={() => navigateTo("profile")}
         >
           <span className="user-menu-icon" aria-hidden="true"></span>
           <span>Profile</span>
@@ -58,16 +117,17 @@ function UserMenu({ name, role, onNavigate, onLogout }) {
         <button
           type="button"
           className="user-menu-button"
-          onClick={() => onNavigate("notification")}
+          onClick={() => navigateTo("notification")}
         >
           <span className="user-menu-icon" aria-hidden="true"></span>
           <span>Notifications</span>
+          {unreadCount > 0 && <span className="user-menu-badge">{unreadCount}</span>}
         </button>
 
         <button
           type="button"
           className="user-menu-button user-menu-logout"
-          onClick={onLogout}
+          onClick={logOut}
         >
           <span className="user-menu-icon" aria-hidden="true"></span>
           <span>Log Out</span>

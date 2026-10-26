@@ -1,5 +1,6 @@
 const http = require("http");
 const initDB = require("./schema");
+
 const { fetchAllItems, getItemByID } = require("./catalog/catalog");
 const {
   addBook,
@@ -25,6 +26,7 @@ const { getProfile } = require("./user/user");
 const { searchItems } = require("./queries/inventory");
 const { manageUsers } = require("./queries/users");
 const { getUserDetails } = require("./queries/manageUsers");
+const { handleLoanRoutes } = require("./loans/routes");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -72,6 +74,11 @@ async function startServer() {
       if (req.method === "OPTIONS") {
         res.writeHead(204);
         res.end();
+        return;
+      }
+
+      // borrowing, returns and notifications
+      if (await handleLoanRoutes(req, res, CORS_HEADERS)) {
         return;
       }
 
@@ -1027,18 +1034,18 @@ async function startServer() {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
-          res.end(JSON.stringify({ error: "Failed to get user detail" }));
+                    res.end(JSON.stringify({ error: "Failed to get user detail" }));
         }
         return;
       }
-    });
+      });
 
-    server.listen(PORT, () => {
-      console.log(`Server running at PORT: `, PORT);
-    });
-  } catch (err) {
-    console.error("Server startup failed:", err.message);
-  }
+      server.listen(PORT, () => {
+        console.log(`Server running at PORT: `, PORT);
+      });
+      } catch (err) {
+        console.error("Server startup failed:", err.message);
+      }
 }
 
 startServer();
