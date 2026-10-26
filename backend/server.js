@@ -25,6 +25,7 @@ const { getProfile } = require("./user/user");
 const { searchItems } = require("./queries/inventory");
 const { manageUsers } = require("./queries/users");
 const { getUserDetails } = require("./queries/manageUsers");
+const { getFinesReport } = require("./reports/fines");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -32,6 +33,11 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
+
+function sendJSON(res, status, body) {
+  res.writeHead(status, { "Content-Type": "application/json", ...CORS_HEADERS });
+  res.end(JSON.stringify(body));
+}
 
 const hostname = "127.0.0.1";
 const PORT = 3000;
@@ -1025,6 +1031,40 @@ async function startServer() {
   }
   return;
 }
+            // fines and charges report
+      if (req.method === "GET" && req.url.startsWith("/api/reports/fines")) {
+        try {
+          const params = new URL(req.url, "http://localhost").searchParams;
+
+          const type = params.get("type") || null;
+          const from = params.get("from") || null;
+          const to = params.get("to") || null;
+          const borrower = (params.get("borrower") || "").trim() || null;
+          const paidRaw = params.get("paid");
+          const paid = paidRaw === "0" || paidRaw === "1" ? Number(paidRaw) : null;
+
+          const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+          if (
+            !dateOk(from) ||
+            !dateOk(to) ||
+            (from && to && from > to) ||
+            (paidRaw && paid === null) ||
+            (type && type.length > 20) ||
+            (borrower && (borrower.length < 2 || borrower.length > 50))
+          ) {
+            sendJSON(res, 400, { error: "Invalid filter" });
+            return;
+          }
+
+          const rows = await getFinesReport({ type, paid, from, to, borrower });
+          sendJSON(res, 200, rows);
+        } catch (error) {
+          console.error("Error running fines report:", error);
+          sendJSON(res, 500, { error: "Failed to run fines report" });
+        }
+        return;
+      }
+
 });
 
 
