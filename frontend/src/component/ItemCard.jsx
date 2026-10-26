@@ -41,27 +41,36 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
 
   return (
     <article className="item-card">
-      <div className="item-card-menu" ref={menuRef}>
-        <button
-          type="button"
-          className="item-card-menu-trigger"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          &#8942;
-        </button>
+      {user?.role === "librarian" && (
+        <div className="item-card-menu" ref={menuRef}>
+          <button
+            type="button"
+            className="item-card-menu-trigger"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            &#8942;
+          </button>
 
-        {menuOpen && (
-          <div className="item-card-dropdown">
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="item-card-dropdown-delete"
-            >
-              Delete
-            </button>
-          </div>
-        )}
-      </div>
+          {menuOpen && (
+            <div className="item-card-dropdown">
+              <button
+                onClick={() => onEdit(item)}
+                className="item-card-dropdown-edit"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="item-card-dropdown-delete"
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={`item-cover ${coverColor}`}>
         <div className="item-cover-edge" />
 
@@ -112,10 +121,6 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
         >
           View details
         </button>
-
-        {user?.role === "librarian" && (
-          <button onClick={() => onEdit(item)}>Edit</button>
-        )}
 
         <button
           type="button"
