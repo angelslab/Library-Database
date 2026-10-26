@@ -3,9 +3,6 @@ import { usDate, downloadCSV } from "./reportHelpers";
 
 const EMPTY_PARAMS = { itemType: "", outOnly: false, from: "", to: "" };
 
-const pct = (out, total) => (total > 0 ? (out / total) * 100 : 0);
-const pctText = (out, total) => pct(out, total).toFixed(1) + "%";
-
 // add one item row's numbers into a running total
 function addTo(total, row) {
   total.items += 1;
@@ -197,7 +194,6 @@ function InventoryReport({ onBack }) {
       "Total copies",
       "Out now",
       "Available",
-      "% checked out",
       "Loans in period",
       "Counter check",
     ];
@@ -211,7 +207,6 @@ function InventoryReport({ onBack }) {
           it.copies,
           it.out,
           it.available,
-          pctText(it.out, it.copies),
           it.loans,
           it.counterOk ? "OK" : `Stored count says ${it.stored_available}`,
         ]);
@@ -223,7 +218,6 @@ function InventoryReport({ onBack }) {
         g.total.copies,
         g.total.out,
         g.total.available,
-        pctText(g.total.out, g.total.copies),
         g.total.loans,
         "",
       ]);
@@ -235,7 +229,6 @@ function InventoryReport({ onBack }) {
       grand.copies,
       grand.out,
       grand.available,
-      pctText(grand.out, grand.copies),
       grand.loans,
       "",
     ]);
@@ -257,9 +250,6 @@ function InventoryReport({ onBack }) {
       <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.copies}</td>
       <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.out}</td>
       <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.available}</td>
-      <td style={{ ...cell, ...num, fontWeight: 700 }}>
-        {pctText(t.out, t.copies)}
-      </td>
       <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.loans}</td>
       <td style={cell}></td>
     </tr>
@@ -316,7 +306,6 @@ function InventoryReport({ onBack }) {
                 <th style={{ ...headCell, ...num }}>Total copies</th>
                 <th style={{ ...headCell, ...num }}>Out now</th>
                 <th style={{ ...headCell, ...num }}>Available</th>
-                <th style={{ ...headCell, ...num }}>% checked out</th>
                 <th style={{ ...headCell, ...num }}>Loans in period</th>
                 <th style={headCell}>Counter check</th>
               </tr>
@@ -326,7 +315,7 @@ function InventoryReport({ onBack }) {
               <tbody key={g.name}>
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={7}
                     style={{ ...cell, background: "#e0e0e0", fontWeight: 700 }}
                   >
                     Item type: {g.name}
@@ -339,9 +328,6 @@ function InventoryReport({ onBack }) {
                     <td style={{ ...cell, ...num }}>{it.copies}</td>
                     <td style={{ ...cell, ...num }}>{it.out}</td>
                     <td style={{ ...cell, ...num }}>{it.available}</td>
-                    <td style={{ ...cell, ...num }}>
-                      {pctText(it.out, it.copies)}
-                    </td>
                     <td style={{ ...cell, ...num }}>{it.loans}</td>
                     <td
                       style={{
