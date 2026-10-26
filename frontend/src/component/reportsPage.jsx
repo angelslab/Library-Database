@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FinesReport from "./FinesReport";
 import LoansReport from "./LoansReport";
-import InventoryReport from "./InventoryReport";
+import InventoryReport from "./inventoryReport";
 
 // Add a report here as it gets built: give it a component.
 const REPORTS = [
