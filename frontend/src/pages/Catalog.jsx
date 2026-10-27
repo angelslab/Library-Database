@@ -6,6 +6,10 @@ import "../styles/Catalog.css";
 function Catalog({
   onSelectItem,
   onBorrow,
+  onPlaceHold,
+  onCancelHold,
+  holdsByItem = {},
+  onOpenHolds,
   onAddItem,
   user,
   onEdit,
@@ -63,6 +67,9 @@ function Catalog({
             items={items}
             onSelectItem={onSelectItem}
             onBorrow={onBorrow}
+            onPlaceHold={onPlaceHold}
+            onCancelHold={onCancelHold}
+            holdsByItem={holdsByItem}
             onSearchChange={setIsSearching}
           />
         </div>
@@ -94,6 +101,18 @@ function Catalog({
                   );
                 })}
               </div>
+
+              {onOpenHolds && (
+                <div className="catalog-add-container">
+                  <button
+                    type="button"
+                    className="catalog-filter"
+                    onClick={onOpenHolds}
+                  >
+                    My holds ({Object.keys(holdsByItem).length})
+                  </button>
+                </div>
+              )}
 
               {user?.role === "librarian" && (
                 <div className="catalog-add-container">
@@ -130,6 +149,9 @@ function Catalog({
                     item={item}
                     onSelectItem={onSelectItem}
                     onBorrow={onBorrow}
+                    onPlaceHold={onPlaceHold}
+                    onCancelHold={onCancelHold}
+                    hold={holdsByItem[item.itemID]}
                     onEdit={onEdit}
                     user={user}
                     onDelete={onDelete}
