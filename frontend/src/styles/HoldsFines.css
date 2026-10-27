@@ -1,0 +1,139 @@
+/* Holds and Fines pages. They reuse the table and card styles from Loans.css. */
+
+.hf-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hf-tab {
+  padding: 8px 16px;
+  color: #c9d4df;
+  background: #10253e;
+  border: 1px solid #263e59;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.hf-tab:hover {
+  background: #163252;
+}
+
+.hf-tab-active {
+  color: #e6ecf2;
+  background: #4075aa;
+  border-color: #4075aa;
+}
+
+.hf-queue {
+  display: block;
+  font-weight: 600;
+}
+
+.hf-queue-note {
+  display: block;
+  color: #97a7b7;
+  font-size: 13px;
+}
+
+.hf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hf-cancel-button {
+  padding: 8px 16px;
+  color: #f3b0b0;
+  background: transparent;
+  border: 1px solid #a94442;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hf-cancel-button:hover:not(:disabled) {
+  background: rgb(241 77 76 / 15%);
+}
+
+.hf-cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hf-status-cancelled {
+  color: #97a7b7;
+}
+
+.hf-status-fulfilled,
+.hf-status-paid {
+  color: #5fbf8a;
+}
+
+.hf-status-unpaid {
+  color: #f1a14c;
+}
+
+.hf-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.hf-note {
+  margin: 12px 0 0;
+  color: #97a7b7;
+  font-size: 13px;
+}
+
+.hf-back-button {
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  color: #c9d4df;
+  background: transparent;
+  border: 1px solid #263e59;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.hf-back-button:hover {
+  background: #163252;
+}
+
+/* hold status on the item card and item details page */
+
+.item-hold-note {
+  margin: 10px 0 0;
+  padding: 6px 10px;
+  color: #e5bf6d;
+  background: rgb(229 191 109 / 12%);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.item-hold-ready {
+  color: #5fbf8a;
+  background: rgb(95 191 138 / 12%);
+}
+
+.item-button-cancel-hold,
+.item-details-borrow.item-button-cancel-hold {
+  color: #f3b0b0;
+  background: transparent;
+  border: 1px solid #a94442;
+}
+
+.item-button-cancel-hold:hover {
+  background: rgb(241 77 76 / 15%);
+}
+
+/* fines section under My loans */
+.hf-section-header {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid #263e59;
+}
+
+.hf-section-header .loans-title {
+  font-size: 28px;
+}
