@@ -1,12 +1,8 @@
 const db = require("../db");
 const { getLoanPolicy } = require("../loans/loans");
-const { syncLateFines } = require("../fines/fines");
 
 // profile: basic info + student/faculty details + loan and fine totals
 async function getProfile(userID) {
-  // late fees grow every day an item is overdue, update them before adding them up
-  await syncLateFines();
-
   const result = await db.query(
     `SELECT
         users.userID,

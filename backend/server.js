@@ -30,8 +30,6 @@ const { getFinesReport } = require("./reports/fines");
 const { getLoansReport } = require("./reports/loans");
 const { getInventoryReport } = require("./reports/inventory");
 const { handleLoanRoutes } = require("./loans/routes");
-const { handleHoldRoutes } = require("./holds/routes");
-const { handleFineRoutes } = require("./fines/routes");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -88,15 +86,6 @@ async function startServer() {
       }
 
       // borrowing, returns and notifications
-      // holds and fines
-      if (await handleHoldRoutes(req, res, CORS_HEADERS)) {
-        return;
-      }
-
-      if (await handleFineRoutes(req, res, CORS_HEADERS)) {
-        return;
-      }
-
       if (await handleLoanRoutes(req, res, CORS_HEADERS)) {
         return;
       }
@@ -1167,4 +1156,4 @@ async function startServer() {
   }
 }
 
-startServer();
+startServer();
