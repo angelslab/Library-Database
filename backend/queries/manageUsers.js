@@ -12,7 +12,7 @@ SELECT u.userID, u.first_name, u.last_name, u.email, u.role,
     (SELECT GROUP_CONCAT(hi.title SEPARATOR ', ')
     FROM holds h
     JOIN items hi ON hi.itemID = h.itemID
-    WHERE h.userID = u.userID) AS items_on_hold,
+    WHERE h.userID = u.userID AND h.status = 'waiting') AS items_on_hold,
 
     l.loanID, i.item_type, i.title, l.borrow_date, l.due_date,
     CASE WHEN l.due_date < CURRENT_DATE

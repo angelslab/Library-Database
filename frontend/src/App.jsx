@@ -12,6 +12,8 @@ import AddItemForm from "./component/AddItemForm";
 import EditItemForm from "./component/EditItemForm";
 import "./App.css";
 import Loans from "./pages/Loans";
+import Holds from "./pages/Holds";
+import Fines from "./pages/Fines";
 import ConfirmBorrowModal from "./component/ConfirmBorrowModal";
 
 function App() {
@@ -24,6 +26,7 @@ function App() {
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [focusLoanID, setFocusLoanID] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [myHolds, setMyHolds] = useState([]);
 
   function goTo(nextPage) {
     setMessage("");
@@ -36,6 +39,43 @@ function App() {
     setMessage("");
     setFocusLoanID(loanID);
     setPage("librarianLoans");
+  }
+
+  // messages show at the top of the page, so scroll up to make sure they are seen
+  useEffect(() => {
+    if (message) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [message]);
+
+  // the student/faculty member's active holds, shown on the item cards
+  const refreshHolds = useCallback(async () => {
+    if (!currentUser || currentUser.role === "librarian") return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/holds/user/${currentUser.userID}`,
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setMyHolds(data.active);
+      }
+    } catch {
+      // the cards just keep showing the last holds if the server can't be reached
+    }
+  }, [currentUser]);
+
+  // reload on login and whenever the catalog reloads (after a borrow)
+  useEffect(() => {
+    const first = setTimeout(refreshHolds, 0);
+
+    return () => clearTimeout(first);
+  }, [refreshHolds, catalogVersion]);
+
+  const holdsByItem = {};
+  for (const hold of myHolds) {
+    holdsByItem[hold.itemID] = hold;
   }
 
   // number shown on the menu badge
@@ -95,6 +135,71 @@ function App() {
     setBorrowItem(item);
   }
 
+  // gets in line for an item with no copies left
+  async function handlePlaceHold(item) {
+    if (!currentUser) {
+      setMessage(`Please log in to place a hold on "${item.title}".`);
+      setPage("login");
+      return;
+    }
+
+    if (currentUser.role === "librarian") {
+      setMessage("Librarian accounts can't place holds.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3000/api/holds/place", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userID: currentUser.userID,
+          itemID: item.itemID,
+        }),
+      });
+      const data = await response.json();
+
+      setMessage(response.ok ? data.message : data.error);
+
+      if (response.ok) {
+        await refreshHolds();
+      }
+    } catch {
+      setMessage("Could not reach the server. Try again.");
+    }
+  }
+
+  // leaves the line for an item (from the item card, item details or the My holds page)
+  async function handleCancelHold(hold) {
+    if (
+      !window.confirm(
+        `Cancel your hold on "${hold.title}"? You will lose your place in line.`,
+      )
+    ) {
+      return false;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3000/api/holds/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userID: currentUser.userID,
+          holdID: hold.holdID,
+        }),
+      });
+      const data = await response.json();
+
+      setMessage(response.ok ? data.message : data.error);
+      await refreshHolds();
+
+      return response.ok;
+    } catch {
+      setMessage("Could not reach the server. Try again.");
+      return false;
+    }
+  }
+
   function handleBorrowed(result) {
     setBorrowItem(null);
     setMessage(result.message);
@@ -111,6 +216,7 @@ function App() {
 
   function handleLogout() {
     setCurrentUser(null);
+    setMyHolds([]);
     goTo("catalog");
   }
 
@@ -202,6 +308,25 @@ function App() {
 
           <main className="library-content">
             <Loans user={currentUser} onBrowse={() => goTo("catalog")} />
+
+            {/* fines live on the same page, under the loans */}
+            <Fines user={currentUser} />
+          </main>
+        </div>
+      )}
+
+      {currentUser && page === "holds" && currentUser.role !== "librarian" && (
+        <div className="library-layout">
+          <aside className="library-nav">{userMenu}</aside>
+
+          <main className="library-content">
+            <Holds
+              user={currentUser}
+              onBrowse={() => goTo("catalog")}
+              onBorrow={handleBorrow}
+              onCancelHold={handleCancelHold}
+              refreshKey={catalogVersion}
+            />
           </main>
         </div>
       )}
@@ -264,6 +389,16 @@ function App() {
               user={currentUser}
               onSelectItem={handleSelectItems}
               onBorrow={handleBorrow}
+              onPlaceHold={
+                currentUser?.role === "librarian" ? undefined : handlePlaceHold
+              }
+              onCancelHold={handleCancelHold}
+              holdsByItem={holdsByItem}
+              onOpenHolds={
+                currentUser && currentUser.role !== "librarian"
+                  ? () => goTo("holds")
+                  : undefined
+              }
               onEdit={handleEditItem}
               onAddItem={() => goTo("addItems")}
               onDelete={handleDeleteItem}
@@ -279,6 +414,11 @@ function App() {
           user={currentUser}
           onBack={() => goTo("catalog")}
           onBorrow={handleBorrow}
+          onPlaceHold={
+            currentUser?.role === "librarian" ? undefined : handlePlaceHold
+          }
+          onCancelHold={handleCancelHold}
+          hold={holdsByItem[selectedItemID]}
           refreshKey={catalogVersion}
         />
       )}
