@@ -1,7 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import "../styles/ItemCard.css";
+import "../styles/HoldsFines.css";
 
-function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
+function ItemCard({
+  item,
+  onSelectItem,
+  onBorrow,
+  onPlaceHold,
+  onCancelHold,
+  hold,
+  onEdit,
+  user,
+  onDelete,
+}) {
   const isLowStock = item.available_copies <= 1;
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -112,6 +123,15 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
         </span>
       </div>
 
+      {/* the user's hold on this item and their place in line */}
+      {hold && (
+        <p className={`item-hold-note ${hold.ready ? "item-hold-ready" : ""}`}>
+          {hold.ready
+            ? "On hold · a copy is ready for you"
+            : `On hold · #${hold.queue_position} of ${hold.queue_length} in line`}
+        </p>
+      )}
+
       {/* Actions */}
       <div className="item-actions">
         <button
@@ -122,14 +142,32 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
           View details
         </button>
 
-        <button
-          type="button"
-          onClick={() => onBorrow && onBorrow(item)}
-          disabled={item.available_copies <= 0}
-          className="item-button item-button-borrow"
-        >
-          {item.available_copies <= 0 ? "Unavailable" : "Borrow"}
-        </button>
+        {item.available_copies <= 0 && hold && onCancelHold ? (
+          <button
+            type="button"
+            onClick={() => onCancelHold(hold)}
+            className="item-button item-button-cancel-hold"
+          >
+            Cancel hold
+          </button>
+        ) : item.available_copies <= 0 && onPlaceHold ? (
+          <button
+            type="button"
+            onClick={() => onPlaceHold(item)}
+            className="item-button item-button-borrow"
+          >
+            Place hold
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onBorrow && onBorrow(item)}
+            disabled={item.available_copies <= 0}
+            className="item-button item-button-borrow"
+          >
+            {item.available_copies <= 0 ? "Unavailable" : "Borrow"}
+          </button>
+        )}
       </div>
     </article>
   );
