@@ -1,4 +1,5 @@
 const db = require("./db");
+const { createTriggers } = require("./triggers");
 
 // removes CHECK rules on a table. schema.js does not create any, but some databases
 // got extra ones added by hand (e.g. holds_chk_1, fines_chk_1) that block holds and fines
@@ -260,6 +261,9 @@ async function initDB() {
       WHERE role = 'librarian'
       AND userID NOT IN (SELECT userID FROM librarian)`,
   );
+
+  // late fee and hold-ready triggers (see triggers.js)
+  await createTriggers();
 
 }
 
