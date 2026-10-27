@@ -1,20 +1,5 @@
 const db = require("./db");
 
-// adds AUTO_INCREMENT to an id column made without it (tables created before the fix)
-async function addAutoIncrement(table, column) {
-  const [rows] = await db.query(
-    `SELECT EXTRA FROM information_schema.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
-    [table, column],
-  );
-
-  if (rows.length > 0 && !/auto_increment/i.test(rows[0].EXTRA)) {
-    await db.query(
-      `ALTER TABLE ${table} MODIFY ${column} INT NOT NULL AUTO_INCREMENT`,
-    );
-  }
-}
-
 async function initDB() {
   //users
   await db.query(`
@@ -171,9 +156,9 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS holds (
       userID INT NOT NULL,
       itemID INT NOT NULL,
-      holdID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+      holdID INT PRIMARY KEY NOT NULL,
       requestDate DATE DEFAULT (CURRENT_DATE),
-      status VARCHAR(20) NOT NULL DEFAULT 'waiting',
+      status VARCHAR(20) NOT NULL,
 
       FOREIGN KEY (userID) REFERENCES users(userID)
       ON DELETE CASCADE,
@@ -183,9 +168,6 @@ async function initDB() {
     )
   `);
 
-  // older databases made holdID without AUTO_INCREMENT, fix it once
-  await addAutoIncrement("holds", "holdID");
-
   console.log("Holds table created");
 
   //fines
@@ -194,7 +176,7 @@ async function initDB() {
       loanID INT,
       userID INT NOT NULL,
       itemID INT NOT NULL,
-      fineID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+      fineID INT PRIMARY KEY NOT NULL,
       charge_type VARCHAR(20) NOT NULL,
       paid TINYINT(1) NOT NULL DEFAULT 0,
       issue_date DATE DEFAULT (CURRENT_DATE),
@@ -206,9 +188,6 @@ async function initDB() {
 
     )
   `);
-
-  // older databases made fineID without AUTO_INCREMENT, fix it once
-  await addAutoIncrement("fines", "fineID");
 
   console.log("Fines table created");
 

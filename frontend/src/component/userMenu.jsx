@@ -27,7 +27,7 @@ function UserMenu({ name, role, onNavigate, onLogout, unreadCount = 0 }) {
             page: "catalog",
           },
           {
-            label: "Loans & fines",
+            label: "Loans",
             page: "loans",
           },
         ];

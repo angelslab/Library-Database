@@ -1,17 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/ItemDetails.css";
-import "../styles/HoldsFines.css";
 
-function ItemDetails({
-  itemID,
-  user,
-  onBack,
-  onBorrow,
-  onPlaceHold,
-  onCancelHold,
-  hold,
-  refreshKey,
-}) {
+function ItemDetails({ itemID, user, onBack, onBorrow, refreshKey }) {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -157,46 +147,18 @@ function ItemDetails({
             )}
           </div>
 
-          {hold && (
-            <p
-              className={`item-hold-note ${hold.ready ? "item-hold-ready" : ""}`}
-            >
-              {hold.ready
-                ? "You have a hold on this item · a copy is ready for you"
-                : `You have a hold on this item · #${hold.queue_position} of ${hold.queue_length} in line`}
-            </p>
-          )}
-
-          {!isAvailable && hold && onCancelHold ? (
-            <button
-              type="button"
-              className="item-details-borrow item-button-cancel-hold"
-              onClick={() => onCancelHold(hold)}
-            >
-              Cancel hold
-            </button>
-          ) : !isAvailable && onPlaceHold ? (
-            <button
-              type="button"
-              className="item-details-borrow"
-              onClick={() => onPlaceHold(item)}
-            >
-              Place hold
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="item-details-borrow"
-              disabled={!isAvailable || !onBorrow}
-              onClick={() => onBorrow(item)}
-            >
-              {!isAvailable
-                ? "Unavailable"
-                : onBorrow
-                  ? "Borrow Item"
-                  : "Borrowing unavailable"}
-            </button>
-          )}
+          <button
+            type="button"
+            className="item-details-borrow"
+            disabled={!isAvailable || !onBorrow}
+            onClick={() => onBorrow(item)}
+          >
+            {!isAvailable
+              ? "Unavailable"
+              : onBorrow
+                ? "Borrow Item"
+                : "Borrowing unavailable"}
+          </button>
         </div>
       </section>
     </main>
