@@ -1,4 +1,36 @@
 const db = require("./db");
+const { createTriggers } = require("./triggers");
+
+// removes CHECK rules on a table. schema.js does not create any, but some databases
+// got extra ones added by hand (e.g. holds_chk_1, fines_chk_1) that block holds and fines
+async function dropCheckRules(table) {
+  const [rules] = await db.query(
+    `SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_TYPE = 'CHECK'`,
+    [table],
+  );
+
+  for (const rule of rules) {
+    await db.query(
+      `ALTER TABLE ${table} DROP CONSTRAINT \`${rule.CONSTRAINT_NAME}\``,
+    );
+  }
+}
+
+// adds AUTO_INCREMENT to an id column made without it (tables created before the fix)
+async function addAutoIncrement(table, column) {
+  const [rows] = await db.query(
+    `SELECT EXTRA FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [table, column],
+  );
+
+  if (rows.length > 0 && !/auto_increment/i.test(rows[0].EXTRA)) {
+    await db.query(
+      `ALTER TABLE ${table} MODIFY ${column} INT NOT NULL AUTO_INCREMENT`,
+    );
+  }
+}
 
 async function initDB() {
   //users
@@ -156,9 +188,9 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS holds (
       userID INT NOT NULL,
       itemID INT NOT NULL,
-      holdID INT PRIMARY KEY NOT NULL,
+      holdID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
       requestDate DATE DEFAULT (CURRENT_DATE),
-      status VARCHAR(20) NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'waiting',
 
       FOREIGN KEY (userID) REFERENCES users(userID)
       ON DELETE CASCADE,
@@ -168,6 +200,10 @@ async function initDB() {
     )
   `);
 
+  // older databases made holdID without AUTO_INCREMENT, fix it once
+  await addAutoIncrement("holds", "holdID");
+  await dropCheckRules("holds");
+
   console.log("Holds table created");
 
   //fines
@@ -176,7 +212,7 @@ async function initDB() {
       loanID INT,
       userID INT NOT NULL,
       itemID INT NOT NULL,
-      fineID INT PRIMARY KEY NOT NULL,
+      fineID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
       charge_type VARCHAR(20) NOT NULL,
       paid TINYINT(1) NOT NULL DEFAULT 0,
       issue_date DATE DEFAULT (CURRENT_DATE),
@@ -188,6 +224,10 @@ async function initDB() {
 
     )
   `);
+
+  // older databases made fineID without AUTO_INCREMENT, fix it once
+  await addAutoIncrement("fines", "fineID");
+  await dropCheckRules("fines");
 
   console.log("Fines table created");
 
@@ -212,6 +252,18 @@ async function initDB() {
   `);
 
   console.log("Notifications table created");
+
+  // every librarian account needs a row in the librarian table,
+  // otherwise they never get return-request notifications
+  await db.query(
+    `INSERT INTO librarian (userID)
+      SELECT userID FROM users
+      WHERE role = 'librarian'
+      AND userID NOT IN (SELECT userID FROM librarian)`,
+  );
+
+  // late fee and hold-ready triggers (see triggers.js)
+  await createTriggers();
 
 }
 

@@ -26,7 +26,12 @@ const { getProfile } = require("./user/user");
 const { searchItems } = require("./queries/inventory");
 const { manageUsers } = require("./queries/users");
 const { getUserDetails } = require("./queries/manageUsers");
+const { getFinesReport } = require("./reports/fines");
+const { getLoansReport } = require("./reports/loans");
+const { getInventoryReport } = require("./reports/inventory");
 const { handleLoanRoutes } = require("./loans/routes");
+const { handleHoldRoutes } = require("./holds/routes");
+const { handleFineRoutes } = require("./fines/routes");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -35,8 +40,13 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
+function sendJSON(res, status, body) {
+  res.writeHead(status, { "Content-Type": "application/json", ...CORS_HEADERS });
+  res.end(JSON.stringify(body));
+}
+
 const hostname = "127.0.0.1";
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
@@ -61,7 +71,7 @@ async function startServer() {
       }
 
       // Allow requests from the React frontend
-      res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.setHeader("Access-Control-Allow-Origin", "*");
 
       res.setHeader(
         "Access-Control-Allow-Methods",
@@ -78,6 +88,15 @@ async function startServer() {
       }
 
       // borrowing, returns and notifications
+      // holds and fines
+      if (await handleHoldRoutes(req, res, CORS_HEADERS)) {
+        return;
+      }
+
+      if (await handleFineRoutes(req, res, CORS_HEADERS)) {
+        return;
+      }
+
       if (await handleLoanRoutes(req, res, CORS_HEADERS)) {
         return;
       }
@@ -1023,29 +1042,129 @@ async function startServer() {
             return;
           }
 
-          res.writeHead(200, {
-            "Content-Type": "application/json",
-            ...CORS_HEADERS,
-          });
-          res.end(JSON.stringify(rows));
+    res.writeHead(200, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify(rows));
+  } catch (error) {
+    console.error("Error getting user detail:", error);
+    res.writeHead(500, { "Content-Type": "application/json", ...CORS_HEADERS });
+    res.end(JSON.stringify({ error: "Failed to get user detail" }));
+  }
+  return;
+}
+            // fines and charges report
+      if (req.method === "GET" && req.url.startsWith("/api/reports/fines")) {
+        try {
+          const params = new URL(req.url, "http://localhost").searchParams;
+
+          const type = params.get("type") || null;
+          const from = params.get("from") || null;
+          const to = params.get("to") || null;
+          const borrower = (params.get("borrower") || "").trim() || null;
+          const paidRaw = params.get("paid");
+          const paid = paidRaw === "0" || paidRaw === "1" ? Number(paidRaw) : null;
+
+          const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+          if (
+            !dateOk(from) ||
+            !dateOk(to) ||
+            (from && to && from > to) ||
+            (paidRaw && paid === null) ||
+            (type && type.length > 20) ||
+            (borrower && (borrower.length < 2 || borrower.length > 50))
+          ) {
+            sendJSON(res, 400, { error: "Invalid filter" });
+            return;
+          }
+
+          const rows = await getFinesReport({ type, paid, from, to, borrower });
+          sendJSON(res, 200, rows);
         } catch (error) {
-          console.error("Error getting user detail:", error);
-          res.writeHead(500, {
-            "Content-Type": "application/json",
-            ...CORS_HEADERS,
-          });
-                    res.end(JSON.stringify({ error: "Failed to get user detail" }));
+          console.error("Error running fines report:", error);
+          sendJSON(res, 500, { error: "Failed to run fines report" });
         }
         return;
       }
-      });
+      // loans by role and item type report
+      if (req.method === "GET" && req.url.startsWith("/api/reports/loans")) {
+        try {
+          const params = new URL(req.url, "http://localhost").searchParams;
 
-      server.listen(PORT, () => {
-        console.log(`Server running at PORT: `, PORT);
-      });
-      } catch (err) {
-        console.error("Server startup failed:", err.message);
+          const from = params.get("from") || null;
+          const to = params.get("to") || null;
+          const role = params.get("role") || null;
+          const itemType = params.get("itemType") || null;
+          const status = params.get("status") || null;
+          const dept = (params.get("dept") || "").trim() || null;
+
+          const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+          if (
+            !dateOk(from) ||
+            !dateOk(to) ||
+            (from && to && from > to) ||
+            (role && !["student", "faculty"].includes(role)) ||
+            (itemType && !["Book", "Media", "Device"].includes(itemType)) ||
+            (status && !["out", "returned"].includes(status)) ||
+            (dept && (dept.length < 2 || dept.length > 50))
+          ) {
+            sendJSON(res, 400, { error: "Invalid filter" });
+            return;
+          }
+
+          const rows = await getLoansReport({ from, to, role, itemType, status, dept });
+          sendJSON(res, 200, rows);
+        } catch (error) {
+          console.error("Error running loans report:", error);
+          sendJSON(res, 500, { error: "Failed to run loans report" });
+        }
+        return;
       }
+
+      // Inventory and Circulation report
+      if (req.method === "GET" && req.url.startsWith("/api/reports/inventory")) {
+        try {
+          const params = new URL(req.url, "http://localhost").searchParams;
+
+          const itemType = params.get("itemType") || null;
+          const from = params.get("from") || null;
+          const to = params.get("to") || null;
+          const outOnlyRaw = params.get("outOnly");
+          const outOnly = outOnlyRaw === "1" ? 1 : null;
+
+          const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
+
+          if (
+            !dateOk(from) ||
+            !dateOk(to) ||
+            (from && to && from > to) ||
+            (itemType && !["Book", "Media", "Device"].includes(itemType)) ||
+            (outOnlyRaw !== null && !["0", "1"].includes(outOnlyRaw))
+          ) {
+            sendJSON(res, 400, { error: "Invalid filter" });
+            return;
+          }
+
+          const rows = await getInventoryReport({ from, to, itemType, outOnly });
+          sendJSON(res, 200, rows);
+        } catch (error) {
+          console.error("Error running inventory report:", error);
+          sendJSON(res, 500, { error: "Failed to run inventory report" });
+        }
+        return;
+      }
+
+      // nothing above answered this request, so reply instead of leaving it hanging
+      if (!res.headersSent && !res.writableEnded) {
+        res.writeHead(404, { "Content-Type": "application/json", ...CORS_HEADERS });
+        res.end(JSON.stringify({ error: "Not found" }));
+      }
+    });
+
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running at PORT: `, PORT);
+    });
+  } catch (err) {
+    console.error("Server startup failed:", err.message);
+  }
 }
 
 startServer();

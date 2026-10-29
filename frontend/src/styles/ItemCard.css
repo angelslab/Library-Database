@@ -67,6 +67,23 @@
   background: rgb(241 77 76 / 12%);
 }
 
+.item-card-dropdown-edit {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #e6ecf2;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.item-card-dropdown-edit:hover {
+  background: #193550;
+}
+
 /* Book, Media, and Device cover */
 .item-cover {
   position: relative;
