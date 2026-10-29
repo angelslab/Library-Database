@@ -2,7 +2,15 @@ import { useState } from "react";
 import ItemCard from "./ItemCard";
 import "../styles/ItemSearch.css";
 
-function ItemSearch({ items, onSelectItem, onBorrow, onSearchChange }) {
+function ItemSearch({
+  items,
+  onSelectItem,
+  onBorrow,
+  onPlaceHold,
+  onCancelHold,
+  holdsByItem = {},
+  onSearchChange,
+}) {
   const [keyword, setKeyword] = useState("");
 
   const search = keyword.trim().toLowerCase();
@@ -47,6 +55,9 @@ function ItemSearch({ items, onSelectItem, onBorrow, onSearchChange }) {
               item={item}
               onSelectItem={onSelectItem}
               onBorrow={onBorrow}
+              onPlaceHold={onPlaceHold}
+              onCancelHold={onCancelHold}
+              hold={holdsByItem[item.itemID]}
             />
           ))}
         </div>

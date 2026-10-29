@@ -1,7 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import "../styles/ItemCard.css";
+import "../styles/HoldsFines.css";
 
-function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
+function ItemCard({
+  item,
+  onSelectItem,
+  onBorrow,
+  onPlaceHold,
+  onCancelHold,
+  hold,
+  onEdit,
+  user,
+  onDelete,
+}) {
   const isLowStock = item.available_copies <= 1;
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -41,27 +52,36 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
 
   return (
     <article className="item-card">
-      <div className="item-card-menu" ref={menuRef}>
-        <button
-          type="button"
-          className="item-card-menu-trigger"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          &#8942;
-        </button>
+      {user?.role === "librarian" && (
+        <div className="item-card-menu" ref={menuRef}>
+          <button
+            type="button"
+            className="item-card-menu-trigger"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            &#8942;
+          </button>
 
-        {menuOpen && (
-          <div className="item-card-dropdown">
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="item-card-dropdown-delete"
-            >
-              Delete
-            </button>
-          </div>
-        )}
-      </div>
+          {menuOpen && (
+            <div className="item-card-dropdown">
+              <button
+                onClick={() => onEdit(item)}
+                className="item-card-dropdown-edit"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="item-card-dropdown-delete"
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={`item-cover ${coverColor}`}>
         <div className="item-cover-edge" />
 
@@ -103,6 +123,15 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
         </span>
       </div>
 
+      {/* the user's hold on this item and their place in line */}
+      {hold && (
+        <p className={`item-hold-note ${hold.ready ? "item-hold-ready" : ""}`}>
+          {hold.ready
+            ? "On hold · a copy is ready for you"
+            : `On hold · #${hold.queue_position} of ${hold.queue_length} in line`}
+        </p>
+      )}
+
       {/* Actions */}
       <div className="item-actions">
         <button
@@ -113,18 +142,32 @@ function ItemCard({ item, onSelectItem, onBorrow, onEdit, user, onDelete }) {
           View details
         </button>
 
-        {user?.role === "librarian" && (
-          <button onClick={() => onEdit(item)}>Edit</button>
+        {item.available_copies <= 0 && hold && onCancelHold ? (
+          <button
+            type="button"
+            onClick={() => onCancelHold(hold)}
+            className="item-button item-button-cancel-hold"
+          >
+            Cancel hold
+          </button>
+        ) : item.available_copies <= 0 && onPlaceHold ? (
+          <button
+            type="button"
+            onClick={() => onPlaceHold(item)}
+            className="item-button item-button-borrow"
+          >
+            Place hold
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onBorrow && onBorrow(item)}
+            disabled={item.available_copies <= 0}
+            className="item-button item-button-borrow"
+          >
+            {item.available_copies <= 0 ? "Unavailable" : "Borrow"}
+          </button>
         )}
-
-        <button
-          type="button"
-          onClick={() => onBorrow && onBorrow(item)}
-          disabled={item.available_copies <= 0}
-          className="item-button item-button-borrow"
-        >
-          {item.available_copies <= 0 ? "Unavailable" : "Borrow"}
-        </button>
       </div>
     </article>
   );

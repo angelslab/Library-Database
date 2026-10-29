@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Inventory from "../component/InventorySearch";
 import UserManagment from "../component/userManage";
+import Reports from "../component/reportsPage";
 import LibrarianLoans from "../component/LibrarianLoans";
 
 function LibrarianHome({
@@ -19,6 +20,7 @@ function LibrarianHome({
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
           <button onClick={() => setView("inventory")}>Manage Inventory</button>
           <button onClick={() => setView("users")}>Manage users</button>
+          <button onClick={() => setView("reports")}>Reports</button>
           <button onClick={() => setView("loans")}>Manage loans</button>
           <button onClick={() => onNavigate("catalog")}>Go to Catalog</button>
         </div>
@@ -30,6 +32,7 @@ function LibrarianHome({
 
       {view === "inventory" && <Inventory />}
       {view === "users" && <UserManagment />}
+      {view === "reports" && <Reports />}
       {view === "loans" && <LibrarianLoans user={user} focusLoanID={focusLoanID} />}
     </div>
   );

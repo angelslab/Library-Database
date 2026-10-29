@@ -60,7 +60,7 @@ function Register({ onLogin, onBack }) {
             ) : (
                 <>
                     <input type="number" placeholder="Faculty ID" value={form.facultyID} onChange={update('facultyID')} required />
-                    <input placeholder="Department" value={form.department} onChange={update('department')} required />
+                    <input placeholder="Department (e.g. CS)" value={form.department} onChange={(e) => { setForm({ ...form, department: e.target.value.toUpperCase() }); setError('') }} required />
                 </>
             )}
 
