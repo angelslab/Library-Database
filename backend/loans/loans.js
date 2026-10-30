@@ -55,7 +55,7 @@ async function borrowItem(userID, itemID) {
 
     // lock the item row so two people can't take the last copy
     const [items] = await conn.query(
-      "SELECT itemID, title, total_copies, available_copies FROM items WHERE itemID = ? FOR UPDATE",
+      "SELECT itemID, title, total_copies, available_copies FROM items WHERE itemID = ? AND is_active = 1 FOR UPDATE",
       [itemID],
     );
 

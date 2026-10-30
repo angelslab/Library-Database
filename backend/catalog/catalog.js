@@ -22,6 +22,8 @@ async function fetchAllItems() {
       (SELECT brand FROM device WHERE device.itemID = items.itemID) AS brand
 
       FROM items
+
+      WHERE is_active = 1;
     `);
 
   const rows = result[0];
@@ -66,7 +68,7 @@ async function getItemByID(itemID) {
        WHERE device.itemID = items.itemID) AS brand
 
     FROM items
-    WHERE itemID = ?`,
+    WHERE itemID = ? AND is_active = 1`,
     [itemID]
   );
 

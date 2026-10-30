@@ -12,7 +12,7 @@ async function fetchDevices() {
             device.device_type,
             device.brand
         FROM items, device
-        WHERE items.itemID = device.itemID
+        WHERE items.itemID = device.itemID AND items.is_active = 1
         `);
 
   const rows = results[0];
@@ -48,7 +48,8 @@ async function addDevice(title, totalCopies, brand, deviceType) {
 async function deleteDevice(itemID) {
   const result = await db.query(
     `
-    DELETE FROM items 
+    UPDATE items
+    SET is_active = 0
     WHERE itemID = ?
     `,
     [itemID],
@@ -79,7 +80,7 @@ async function editDevice(itemID, title, totalCopies, brand, deviceType) {
       SET device_type =? , brand = ?
       WHERE itemID = ?
     `,
-    [deviceType, brand],
+    [deviceType, brand, itemID],
   );
 
   return true;
