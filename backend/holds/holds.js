@@ -51,7 +51,7 @@ async function placeHold(userID, itemID) {
     }
 
     const [items] = await conn.query(
-      "SELECT itemID, title, available_copies FROM items WHERE itemID = ?",
+      "SELECT itemID, title, available_copies FROM items WHERE itemID = ? AND is_active = 1",
       [itemID],
     );
 

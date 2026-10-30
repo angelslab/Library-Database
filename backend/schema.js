@@ -65,7 +65,8 @@ async function initDB() {
       title VARCHAR(100) NOT NULL,
       item_type VARCHAR(100),
       total_copies INT NOT NULL DEFAULT 1,
-      available_copies INT NOT NULL DEFAULT 1
+      available_copies INT NOT NULL DEFAULT 1,
+      is_active TINYINT(1) NOT NULL DEFAULT 1
     )
   `);
 
