@@ -42,8 +42,7 @@ async function addBook(title, author, isbn, publication_year, totalCopies) {
 
 async function deleteBook(itemID) {
   const result = await db.query(
-    `UPDATE items
-    SET is_active = 0  
+    `DELETE FROM items 
     WHERE itemID = ?`,
     [itemID],
   );
