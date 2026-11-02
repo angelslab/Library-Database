@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import ItemCard from "../component/ItemCard";
 import ItemSearch from "../component/ItemSearch";
 import "../styles/Catalog.css";
-import API_URL from "../api";
 
 function Catalog({
   onSelectItem,
