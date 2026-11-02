@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import ItemCard from "../component/ItemCard";
 import ItemSearch from "../component/ItemSearch";
 import "../styles/Catalog.css";
-import API_URL from "../api";
 
 function Catalog({
   onSelectItem,
@@ -17,6 +16,8 @@ function Catalog({
   onDelete,
   refreshKey,
 }) {
+  const API_URL = import.meta.env.VITE_API_URL;
+  console.log("API_URL", API_URL);
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState("All");
   const [loading, setLoading] = useState(true);
