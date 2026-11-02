@@ -119,6 +119,8 @@ async function startServer() {
           res.end(
             JSON.stringify({
               message: "Failed to retrieve catalog",
+              error: error.message,
+              code: error.code,
             }),
           );
 
@@ -1042,16 +1044,16 @@ async function startServer() {
             return;
           }
 
-    res.writeHead(200, { "Content-Type": "application/json", ...CORS_HEADERS });
-    res.end(JSON.stringify(rows));
-  } catch (error) {
-    console.error("Error getting user detail:", error);
-    res.writeHead(500, { "Content-Type": "application/json", ...CORS_HEADERS });
-    res.end(JSON.stringify({ error: "Failed to get user detail" }));
-  }
-  return;
-}
-            // fines and charges report
+          res.writeHead(200, { "Content-Type": "application/json", ...CORS_HEADERS });
+          res.end(JSON.stringify(rows));
+        } catch (error) {
+          console.error("Error getting user detail:", error);
+          res.writeHead(500, { "Content-Type": "application/json", ...CORS_HEADERS });
+          res.end(JSON.stringify({ error: "Failed to get user detail" }));
+        }
+        return;
+      }
+      // fines and charges report
       if (req.method === "GET" && req.url.startsWith("/api/reports/fines")) {
         try {
           const params = new URL(req.url, "http://localhost").searchParams;
