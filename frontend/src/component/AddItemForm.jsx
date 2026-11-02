@@ -162,7 +162,6 @@ function AddItemForm() {
                     id="isbn"
                     type="text"
                     placeholder="e.g. 978-0-19-283012-4"
-                    maxLength={13}
                     value={isbn}
                     onChange={(e) => setIsbn(e.target.value)}
                     required
