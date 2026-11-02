@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "../styles/AddItemForm.css";
+import API_URL from "../api";
 
 function AddItemForm() {
   const [itemType, setItemType] = useState("Book");
@@ -44,7 +45,7 @@ function AddItemForm() {
       let response;
 
       if (itemType === "Book") {
-        response = await fetch("http://localhost:3000/books", {
+        response = await fetch(`${API_URL}/books`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -52,7 +53,7 @@ function AddItemForm() {
           body: JSON.stringify(itemData),
         });
       } else if (itemType === "Media") {
-        response = await fetch("http://localhost:3000/media", {
+        response = await fetch(`${API_URL}/media`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -60,7 +61,7 @@ function AddItemForm() {
           body: JSON.stringify(itemData),
         });
       } else {
-        response = await fetch("http://localhost:3000/device", {
+        response = await fetch(`${API_URL}/device`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

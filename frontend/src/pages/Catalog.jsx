@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ItemCard from "../component/ItemCard";
 import ItemSearch from "../component/ItemSearch";
 import "../styles/Catalog.css";
+import API_URL from "../api";
 
 function Catalog({
   onSelectItem,
@@ -32,7 +33,7 @@ function Catalog({
   useEffect(() => {
     async function fetchCatalog() {
       try {
-        const response = await fetch("http://localhost:3000/items");
+        const response = await fetch(`${API_URL}/items`);
 
         if (!response.ok) {
           throw new Error("Failed to load items");
@@ -48,7 +49,7 @@ function Catalog({
     }
 
     fetchCatalog();
-    }, [refreshKey]);
+  }, [refreshKey]);
 
   if (loading) {
     return <p className="catalog-message">Loading catalog...</p>;

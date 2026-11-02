@@ -13,6 +13,7 @@ async function fetchDevices() {
             device.brand
         FROM items, device
         WHERE items.itemID = device.itemID
+          AND items.is_active = 1
         `);
 
   const rows = results[0];
@@ -48,8 +49,11 @@ async function addDevice(title, totalCopies, brand, deviceType) {
 async function deleteDevice(itemID) {
   const result = await db.query(
     `
-    DELETE FROM items 
+    UPDATE items
+    SET is_active = 0 
     WHERE itemID = ?
+      AND item_type = 'Device'
+      AND is_active = 1
     `,
     [itemID],
   );
@@ -64,6 +68,8 @@ async function editDevice(itemID, title, totalCopies, brand, deviceType) {
       UPDATE items
       SET title = ? , total_copies = ?
       WHERE itemID = ?
+        AND item_type = 'Device'
+        AND is_active = 1
     `,
     [title, totalCopies, itemID],
   );
