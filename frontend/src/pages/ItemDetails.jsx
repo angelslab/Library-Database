@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/ItemDetails.css";
 import "../styles/HoldsFines.css";
+import API_URL from "../api";
 
 function ItemDetails({
   itemID,
@@ -23,7 +24,7 @@ function ItemDetails({
         setError("");
         setItem(null);
 
-        const response = await fetch(`http://localhost:3000/items/${itemID}`);
+        const response = await fetch(`${API_URL}/items/${itemID}`);
 
         if (!response.ok) {
           throw new Error("Failed to load item details");

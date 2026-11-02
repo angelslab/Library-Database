@@ -11,6 +11,7 @@ async function fetchMedia() {
         media.author,
       FROM items, media
       WHERE items.itemiD = media.itemID
+        AND items.is_active = 1
         
         `);
   const rows = result[0];
@@ -48,8 +49,12 @@ async function addMedia(title, totalCopies, author) {
 async function deleteMedia(itemID) {
   const result = await db.query(
     `
-    DELETE from items
-    WHERE itemID = ?`,
+    UPDATE items
+      SET is_active = 0
+      WHERE itemID = ?
+        AND item_type = 'Media'
+        AND is_active = 1
+    `,
     [itemID],
   );
 
@@ -62,6 +67,8 @@ async function editMedia(itemID, title, totalCopies, author) {
     `UPDATE items
      SET title= ?, total_copies=?
      WHERE itemID = ?
+      AND item_type = 'Media'
+      AND is_active = 1
     `,
     [title, totalCopies, itemID],
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../styles/AddItemForm.css";
+import API_URL from "../api";
 
 function EditItemForm({ item, onBack, onItemUpdated }) {
   const [itemType, setItemType] = useState(item?.item_type || "Book");
@@ -8,7 +9,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
 
   // Book and Media fields
   const [author, setAuthor] = useState(
-    item?.author || item?.media_author || "",
+    item?.author || item?.media_author || item?.book_author || "",
   );
   const [isbn, setIsbn] = useState(item?.isbn || "");
   const [publicationYear, setPublicationYear] = useState(
@@ -28,7 +29,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
     setItemType(item.item_type || "Book");
     setTitle(item.title || "");
     setTotalCopies(item.total_copies ?? 1);
-    setAuthor(item.author || item.media_author || "");
+    setAuthor(item.author || item.media_author || item?.book_author || "");
     setIsbn(item.isbn || "");
     setPublicationYear(item.publication_year || "");
     setBrand(item.brand || "");
@@ -68,11 +69,11 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
       let endpoint;
 
       if (itemType === "Book") {
-        endpoint = `http://localhost:3000/books/${item.itemID}`;
+        endpoint = `${API_URL}/books/${item.itemID}`;
       } else if (itemType === "Media") {
-        endpoint = `http://localhost:3000/media/${item.itemID}`;
+        endpoint = `${API_URL}/media/${item.itemID}`;
       } else {
-        endpoint = `http://localhost:3000/device/${item.itemID}`;
+        endpoint = `${API_URL}/device/${item.itemID}`;
       }
 
       const response = await fetch(endpoint, {
