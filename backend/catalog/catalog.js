@@ -8,6 +8,7 @@ async function fetchAllItems() {
       item_type,
       total_copies,
       available_copies,
+      image_url,
 
       (SELECT author FROM book WHERE book.itemID = items.itemID) AS book_author,
 
@@ -38,6 +39,7 @@ async function getItemByID(itemID) {
       item_type,
       total_copies,
       available_copies,
+      image_url,
 
       -- Book details
       (SELECT author

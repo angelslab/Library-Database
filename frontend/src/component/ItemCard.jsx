@@ -16,6 +16,7 @@ function ItemCard({
   const isLowStock = item.available_copies <= 1;
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const menuRef = useRef(null);
 
   const coverColors = {
@@ -39,6 +40,11 @@ function ItemCard({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  //image
+  useEffect(() => {
+    setImageFailed(false);
+  }, [item.image_url]);
 
   const handleDelete = () => {
     setMenuOpen(false);
@@ -83,27 +89,44 @@ function ItemCard({
       )}
 
       <div className={`item-cover ${coverColor}`}>
-        <div className="item-cover-edge" />
+        {item.image_url && !imageFailed ? (
+          <img
+            src={item.image_url}
+            alt={`${item.title} cover`}
+            className="item-cover-image"
+            style={{
+              objectFit:
+                item.item_type === "Book" || item.item_type === "Media"
+                  ? "cover"
+                  : "contain",
+            }}
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <>
+            <div className="item-cover-edge" />
 
-        {/* Item Type */}
-        <div className="item-type-label">{item.item_type}</div>
+            {/* Item Type */}
+            <div className="item-type-label">{item.item_type}</div>
 
-        {/* Item Information */}
-        <div className="item-cover-info">
-          <h3 className="item-cover-title">{item.title}</h3>
+            {/* Item Information */}
+            <div className="item-cover-info">
+              <h3 className="item-cover-title">{item.title}</h3>
 
-          {item.item_type === "Book" && (
-            <p className="item-cover-author">{item.book_author}</p>
-          )}
+              {item.item_type === "Book" && (
+                <p className="item-cover-author">{item.book_author}</p>
+              )}
 
-          {item.item_type === "Media" && (
-            <p className="item-cover-author">{item.media_author}</p>
-          )}
+              {item.item_type === "Media" && (
+                <p className="item-cover-author">{item.media_author}</p>
+              )}
 
-          {item.item_type === "Device" && (
-            <p className="item-cover-author">{item.device_author}</p>
-          )}
-        </div>
+              {item.item_type === "Device" && (
+                <p className="item-cover-author">{item.device_author}</p>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Availability */}

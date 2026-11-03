@@ -65,7 +65,10 @@ async function initDB() {
       title VARCHAR(100) NOT NULL,
       item_type VARCHAR(100),
       total_copies INT NOT NULL DEFAULT 1,
-      available_copies INT NOT NULL DEFAULT 1
+      available_copies INT NOT NULL DEFAULT 1,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      image_url VARCHAR(500) NULL
+
     )
   `);
 
@@ -177,8 +180,13 @@ async function initDB() {
       AND COLUMN_NAME = 'loanID'`,
   );
 
-  if (loanIdColumn.length > 0 && !/auto_increment/i.test(loanIdColumn[0].EXTRA)) {
-    await db.query("ALTER TABLE loans MODIFY loanID INT NOT NULL AUTO_INCREMENT");
+  if (
+    loanIdColumn.length > 0 &&
+    !/auto_increment/i.test(loanIdColumn[0].EXTRA)
+  ) {
+    await db.query(
+      "ALTER TABLE loans MODIFY loanID INT NOT NULL AUTO_INCREMENT",
+    );
   }
 
   console.log("Loans table created");
@@ -264,7 +272,6 @@ async function initDB() {
 
   // late fee and hold-ready triggers (see triggers.js)
   await createTriggers();
-
 }
 
 module.exports = initDB;
