@@ -25,12 +25,30 @@ const REPORTS = [
 ];
 
 function Reports() {
-  const [active, setActive] = useState(null);
+  const [active, setActive] = useState(() => {
+    try {
+      const saved = localStorage.getItem("reportView");
+      return REPORTS.some((r) => r.key === saved) ? saved : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // remember which report is open so a reload keeps it
+  function openReport(key) {
+    setActive(key);
+    try {
+      if (key) localStorage.setItem("reportView", key);
+      else localStorage.removeItem("reportView");
+    } catch {
+      // ignore: storage blocked
+    }
+  }
 
   const current = REPORTS.find((r) => r.key === active);
   if (current) {
     const ReportComponent = current.Component;
-    return <ReportComponent onBack={() => setActive(null)} />;
+    return <ReportComponent onBack={() => openReport(null)} />;
   }
 
   return (
@@ -47,7 +65,7 @@ function Reports() {
         {REPORTS.map((r) => (
           <button
             key={r.key}
-            onClick={() => setActive(r.key)}
+            onClick={() => openReport(r.key)}
             style={{ textAlign: "left", padding: "10px 14px" }}
           >
             {r.label}
