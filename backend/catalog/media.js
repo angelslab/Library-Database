@@ -9,7 +9,7 @@ async function fetchMedia() {
         items.total_copies,
         items.available_copies,
         items.image_url,
-        media.author,
+        media.author
       FROM items, media
       WHERE items.itemiD = media.itemID
         AND items.is_active = 1
@@ -63,33 +63,61 @@ async function deleteMedia(itemID) {
 }
 
 async function editMedia(itemID, title, totalCopies, author, image_url) {
-  //items table
-  const itemResult = await db.query(
-    `UPDATE items
-     SET title= ?, total_copies=?, image_url = ?
+  try {
+    const [rows] = await db.query(
+      `
+        SELECT total_copies, available_copies
+        FROM items
+        WHERE itemID = ? 
+          AND item_type = 'Media'
+          AND is_active = 1
+      
+      `,
+      [itemID],
+    );
+
+    if (rows.length === 0) {
+      return false;
+    }
+
+    //calculate currently borrowed copies
+    const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
+
+    //prevent totalcopies going below borrowedcopies
+    if (totalCopies < borrowedCopies) {
+      throw new Error(
+        `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
+      );
+    }
+
+    const newAvailCopies = totalCopies - borrowedCopies;
+
+    //items table
+    await db.query(
+      `UPDATE items
+     SET title= ?, total_copies=?, available_copies = ?, image_url = ?
      WHERE itemID = ?
       AND item_type = 'Media'
       AND is_active = 1
     `,
-    [title, totalCopies, image_url || null, itemID],
-  );
+      [title, totalCopies, newAvailCopies, image_url || null, itemID],
+    );
 
-  if (itemResult[0].affectedRows === 0) {
-    return false;
-  }
-
-  //media
-  await db.query(
-    `
+    //media
+    await db.query(
+      `
         UPDATE media
         SET author = ?
         WHERE itemID = ?
     
     `,
-    [author, itemID],
-  );
+      [author, itemID],
+    );
 
-  return true;
+    return true;
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = { fetchMedia, addMedia, deleteMedia, editMedia };

@@ -69,33 +69,58 @@ async function editDevice(
   deviceType,
   image_url,
 ) {
-  // items table
-  const itemResult = await db.query(
-    `
-      UPDATE items
-      SET title = ? , total_copies = ?, image_url = ?
-      WHERE itemID = ?
+  try {
+    const [rows] = await db.query(
+      `SELECT total_copies, available_copies
+       FROM items
+       WHERE itemID = ? 
         AND item_type = 'Device'
         AND is_active = 1
+      `,
+      [itemID],
+    );
+
+    if (rows.length === 0) {
+      return false;
+    }
+
+    //calculate currently borrowed copies
+    const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
+
+    //prevent totalcopies going below borrowedcopies
+    if (totalCopies < borrowedCopies) {
+      throw new Error(
+        `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
+      );
+    }
+
+    const newAvailCopies = totalCopies - borrowedCopies;
+
+    // items table
+    await db.query(
+      `
+      UPDATE items
+      SET title = ? , total_copies = ?, available_copies = ? ,image_url = ?
+      WHERE itemID = ?
+        
     `,
-    [title, totalCopies, image_url, itemID],
-  );
+      [title, totalCopies, newAvailCopies, image_url, itemID],
+    );
 
-  if (itemResult[0].affectedRows === 0) {
-    return false;
-  }
-
-  //device
-  await db.query(
-    `
+    //device
+    await db.query(
+      `
       UPDATE device
       SET device_type =? , brand = ?
       WHERE itemID = ?
     `,
-    [deviceType, brand, itemID],
-  );
+      [deviceType, brand, itemID],
+    );
 
-  return true;
+    return true;
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = { fetchDevices, addDevice, deleteDevice, editDevice };

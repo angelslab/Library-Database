@@ -73,9 +73,36 @@ async function updateBook(
   totalCopies,
   image_url,
 ) {
-  // updating items table
-  const result = await db.query(
-    `
+  try {
+    const [rows] = await db.query(
+      `SELECT total_copies, available_copies
+       FROM items
+       WHERE itemID = ? 
+        AND item_type = 'Book'
+        AND is_active = 1
+      `,
+      [itemID],
+    );
+
+    if (rows.length === 0) {
+      return false;
+    }
+
+    //calculate currently borrowed copies
+    const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
+
+    //prevent totalcopies going below borrowedcopies
+    if (totalCopies < borrowedCopies) {
+      throw new Error(
+        `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
+      );
+    }
+
+    const newAvailCopies = totalCopies - borrowedCopies;
+
+    // updating items table
+    await db.query(
+      `
       UPDATE items 
       SET title = ?, total_copies = ?, available_copies = ?, image_url = ? 
       WHERE itemID = ?
@@ -83,25 +110,24 @@ async function updateBook(
         AND is_active = 1
     
     `,
-    [title, totalCopies, totalCopies, image_url || null, itemID],
-  );
+      [title, totalCopies, newAvailCopies, image_url || null, itemID],
+    );
 
-  if (result[0].affectedRows === 0) {
-    return false;
-  }
-
-  //updating books table
-  await db.query(
-    `
+    //updating books table
+    await db.query(
+      `
       UPDATE book
         SET author = ?, isbn = ?, publication_year = ?
         WHERE itemID = ?
       
     `,
-    [author, isbn, publication_year, itemID],
-  );
+      [author, isbn, publication_year, itemID],
+    );
 
-  return true;
+    return true;
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = { fetchBooks, addBook, deleteBook, updateBook };
