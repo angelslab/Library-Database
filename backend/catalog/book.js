@@ -5,6 +5,7 @@ async function fetchBooks() {
             items.itemID,
             items.title,
             items.item_type,
+            items.image_url,
             items.total_copies,
             items.available_copies,
             book.author,
@@ -21,12 +22,19 @@ async function fetchBooks() {
   return rows;
 }
 
-async function addBook(title, author, isbn, publication_year, totalCopies) {
+async function addBook(
+  title,
+  author,
+  isbn,
+  publication_year,
+  totalCopies,
+  image_url,
+) {
   //items table
   const result = await db.query(
-    `INSERT into items (title, item_type, total_copies, available_copies)
-        VALUES (?, 'Book', ?, ?)`,
-    [title, totalCopies, totalCopies],
+    `INSERT into items (title, item_type, total_copies, available_copies, image_url)
+        VALUES (?, 'Book', ?, ?, ?)`,
+    [title, totalCopies, totalCopies, image_url || null],
   );
 
   const itemID = result[0].insertId;
@@ -63,18 +71,19 @@ async function updateBook(
   isbn,
   publication_year,
   totalCopies,
+  image_url,
 ) {
   // updating items table
   const result = await db.query(
     `
       UPDATE items 
-      SET title = ?, total_copies = ?, available_copies = ?
+      SET title = ?, total_copies = ?, available_copies = ?, image_url = ? 
       WHERE itemID = ?
         AND item_type = 'Book'
         AND is_active = 1
     
     `,
-    [title, totalCopies, totalCopies, itemID],
+    [title, totalCopies, totalCopies, image_url || null, itemID],
   );
 
   if (result[0].affectedRows === 0) {

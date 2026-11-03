@@ -8,7 +8,7 @@ async function fetchDevices() {
             items.item_type,
             items.total_copies,
             items.available_copies,
-
+            items.image_url,
             device.device_type,
             device.brand
         FROM items, device
@@ -21,15 +21,15 @@ async function fetchDevices() {
   return rows;
 }
 
-async function addDevice(title, totalCopies, brand, deviceType) {
+async function addDevice(title, totalCopies, brand, deviceType, image_url) {
   // item table
   const results = await db.query(
     `
-      INSERT into items(title, item_type, total_copies)
-      VALUES (?, 'Device', ?)
+      INSERT into items(title, item_type, total_copies, image_url)
+      VALUES (?, 'Device', ?, ?)
     
     `,
-    [title, totalCopies],
+    [title, totalCopies, image_url || null],
   );
 
   const itemID = results[0].insertId;
@@ -61,17 +61,24 @@ async function deleteDevice(itemID) {
   return result[0].affectedRows;
 }
 
-async function editDevice(itemID, title, totalCopies, brand, deviceType) {
+async function editDevice(
+  itemID,
+  title,
+  totalCopies,
+  brand,
+  deviceType,
+  image_url,
+) {
   // items table
   const itemResult = await db.query(
     `
       UPDATE items
-      SET title = ? , total_copies = ?
+      SET title = ? , total_copies = ?, image_url = ?
       WHERE itemID = ?
         AND item_type = 'Device'
         AND is_active = 1
     `,
-    [title, totalCopies, itemID],
+    [title, totalCopies, image_url, itemID],
   );
 
   if (itemResult[0].affectedRows === 0) {
@@ -85,7 +92,7 @@ async function editDevice(itemID, title, totalCopies, brand, deviceType) {
       SET device_type =? , brand = ?
       WHERE itemID = ?
     `,
-    [deviceType, brand],
+    [deviceType, brand, itemID],
   );
 
   return true;
