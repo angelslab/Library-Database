@@ -9,7 +9,7 @@
   box-sizing: border-box;
   background: #0b152c;
   color: #e6ecf2;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--sans);
 }
 
 /* ========================================
@@ -74,18 +74,21 @@
 .app-back-button {
   margin-bottom: 20px;
   padding: 10px 16px;
-  color: #e6ecf2;
-  background: #193550;
-  border: 1px solid #4075aa;
-  border-radius: 8px;
+  color: #c9d4df;
+  background: transparent;
+  border: 1px solid #263e59;
+  border-radius: 10px;
   font-family: inherit;
   font-size: 14px;
   cursor: pointer;
-  transition: background 180ms ease;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
 }
 
 .app-back-button:hover {
-  background: #4075aa;
+  background: #193550;
+  border-color: #4075aa;
 }
 
 .app-back-button:focus-visible {

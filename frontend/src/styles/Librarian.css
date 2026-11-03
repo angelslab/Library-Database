@@ -1,0 +1,55 @@
+/* Librarian dashboard menu */
+
+.librarian-dashboard {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.librarian-dashboard > h2 {
+  margin: 0 0 24px;
+  font-family: var(--heading, Georgia, "Times New Roman", serif);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.dash-menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dash-button {
+  padding: 12px 18px;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid #263e59;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 120ms ease;
+}
+
+.dash-button:hover {
+  background: #193550;
+  border-color: #4075aa;
+}
+
+.dash-button-primary {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.dash-button-primary:hover {
+  background: var(--primary);
+  border-color: transparent;
+  opacity: 0.92;
+}

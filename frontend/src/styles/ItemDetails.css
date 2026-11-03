@@ -7,17 +7,22 @@
 
 .item-details-back {
   margin-bottom: 24px;
-  padding: 10px 0;
-  border: none;
+  padding: 10px 16px;
+  border: 1px solid #263e59;
+  border-radius: 10px;
   background: transparent;
-  color: inherit;
+  color: #c9d4df;
   font: inherit;
   cursor: pointer;
-  color: white;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
 }
 
 .item-details-back:hover {
-  text-decoration: underline;
+  background: #193550;
+  border-color: #4075aa;
+  text-decoration: none;
 }
 
 .item-details-cover {
@@ -182,12 +187,12 @@
   width: 100%;
   margin-top: 28px;
   padding: 13px 18px;
-  border: none;
-  border-radius: 8px;
-  background: var(--primary, #315b43);
-  color: white;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--primary, #4075aa);
+  color: var(--primary-foreground, #f6f9fc);
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 

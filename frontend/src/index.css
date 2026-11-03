@@ -128,6 +128,20 @@ select {
 
 button {
   cursor: pointer;
+  border-radius: 8px;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease,
+    transform 120ms ease;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 button:focus-visible,
@@ -141,4 +155,122 @@ select:focus-visible {
 img {
   display: block;
   max-width: 100%;
+}
+
+
+/* Text selection */
+::selection {
+  background: rgb(229 191 109 / 30%);
+  color: var(--foreground);
+}
+
+/* Slim dark scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #26405e var(--background);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #26405e;
+  border: 2px solid var(--background);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #335070;
+}
+
+/* ============================================================
+   GLOBAL BASELINE
+   Makes any unstyled element across the app follow the concept.
+   Component classes still override these (higher specificity).
+   ============================================================ */
+
+/* Default button = tidy secondary button */
+button {
+  padding: 10px 16px;
+  color: var(--foreground);
+  background: var(--secondary);
+  border: 1px solid #263e59;
+  font-weight: 500;
+}
+
+button:hover {
+  border-color: #4075aa;
+}
+
+/* Form fields */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+select,
+textarea {
+  padding: 10px 12px;
+  color: var(--foreground);
+  background: #0e1f36;
+  border: 1px solid #263e59;
+  border-radius: 10px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+::placeholder {
+  color: #6f8097;
+}
+
+/* Headings — serif, library feel */
+h1,
+h2,
+h3 {
+  font-family: var(--heading);
+  font-weight: 600;
+}
+
+/* Tables (report / management pages) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #263e59;
+}
+
+th {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+tbody tr:hover {
+  background: #10253e;
+}
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: #5a90c4;
 }

@@ -84,23 +84,32 @@
 .borrow-modal-button {
   padding: 10px 16px;
   color: #e6ecf2;
-  background: #193550;
-  border: 1px solid #4075aa;
-  border-radius: 8px;
+  background: transparent;
+  border: 1px solid #263e59;
+  border-radius: 10px;
   font-size: 14px;
-  transition: background 180ms ease;
+  font-weight: 500;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
 }
 
 .borrow-modal-button:hover:not(:disabled) {
-  background: #24486b;
+  background: #193550;
+  border-color: #4075aa;
 }
 
 .borrow-modal-confirm {
   background: #4075aa;
+  border-color: transparent;
+  color: #f6f9fc;
+  font-weight: 600;
 }
 
 .borrow-modal-confirm:hover:not(:disabled) {
-  background: #4f86bd;
+  background: #4075aa;
+  border-color: transparent;
+  opacity: 0.92;
 }
 
 .borrow-modal-button:disabled {

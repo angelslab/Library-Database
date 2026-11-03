@@ -231,24 +231,28 @@
 .item-button {
   flex: 1;
   min-width: 0;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 9px 10px;
+  border-radius: 10px;
   font-family: inherit;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition:
-    background-color 200ms ease,
-    opacity 200ms ease;
+    background-color 180ms ease,
+    border-color 180ms ease,
+    opacity 180ms ease,
+    transform 120ms ease;
 }
 
 .item-button-details {
-  border: 1px solid var(--border);
+  border: 1px solid #263e59;
   background: transparent;
   color: var(--foreground);
 }
 
 .item-button-details:hover {
-  background-color: var(--secondary);
+  background-color: #193550;
+  border-color: #4075aa;
 }
 
 .item-button-borrow {

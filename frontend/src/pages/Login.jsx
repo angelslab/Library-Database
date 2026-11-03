@@ -1,47 +1,106 @@
 import { useState } from 'react'
 import Register from './Register'
+import '../styles/Auth.css'
+
 function Login({ onLogin, message, onBack }) {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
-    const [showRegister, setShowRegister] = useState(false)
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        setError('')
-        try {
-        const res = await fetch('http://localhost:3000/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        })
-        const data = await res.json()
-        if (res.ok) {
-            onLogin(data)
-        } else {
-            setError(data.error)
-        }
-    } catch (err){
-        setError('Cannot reach server: '+ err.message)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [showRegister, setShowRegister] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      const res = await fetch('http://localhost:3000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        onLogin(data)
+      } else {
+        setError(data.error)
+      }
+    } catch (err) {
+      setError('Cannot reach server: ' + err.message)
     }
-}
-if (showRegister) {
+  }
+
+  if (showRegister) {
     return <Register onLogin={onLogin} onBack={() => setShowRegister(false)} />
+  }
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-logo">📚</div>
+          <h1 className="auth-title">Library</h1>
+          <p className="auth-subtitle">Sign in to your account</p>
+        </div>
+
+        {message && <p className="auth-note">{message}</p>}
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              className="auth-input"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setError('')
+              }}
+            />
+          </div>
+
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              className="auth-input"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setError('')
+              }}
+            />
+          </div>
+
+          {error && <p className="auth-error">{error}</p>}
+
+          <div className="auth-actions">
+            <button type="submit" className="auth-button auth-button-primary">
+              Sign in
+            </button>
+            <button
+              type="button"
+              className="auth-button auth-button-ghost"
+              onClick={() => setShowRegister(true)}
+            >
+              Create an account
+            </button>
+            {onBack && (
+              <button
+                type="button"
+                className="auth-button auth-button-ghost"
+                onClick={onBack}
+              >
+                Back to catalog
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
-return(
-    <form
-    onSubmit={handleSubmit}
-    style={{ display: 'flex', flexDirection: 'column', gap: 10, width:300, margin: '40px auto' }}
-    >
-    <h1 style={{ fontSize: 40, lineHeight: 1.2 }}> library log in </h1>
-    {message && <p style={{ margin: 0 }}>{message}</p>}
-    <input type="email" placeholder="Enter your email"
-    value={email} onChange={(e) => { setEmail(e.target.value); setError('') }}/>
-    <input type="password" placeholder="Enter your password" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
-    {error && <p style={{ color: '#ff6b6b', margin: 0 }}>{error}</p>}
-    <button type="submit">Login</button>
-    <button type="button" onClick={() => setShowRegister(true)}>Create an account</button>
-    {onBack && <button type="button" onClick={onBack}>Back to catalog</button>}
-    </form>
-)
-}
+
 export default Login

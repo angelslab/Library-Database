@@ -117,6 +117,16 @@
 /* Add Item button */
 .catalog-add-button {
   white-space: nowrap;
+  color: var(--primary-foreground);
+  background-color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.catalog-add-button:hover {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  opacity: 0.92;
 }
 
 /* Results heading */
