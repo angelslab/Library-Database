@@ -2,6 +2,7 @@ import { useState } from "react";
 import FinesReport from "./FinesReport";
 import LoansReport from "./LoansReport";
 import InventoryReport from "./inventoryReport";
+import ActivityLogReport from "./ActivityLogReport";
 
 // Add a report here as it gets built: give it a component.
 const REPORTS = [
@@ -15,6 +16,11 @@ const REPORTS = [
     key: "inventory",
     label: "Inventory and Circulation",
     Component: InventoryReport,
+  },
+  {
+    key: "activity",
+    label: "Activity Log (borrows & returns)",
+    Component: ActivityLogReport,
   },
 ];
 

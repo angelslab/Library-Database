@@ -58,9 +58,34 @@ const HOLD_READY_TRIGGER = `
     END IF;
   END`;
 
+// 3) Audit log: record every borrow (a new loan) and every return (a loan
+//    getting its returned_date) in the audit_log table, so there is a full
+//    history of who took out and returned each item and when.
+const AUDIT_BORROW_TRIGGER = `
+  CREATE TRIGGER trg_loans_audit_borrow
+  AFTER INSERT ON loans
+  FOR EACH ROW
+  BEGIN
+    INSERT INTO audit_log (action, userID, itemID, loanID)
+      VALUES ('borrow', NEW.userID, NEW.itemID, NEW.loanID);
+  END`;
+
+const AUDIT_RETURN_TRIGGER = `
+  CREATE TRIGGER trg_loans_audit_return
+  AFTER UPDATE ON loans
+  FOR EACH ROW
+  BEGIN
+    IF OLD.returned_date IS NULL AND NEW.returned_date IS NOT NULL THEN
+      INSERT INTO audit_log (action, userID, itemID, loanID)
+        VALUES ('return', NEW.userID, NEW.itemID, NEW.loanID);
+    END IF;
+  END`;
+
 const TRIGGERS = [
   { name: "trg_loans_late_fee", sql: LATE_FEE_TRIGGER },
   { name: "trg_items_hold_ready", sql: HOLD_READY_TRIGGER },
+  { name: "trg_loans_audit_borrow", sql: AUDIT_BORROW_TRIGGER },
+  { name: "trg_loans_audit_return", sql: AUDIT_RETURN_TRIGGER },
 ];
 
 async function createTriggers() {
