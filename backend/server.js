@@ -29,6 +29,7 @@ const { getUserDetails } = require("./queries/manageUsers");
 const { getFinesReport } = require("./reports/fines");
 const { getLoansReport } = require("./reports/loans");
 const { getInventoryReport } = require("./reports/inventory");
+const { getAuditReport } = require("./reports/audit");
 const { handleLoanRoutes } = require("./loans/routes");
 const { handleHoldRoutes } = require("./holds/routes");
 const { handleFineRoutes } = require("./fines/routes");
@@ -1177,6 +1178,18 @@ async function startServer() {
         } catch (error) {
           console.error("Error running inventory report:", error);
           sendJSON(res, 500, { error: "Failed to run inventory report" });
+        }
+        return;
+      }
+
+      // activity log (audit) report
+      if (req.method === "GET" && req.url.startsWith("/api/reports/audit")) {
+        try {
+          const rows = await getAuditReport();
+          sendJSON(res, 200, rows);
+        } catch (error) {
+          console.error("Error running activity log report:", error);
+          sendJSON(res, 500, { error: "Failed to run activity log report" });
         }
         return;
       }

@@ -227,7 +227,7 @@ async function approveReturn(librarianID, loanID) {
     );
 
     await conn.query(
-      "UPDATE items SET available_copies = available_copies + 1 WHERE itemID = ?",
+      "UPDATE items SET available_copies = LEAST(available_copies + 1, total_copies) WHERE itemID = ?",
       [item.itemID],
     );
 

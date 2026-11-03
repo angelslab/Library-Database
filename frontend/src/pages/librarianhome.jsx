@@ -31,6 +31,9 @@ function LibrarianHome({
     setView(next);
     try {
       localStorage.setItem("librarianView", next);
+      // entering a section from the menu starts at its top, not a deep view
+      localStorage.removeItem("reportView");
+      localStorage.removeItem("userDetailID");
     } catch {
       // ignore: storage blocked
     }

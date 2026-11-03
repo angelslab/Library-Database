@@ -32,6 +32,19 @@ async function addAutoIncrement(table, column) {
   }
 }
 
+// adds a column to a table that was created before the column existed
+async function addColumn(table, column, definition) {
+  const [rows] = await db.query(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [table, column],
+  );
+
+  if (rows.length === 0) {
+    await db.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
 async function initDB() {
   //users
   await db.query(`
@@ -73,6 +86,14 @@ async function initDB() {
   `);
 
   console.log("Items table created");
+
+  // older databases made the items table before these columns existed, add them once
+  await addColumn("items", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
+  await addColumn("items", "image_url", "VARCHAR(500) NULL");
+
+  // some databases got CHECK rules added by hand (e.g. items_chk_4) that block
+  // normal copy-count updates on return; schema.js does not create any, so drop them
+  await dropCheckRules("items");
 
   //student
   await db.query(`
@@ -261,6 +282,20 @@ async function initDB() {
 
   console.log("Notifications table created");
 
+  //audit_log (history of every borrow and return, written by the triggers)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS audit_log (
+      auditID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+      action VARCHAR(20) NOT NULL,
+      userID INT,
+      itemID INT,
+      loanID INT,
+      logged_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  console.log("Audit_log table created");
+
   // every librarian account needs a row in the librarian table,
   // otherwise they never get return-request notifications
   await db.query(
@@ -270,7 +305,20 @@ async function initDB() {
       AND userID NOT IN (SELECT userID FROM librarian)`,
   );
 
-  // late fee and hold-ready triggers (see triggers.js)
+  // repair any item whose available copy count drifted out of sync:
+  // available should be total copies minus the copies currently checked out
+  await db.query(
+    `UPDATE items i
+      SET i.available_copies = GREATEST(0, LEAST(i.total_copies,
+        i.total_copies - (
+          SELECT COUNT(*) FROM loans l
+          WHERE l.itemID = i.itemID AND l.returned_date IS NULL
+        )))`,
+  );
+
+  console.log("Item copy counts reconciled");
+
+  // late fee, hold-ready and audit triggers (see triggers.js)
   await createTriggers();
 }
 
