@@ -17,8 +17,31 @@ import Fines from "./pages/Fines";
 import ConfirmBorrowModal from "./component/ConfirmBorrowModal";
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [page, setPage] = useState("catalog");
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [page, setPage] = useState(() => {
+    try {
+      const saved = localStorage.getItem("page");
+      const keep = [
+        "catalog",
+        "home",
+        "loans",
+        "holds",
+        "profile",
+        "notification",
+        "librarianLoans",
+      ];
+      return keep.includes(saved) ? saved : "catalog";
+    } catch {
+      return "catalog";
+    }
+  });
   const [selectedItemID, setSelectedItemID] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [message, setMessage] = useState("");
@@ -28,11 +51,59 @@ function App() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [myHolds, setMyHolds] = useState([]);
 
-  function goTo(nextPage) {
+  function goTo(nextPage, itemID = null) {
     setMessage("");
     setFocusLoanID(null);
     setPage(nextPage);
+    try {
+      localStorage.setItem("page", nextPage);
+    } catch {
+      // ignore: private mode / storage blocked
+    }
+    try {
+      window.history.pushState({ page: nextPage, itemID }, "");
+    } catch {
+      // ignore: history not available
+    }
   }
+
+  // make the browser Back / Forward buttons move between pages
+  useEffect(() => {
+    // remember the starting page so Back can return to it
+    try {
+      window.history.replaceState({ page, itemID: selectedItemID }, "");
+    } catch {
+      // ignore
+    }
+
+    function onPopState(event) {
+      const state = event.state || { page: "catalog", itemID: null };
+      const keep = [
+        "catalog",
+        "home",
+        "loans",
+        "holds",
+        "profile",
+        "notification",
+        "librarianLoans",
+        "itemDetails",
+      ];
+      const target = keep.includes(state.page) ? state.page : "catalog";
+
+      if (target === "itemDetails" && state.itemID) {
+        setSelectedItemID(state.itemID);
+      }
+
+      setMessage("");
+      setFocusLoanID(null);
+      setPage(target);
+    }
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // librarian clicked "Review return" on a notification: open the Loans page on that loan
   function handleReviewLoan(loanID) {
@@ -111,7 +182,7 @@ function App() {
 
   function handleSelectItems(itemID) {
     setSelectedItemID(itemID);
-    goTo("itemDetails");
+    goTo("itemDetails", itemID);
   }
 
   function handleEditItem(item) {
@@ -209,12 +280,16 @@ function App() {
   }
 
   function handleLogin(user) {
+    localStorage.setItem("token", user.token);
+    localStorage.setItem("user", JSON.stringify(user));
     setCurrentUser(user);
     setUnreadCount(0);
     goTo(user.role === "librarian" ? "home" : "catalog");
   }
 
   function handleLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setCurrentUser(null);
     setMyHolds([]);
     goTo("catalog");
