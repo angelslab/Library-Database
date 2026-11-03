@@ -165,31 +165,35 @@ function ItemCard({
           View details
         </button>
 
-        {item.available_copies <= 0 && hold && onCancelHold ? (
-          <button
-            type="button"
-            onClick={() => onCancelHold(hold)}
-            className="item-button item-button-cancel-hold"
-          >
-            Cancel hold
-          </button>
-        ) : item.available_copies <= 0 && onPlaceHold ? (
-          <button
-            type="button"
-            onClick={() => onPlaceHold(item)}
-            className="item-button item-button-borrow"
-          >
-            Place hold
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onBorrow && onBorrow(item)}
-            disabled={item.available_copies <= 0}
-            className="item-button item-button-borrow"
-          >
-            {item.available_copies <= 0 ? "Unavailable" : "Borrow"}
-          </button>
+        {user?.role !== "librarian" && (
+          <>
+            {item.available_copies <= 0 && hold && onCancelHold ? (
+              <button
+                type="button"
+                onClick={() => onCancelHold(hold)}
+                className="item-button item-button-cancel-hold"
+              >
+                Cancel hold
+              </button>
+            ) : item.available_copies <= 0 && onPlaceHold ? (
+              <button
+                type="button"
+                onClick={() => onPlaceHold(item)}
+                className="item-button item-button-borrow"
+              >
+                Place hold
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onBorrow && onBorrow(item)}
+                disabled={item.available_copies <= 0}
+                className="item-button item-button-borrow"
+              >
+                {item.available_copies <= 0 ? "Unavailable" : "Borrow"}
+              </button>
+            )}
+          </>
         )}
       </div>
     </article>
