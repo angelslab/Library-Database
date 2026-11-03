@@ -1,11 +1,29 @@
 import { useState } from 'react'
 import UserDetail from './UserDetail'
 
-function UserManagment( {onSelect} ) {
+function UserManagment() {
     const [keyword, setKeyword] = useState('')
     const [results, setResults] = useState([])
     const [searched, setSearched] = useState(false)
-    const [selectedUserID, setSelectedUserID] = useState(null)
+    const [selectedUserID, setSelectedUserID] = useState(() => {
+        try {
+            const saved = localStorage.getItem('userDetailID')
+            return saved ? Number(saved) : null
+        } catch {
+            return null
+        }
+    })
+
+    // remember which user is open so a reload keeps the detail page
+    const openUser = (id) => {
+        setSelectedUserID(id)
+        try {
+            if (id) localStorage.setItem('userDetailID', String(id))
+            else localStorage.removeItem('userDetailID')
+        } catch {
+            // ignore: storage blocked
+        }
+    }
 
     const handleSearch = async (e) => {
     e.preventDefault()
@@ -33,7 +51,7 @@ const cell = {
 if (selectedUserID !== null) {
     return (
     <div>
-        <button onClick={() => setSelectedUserID(null)}>← Back to search</button>
+        <button onClick={() => openUser(null)}>← Back to search</button>
         <UserDetail userID={selectedUserID} />
     </div>
     )
@@ -81,7 +99,7 @@ if (selectedUserID !== null) {
             {results.map((user) => (
             
             <tr key={user.userID}
-                onClick={() => setSelectedUserID(user.userID)}
+                onClick={() => openUser(user.userID)}
                 style={{ cursor: 'pointer' }}>
                 <td style={cell}>{user.id_number}</td>
                 <td style={cell}>{user.first_name} {user.last_name}</td>
