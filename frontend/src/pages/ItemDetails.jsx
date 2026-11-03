@@ -16,6 +16,7 @@ function ItemDetails({
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     async function fetchItem() {
@@ -43,6 +44,11 @@ function ItemDetails({
       fetchItem();
     }
   }, [itemID, refreshKey]);
+
+  // Reset image failure when the item or its image URL changes
+  useEffect(() => {
+    setImageFailed(false);
+  }, [item?.image_url, itemID]);
 
   if (loading) {
     return (
@@ -86,11 +92,22 @@ function ItemDetails({
             item.item_type || "default"
           ).toLowerCase()}`}
         >
-          <span className="item-details-type">{item.item_type}</span>
+          {item.image_url && !imageFailed ? (
+            <img
+              src={item.image_url}
+              alt={`${item.title} cover`}
+              className="item-details-cover-image"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <>
+              <span className="item-details-type">{item.item_type}</span>
 
-          <div className="item-details-cover-title">
-            <h1>{item.title}</h1>
-          </div>
+              <div className="item-details-cover-title">
+                <h1>{item.title}</h1>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="item-details-content">

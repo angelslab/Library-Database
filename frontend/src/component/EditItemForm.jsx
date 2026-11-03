@@ -20,6 +20,9 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
   const [brand, setBrand] = useState(item?.brand || "");
   const [deviceType, setDeviceType] = useState(item?.device_type || "");
 
+  // Image URL field
+  const [imageURL, setImageURL] = useState(item?.image_url || "");
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -29,11 +32,12 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
     setItemType(item.item_type || "Book");
     setTitle(item.title || "");
     setTotalCopies(item.total_copies ?? 1);
-    setAuthor(item.author || item.media_author || item?.book_author || "");
+    setAuthor(item.author || item.media_author || item.book_author || "");
     setIsbn(item.isbn || "");
     setPublicationYear(item.publication_year || "");
     setBrand(item.brand || "");
     setDeviceType(item.device_type || "");
+    setImageURL(item.image_url || "");
     setMessage("");
     setError("");
   }, [item]);
@@ -52,6 +56,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
     const itemData = {
       title,
       total_copies: Number(totalCopies),
+      image_url: imageURL,
     };
 
     if (itemType === "Book") {
@@ -128,7 +133,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
         <div className="add-item-type-section">
           <label htmlFor="itemType">Item Type:</label>
 
-          <select id="itemType" value={itemType}>
+          <select id="itemType" value={itemType} disabled>
             <option value="Book">Book</option>
             <option value="Media">Media</option>
             <option value="Device">Device</option>
@@ -250,6 +255,19 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
                 </div>
               </>
             )}
+          </div>
+
+          {/* Image URL */}
+          <div className="add-item-field">
+            <label htmlFor="imageUrl">Image URL (Optional):</label>
+
+            <input
+              id="imageUrl"
+              type="url"
+              placeholder="Paste image URL"
+              value={imageURL}
+              onChange={(e) => setImageURL(e.target.value)}
+            />
           </div>
         </section>
 

@@ -8,6 +8,7 @@ async function fetchMedia() {
         items.item_type,
         items.total_copies,
         items.available_copies,
+        items.image_url,
         media.author,
       FROM items, media
       WHERE items.itemiD = media.itemID
@@ -19,15 +20,15 @@ async function fetchMedia() {
   return rows;
 }
 
-async function addMedia(title, totalCopies, author) {
+async function addMedia(title, totalCopies, author, image_url) {
   //items table
   const result = await db.query(
     `
-            INSERT into items (title, item_type, total_copies)
-            VALUES (?, 'Media', ?)
+            INSERT into items (title, item_type, total_copies, image_url)
+            VALUES (?, 'Media', ?, ?)
         
         `,
-    [title, totalCopies],
+    [title, totalCopies, image_url || null],
   );
 
   const itemID = result[0].insertId;
@@ -61,16 +62,16 @@ async function deleteMedia(itemID) {
   return result[0].affectedRows;
 }
 
-async function editMedia(itemID, title, totalCopies, author) {
+async function editMedia(itemID, title, totalCopies, author, image_url) {
   //items table
   const itemResult = await db.query(
     `UPDATE items
-     SET title= ?, total_copies=?
+     SET title= ?, total_copies=?, image_url = ?
      WHERE itemID = ?
       AND item_type = 'Media'
       AND is_active = 1
     `,
-    [title, totalCopies, itemID],
+    [title, totalCopies, image_url || null, itemID],
   );
 
   if (itemResult[0].affectedRows === 0) {
