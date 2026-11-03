@@ -13,6 +13,7 @@ async function fetchBooks() {
 
             FROM items, book
             WHERE items.itemID = book.itemID
+            AND items.is_active = 1
         `);
 
   const rows = result[0];
@@ -42,8 +43,13 @@ async function addBook(title, author, isbn, publication_year, totalCopies) {
 
 async function deleteBook(itemID) {
   const result = await db.query(
-    `DELETE FROM items 
-    WHERE itemID = ?`,
+    `UPDATE items
+     SET is_active = 0 
+     WHERE itemID = ?
+      AND item_type = 'Book'
+      AND is_active = 1
+    
+    `,
     [itemID],
   );
 
@@ -64,6 +70,8 @@ async function updateBook(
       UPDATE items 
       SET title = ?, total_copies = ?, available_copies = ?
       WHERE itemID = ?
+        AND item_type = 'Book'
+        AND is_active = 1
     
     `,
     [title, totalCopies, totalCopies, itemID],
