@@ -5,13 +5,36 @@ import Reports from "../component/reportsPage";
 import LibrarianLoans from "../component/LibrarianLoans";
 import "../styles/Librarian.css";
 
+// sub-views that are safe to restore after a reload
+const KEEP_VIEWS = ["inventory", "users", "reports", "loans"];
+
 function LibrarianHome({
   user,
   onNavigate,
   initialView = "menu",
   focusLoanID = null,
 }) {
-  const [view, setView] = useState(initialView);
+  const [view, setView] = useState(() => {
+    // a deep-link (e.g. "Review return" opens loans) always wins
+    if (initialView !== "menu") return initialView;
+    // otherwise, on a plain reload, stay on the sub-view we were last on
+    try {
+      const saved = localStorage.getItem("librarianView");
+      return KEEP_VIEWS.includes(saved) ? saved : "menu";
+    } catch {
+      return "menu";
+    }
+  });
+
+  // remember the current sub-view so a reload keeps it
+  function go(next) {
+    setView(next);
+    try {
+      localStorage.setItem("librarianView", next);
+    } catch {
+      // ignore: storage blocked
+    }
+  }
 
   return (
     <div className="librarian-dashboard">
@@ -19,16 +42,16 @@ function LibrarianHome({
 
       {view === "menu" && (
         <div className="dash-menu">
-          <button className="dash-button" onClick={() => setView("inventory")}>
+          <button className="dash-button" onClick={() => go("inventory")}>
             Manage Inventory
           </button>
-          <button className="dash-button" onClick={() => setView("users")}>
+          <button className="dash-button" onClick={() => go("users")}>
             Manage users
           </button>
-          <button className="dash-button" onClick={() => setView("reports")}>
+          <button className="dash-button" onClick={() => go("reports")}>
             Reports
           </button>
-          <button className="dash-button" onClick={() => setView("loans")}>
+          <button className="dash-button" onClick={() => go("loans")}>
             Manage loans
           </button>
           <button
@@ -41,7 +64,7 @@ function LibrarianHome({
       )}
 
       {view !== "menu" && (
-        <button className="app-back-button" onClick={() => setView("menu")}>
+        <button className="app-back-button" onClick={() => go("menu")}>
           ← Back
         </button>
       )}

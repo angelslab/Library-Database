@@ -282,6 +282,7 @@ function App() {
   function handleLogin(user) {
     localStorage.setItem("token", user.token);
     localStorage.setItem("user", JSON.stringify(user));
+    localStorage.removeItem("librarianView");
     setCurrentUser(user);
     setUnreadCount(0);
     goTo(user.role === "librarian" ? "home" : "catalog");
@@ -290,6 +291,7 @@ function App() {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("librarianView");
     setCurrentUser(null);
     setMyHolds([]);
     goTo("catalog");

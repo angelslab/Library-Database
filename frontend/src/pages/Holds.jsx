@@ -42,7 +42,24 @@ async function fetchHolds(userID) {
 function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState("active");
+  const [tab, setTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem("holdsTab");
+      return TABS.some((t) => t.key === saved) ? saved : "active";
+    } catch {
+      return "active";
+    }
+  });
+
+  // remember the chosen tab so a reload keeps it
+  function selectTab(key) {
+    setTab(key);
+    try {
+      localStorage.setItem("holdsTab", key);
+    } catch {
+      // ignore: storage blocked
+    }
+  }
   const [cancelling, setCancelling] = useState(null);
 
   // load when the page opens (and again after a borrow, when refreshKey changes)
@@ -163,7 +180,7 @@ function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
             role="tab"
             aria-selected={tab === item.key}
             className={`hf-tab ${tab === item.key ? "hf-tab-active" : ""}`}
-            onClick={() => setTab(item.key)}
+            onClick={() => selectTab(item.key)}
           >
             {item.label} ({data[item.key].length})
           </button>
