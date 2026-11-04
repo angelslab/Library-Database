@@ -45,9 +45,9 @@ function LibrarianHome({
 
       {view === "menu" && (
         <div className="dash-menu">
-          <button className="dash-button" onClick={() => go("inventory")}>
+          {/* <button className="dash-button" onClick={() => go("inventory")}>
             Manage Inventory
-          </button>
+          </button> */}
           <button className="dash-button" onClick={() => go("users")}>
             Manage users
           </button>
