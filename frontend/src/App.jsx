@@ -36,13 +36,25 @@ function App() {
         "profile",
         "notification",
         "librarianLoans",
+        "itemDetails",
       ];
+      // itemDetails can only be restored if we also know which item
+      if (saved === "itemDetails" && !localStorage.getItem("itemID")) {
+        return "catalog";
+      }
       return keep.includes(saved) ? saved : "catalog";
     } catch {
       return "catalog";
     }
   });
-  const [selectedItemID, setSelectedItemID] = useState(null);
+  const [selectedItemID, setSelectedItemID] = useState(() => {
+    try {
+      const saved = localStorage.getItem("itemID");
+      return saved ? Number(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [selectedItem, setSelectedItem] = useState(null);
   const [message, setMessage] = useState("");
   const [borrowItem, setBorrowItem] = useState(null);
@@ -57,6 +69,10 @@ function App() {
     setPage(nextPage);
     try {
       localStorage.setItem("page", nextPage);
+      // remember the item so a reload stays on its details page
+      if (nextPage === "itemDetails" && itemID != null) {
+        localStorage.setItem("itemID", String(itemID));
+      }
     } catch {
       // ignore: private mode / storage blocked
     }
@@ -110,6 +126,11 @@ function App() {
     setMessage("");
     setFocusLoanID(loanID);
     setPage("librarianLoans");
+    try {
+      localStorage.setItem("page", "librarianLoans");
+    } catch {
+      // ignore: storage blocked
+    }
   }
 
   // messages show at the top of the page, so scroll up to make sure they are seen
