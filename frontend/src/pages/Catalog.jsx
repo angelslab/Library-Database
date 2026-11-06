@@ -115,7 +115,9 @@ function Catalog({
       {!isSearching && (
         <div
           className="browse-grid"
-          style={isLibrarian ? { gridTemplateColumns: "minmax(0, 1fr)" } : undefined}
+          style={
+            isLibrarian ? { gridTemplateColumns: "minmax(0, 1fr)" } : undefined
+          }
         >
           <div className="browse-main">
             {/* Recommended — users only (not librarian inventory view) */}
@@ -200,69 +202,12 @@ function Catalog({
                   ))}
                 </div>
               ) : (
-                <p className="catalog-empty">No items found in this category.</p>
+                <p className="catalog-empty">
+                  No items found in this category.
+                </p>
               )}
             </section>
           </div>
-
-          {/* Featured side panel — users only */}
-          {!isLibrarian && featured && (
-            <aside className="browse-featured">
-              <p className="bf-eyebrow">FEATURED</p>
-
-              <div className={`bf-cover ${featuredCoverClass}`}>
-                {featured.image_url ? (
-                  <img src={featured.image_url} alt={`${featured.title} cover`} />
-                ) : (
-                  <h4 className="bf-cover-title">{featured.title}</h4>
-                )}
-              </div>
-
-              <h3 className="bf-title">{featured.title}</h3>
-              {authorOf(featured) && (
-                <p className="bf-author">{authorOf(featured)}</p>
-              )}
-
-              <p
-                className={`bf-avail ${
-                  featured.available_copies <= 0 ? "out" : ""
-                }`}
-              >
-                ● {featured.available_copies} of {featured.total_copies} available
-              </p>
-
-              <div className="bf-actions">
-                {!isLibrarian &&
-                  (featured.available_copies > 0 ? (
-                    <button
-                      type="button"
-                      className="bf-btn bf-btn-primary"
-                      onClick={() => onBorrow && onBorrow(featured)}
-                    >
-                      Borrow Now
-                    </button>
-                  ) : (
-                    onPlaceHold && (
-                      <button
-                        type="button"
-                        className="bf-btn bf-btn-primary"
-                        onClick={() => onPlaceHold(featured)}
-                      >
-                        Place hold
-                      </button>
-                    )
-                  ))}
-
-                <button
-                  type="button"
-                  className="bf-btn bf-btn-ghost"
-                  onClick={() => onSelectItem(featured.itemID)}
-                >
-                  View details
-                </button>
-              </div>
-            </aside>
-          )}
         </div>
       )}
     </div>
