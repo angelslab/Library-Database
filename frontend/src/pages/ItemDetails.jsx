@@ -185,35 +185,39 @@ function ItemDetails({
             </p>
           )}
 
-          {!isAvailable && hold && onCancelHold ? (
-            <button
-              type="button"
-              className="item-details-borrow item-button-cancel-hold"
-              onClick={() => onCancelHold(hold)}
-            >
-              Cancel hold
-            </button>
-          ) : !isAvailable && onPlaceHold ? (
-            <button
-              type="button"
-              className="item-details-borrow"
-              onClick={() => onPlaceHold(item)}
-            >
-              Place hold
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="item-details-borrow"
-              disabled={!isAvailable || !onBorrow}
-              onClick={() => onBorrow(item)}
-            >
-              {!isAvailable
-                ? "Unavailable"
-                : onBorrow
-                  ? "Borrow Item"
-                  : "Borrowing unavailable"}
-            </button>
+          {(user?.role === "student" || user?.role === "faculty") && (
+            <>
+              {!isAvailable && hold && onCancelHold ? (
+                <button
+                  type="button"
+                  className="item-details-borrow item-button-cancel-hold"
+                  onClick={() => onCancelHold(hold)}
+                >
+                  Cancel hold
+                </button>
+              ) : !isAvailable && onPlaceHold ? (
+                <button
+                  type="button"
+                  className="item-details-borrow"
+                  onClick={() => onPlaceHold(item)}
+                >
+                  Place hold
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="item-details-borrow"
+                  disabled={!isAvailable || !onBorrow}
+                  onClick={() => onBorrow(item)}
+                >
+                  {!isAvailable
+                    ? "Unavailable"
+                    : onBorrow
+                      ? "Borrow Item"
+                      : "Borrowing unavailable"}
+                </button>
+              )}
+            </>
           )}
         </div>
       </section>

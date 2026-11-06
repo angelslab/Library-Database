@@ -71,10 +71,16 @@ function Icon({ name }) {
 }
 
 // Persistent navigation sidebar for the librarian.
-function LibrarianSidebar({ activeView, onSelect, onNavigate, onLogout, unreadCount = 0 }) {
+function LibrarianSidebar({
+  activeView,
+  onSelect,
+  onNavigate,
+  onLogout,
+  unreadCount = 0,
+}) {
   const items = [
     { view: "menu", label: "Dashboard", icon: "dash" },
-    { view: "inventory", label: "Manage Inventory", icon: "inv" },
+    { view: "inventory", label: "Catalog", icon: "inv" },
     { view: "users", label: "Manage Users", icon: "users" },
     { view: "loans", label: "Manage Loans", icon: "loans" },
     { view: "reports", label: "Reports", icon: "reports" },
@@ -83,7 +89,9 @@ function LibrarianSidebar({ activeView, onSelect, onNavigate, onLogout, unreadCo
   return (
     <aside className="lib-sidebar">
       <div className="lib-brand">
-        <span className="lib-mark" aria-hidden="true">📚</span>
+        <span className="lib-mark" aria-hidden="true">
+          📚
+        </span>
         <span>The Library</span>
       </div>
 
@@ -116,7 +124,9 @@ function LibrarianSidebar({ activeView, onSelect, onNavigate, onLogout, unreadCo
             <Icon name="notif" />
           </span>
           <span className="lib-nav-text">Notifications</span>
-          {unreadCount > 0 && <span className="lib-nav-badge">{unreadCount}</span>}
+          {unreadCount > 0 && (
+            <span className="lib-nav-badge">{unreadCount}</span>
+          )}
         </button>
 
         <button type="button" className="lib-nav-item" onClick={onLogout}>
