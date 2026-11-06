@@ -243,7 +243,11 @@ function LibrarianHome({
                   key={a.view}
                   type="button"
                   className="dash-action"
-                  onClick={() => go(a.view)}
+                  onClick={() =>
+                    a.view === "inventory"
+                      ? onNavigate("catalog")
+                      : go(a.view)
+                  }
                 >
                   <span className="dash-action-icon">
                     <ActionIcon name={a.icon} />
