@@ -1,3 +1,4 @@
+
 const db = require("../db");
 
 async function fetchBooks() {
@@ -30,23 +31,40 @@ async function addBook(
   totalCopies,
   image_url,
 ) {
-  //items table
-  const result = await db.query(
-    `INSERT into items (title, item_type, total_copies, available_copies, image_url)
+
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    //items table
+    const result = await connection.query(
+      `INSERT into items (title, item_type, total_copies, available_copies, image_url)
         VALUES (?, 'Book', ?, ?, ?)`,
-    [title, totalCopies, totalCopies, image_url || null],
-  );
+      [title, totalCopies, totalCopies, image_url || null],
+    );
 
-  const itemID = result[0].insertId;
+    const itemID = result[0].insertId;
 
-  //book table
-  await db.query(
-    `INSERT into book(author, itemID, isbn, publication_year) 
+    //book table
+    await connection.query(
+      `INSERT into book(author, itemID, isbn, publication_year) 
     VALUES (?, ?, ?, ?)`,
-    [author, itemID, isbn, publication_year],
-  );
+      [author, itemID, isbn, publication_year],
+    );
 
-  return itemID;
+    await connection.commit();
+    return itemID;
+
+
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+
+
 }
 
 async function deleteBook(itemID) {
@@ -64,6 +82,7 @@ async function deleteBook(itemID) {
   return result[0].affectedRows;
 }
 
+
 async function updateBook(
   itemID,
   title,
@@ -73,35 +92,96 @@ async function updateBook(
   totalCopies,
   image_url,
 ) {
-  // updating items table
-  const result = await db.query(
-    `
-      UPDATE items 
-      SET title = ?, total_copies = ?, available_copies = ?, image_url = ? 
-      WHERE itemID = ?
-        AND item_type = 'Book'
-        AND is_active = 1
-    
-    `,
-    [title, totalCopies, totalCopies, image_url || null, itemID],
-  );
+  const connection = await db.getConnection();
 
-  if (result[0].affectedRows === 0) {
-    return false;
-  }
+  try {
+    await connection.beginTransaction();
 
-  //updating books table
-  await db.query(
-    `
-      UPDATE book
-        SET author = ?, isbn = ?, publication_year = ?
+    // Check whether the book exists
+    const [rows] = await connection.query(
+      `
+        SELECT total_copies, available_copies
+        FROM items
         WHERE itemID = ?
-      
-    `,
-    [author, isbn, publication_year, itemID],
-  );
+          AND item_type = 'Book'
+          AND is_active = 1
+      `,
+      [itemID],
+    );
 
-  return true;
+    if (rows.length === 0) {
+      await connection.rollback();
+      return false;
+    }
+
+    // Check for duplicate ISBN, excluding the current book
+    const [existingBook] = await connection.query(
+      `
+        SELECT itemID
+        FROM book
+        WHERE isbn = ?
+          AND itemID != ?
+      `,
+      [isbn, itemID],
+    );
+
+    if (existingBook.length > 0) {
+      throw new Error(
+        "A book with this ISBN already exists.",
+      );
+    }
+
+    // Calculate currently borrowed copies
+    const borrowedCopies =
+      rows[0].total_copies - rows[0].available_copies;
+
+    // Prevent total copies from going below borrowed copies
+    if (totalCopies < borrowedCopies) {
+      throw new Error(
+        `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
+      );
+    }
+
+    const newAvailCopies = totalCopies - borrowedCopies;
+
+    // Update items table
+    await connection.query(
+      `
+        UPDATE items
+        SET title = ?,
+            total_copies = ?,
+            available_copies = ?,
+            image_url = ?
+        WHERE itemID = ?
+          AND item_type = 'Book'
+          AND is_active = 1
+      `,
+      [title, totalCopies, newAvailCopies, image_url || null, itemID],
+    );
+
+    // Update book table
+    await connection.query(
+      `
+        UPDATE book
+        SET author = ?,
+            isbn = ?,
+            publication_year = ?
+        WHERE itemID = ?
+      `,
+      [author, isbn, publication_year, itemID],
+    );
+
+    await connection.commit();
+
+    return true;
+
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
+
 
 module.exports = { fetchBooks, addBook, deleteBook, updateBook };
