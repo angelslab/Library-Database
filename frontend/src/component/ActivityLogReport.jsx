@@ -7,6 +7,7 @@ function ActivityLogReport({ onBack }) {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -27,9 +28,22 @@ function ActivityLogReport({ onBack }) {
     };
   }, []);
 
+  const term = search.trim().toLowerCase();
+  const shown = rows
+    ? rows.filter(
+        (r) =>
+          !term ||
+          [r.user_name, r.item_title, r.action, r.item_type]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(term),
+      )
+    : rows;
+
   const saveCSV = () => {
     const header = ["When", "Action", "User", "Item", "Type", "Loan ID"];
-    const data = (rows || []).map((r) => [
+    const data = (shown || []).map((r) => [
       r.logged_at,
       r.action,
       r.user_name,
@@ -79,6 +93,18 @@ function ActivityLogReport({ onBack }) {
         )}
       </div>
 
+      {rows && rows.length > 0 && (
+        <div className="activity-print-hide">
+          <input
+            type="text"
+            placeholder="Search by user, item, action, or type…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "100%", maxWidth: 440, marginBottom: 16 }}
+          />
+        </div>
+      )}
+
       <div className="activity-sheet">
         <h3>Activity Log</h3>
         <p
@@ -113,7 +139,7 @@ function ActivityLogReport({ onBack }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {shown.map((r) => (
                   <tr key={r.auditID}>
                     <td>{r.logged_at}</td>
                     <td
@@ -134,7 +160,7 @@ function ActivityLogReport({ onBack }) {
             </table>
 
             <p style={{ fontSize: 12, marginTop: 14, fontStyle: "italic" }}>
-              Generated {new Date().toLocaleString()} · {rows.length} entries
+              Generated {new Date().toLocaleString()} · {shown.length} entries
             </p>
           </>
         )}

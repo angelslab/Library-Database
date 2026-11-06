@@ -184,8 +184,13 @@ function LibrarianLoans({ user, focusLoanID = null }) {
       const value = loan[dateField];
 
       if (!value) return false;
-      if (range.from && value < range.from) return false;
-      if (range.to && value > range.to) return false;
+
+      // normalize to YYYY-MM-DD so a time component (e.g. "2026-10-20T00:00:00Z")
+      // doesn't push a same-day loan past the "to" boundary
+      const day = String(value).slice(0, 10);
+
+      if (range.from && day < range.from) return false;
+      if (range.to && day > range.to) return false;
 
       return true;
     });
@@ -203,24 +208,42 @@ function LibrarianLoans({ user, focusLoanID = null }) {
         }`;
 
   const buttonStyle = (active) => ({
-    padding: "6px 12px",
+    padding: "8px 16px",
     cursor: "pointer",
-    fontWeight: active ? 700 : 400,
-    background: active ? "#4075aa" : undefined,
-    color: active ? "#fff" : undefined,
+    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: active ? 600 : 500,
+    background: active ? "#4075aa" : "#10253e",
+    color: active ? "#f6f9fc" : "#8295a9",
+    border: `1px solid ${active ? "#4075aa" : "#263e59"}`,
   });
 
   return (
     <div style={{ marginTop: 20, textAlign: "left" }}>
+      <h2 style={{ fontFamily: "Georgia, serif", fontSize: 26, margin: "0 0 18px" }}>
+        Manage Loans
+      </h2>
       <form onSubmit={handleSearch} style={{ display: "flex", gap: 8 }}>
         <input
           type="text"
           placeholder="Search by borrower, email, title, author, brand, ISBN, or loan number"
           value={keywordInput}
           onChange={(e) => setKeywordInput(e.target.value)}
-          style={{ flex: 1, padding: 8 }}
+          style={{ flex: 1 }}
         />
-        <button type="submit">Search</button>
+        <button
+          type="submit"
+          style={{
+            padding: "10px 18px",
+            borderRadius: 10,
+            background: "#4075aa",
+            border: "none",
+            color: "#f6f9fc",
+            fontWeight: 600,
+          }}
+        >
+          Search
+        </button>
         {keyword && (
           <button
             type="button"

@@ -1,22 +1,231 @@
-/* Librarian dashboard menu */
+/* ============================================================
+   LIBRARIAN DASHBOARD
+   ============================================================ */
+
+.dash {
+  min-width: 0;
+}
+
+.dash-h {
+  font-family: var(--heading, Georgia, serif);
+  font-size: 26px;
+  margin: 0 0 4px;
+}
+
+.dash-sub {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+
+.dash-h3 {
+  font-family: var(--heading, Georgia, serif);
+  font-size: 19px;
+  margin: 0 0 14px;
+}
+
+/* stat tiles */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.dash-stat {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  background: var(--card);
+  border: 1px solid #263e59;
+  border-radius: 14px;
+}
+
+.dash-stat-label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dash-stat-value {
+  font-size: 30px;
+  font-weight: 700;
+  margin-top: 10px;
+  color: var(--foreground);
+}
+
+.dash-stat-value.green { color: #5fbf8a; }
+.dash-stat-value.gold { color: var(--accent); }
+.dash-stat-value.red { color: #f3a0a0; }
+
+/* ---- Overview donut charts ---- */
+.dash-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.dash-chart {
+  background: var(--card);
+  border: 1px solid #263e59;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.dash-chart-title {
+  font-family: var(--heading, Georgia, serif);
+  font-size: 16px;
+  margin: 0 0 16px;
+}
+
+.donut-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.donut {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.donut-svg {
+  transform: rotate(-90deg);
+}
+
+.donut-mid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  place-content: center;
+  text-align: center;
+  gap: 3px
+}
+
+.donut-big {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.donut-lbl {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 170px;
+}
+
+.donut-leg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.donut-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.donut-n {
+  color: var(--muted-foreground);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.donut-empty {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+/* quick-action cards */
+.dash-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.dash-action {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid #263e59;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 120ms ease;
+}
+
+.dash-action:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.dash-action-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--secondary);
+}
+
+.dash-action-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dash-action-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.dash-action-desc {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.dash-action-go {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   Legacy dash-button menu (kept for any other callers)
+   ============================================================ */
 
 .librarian-dashboard {
   max-width: 1100px;
   margin: 0 auto;
 }
 
-.librarian-dashboard > h2 {
-  margin: 0 0 24px;
-  font-family: var(--heading, Georgia, "Times New Roman", serif);
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--foreground);
-}
-
 .dash-menu {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 12px;
 }
 
@@ -30,10 +239,6 @@
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    transform 120ms ease;
 }
 
 .dash-button:hover {
@@ -46,10 +251,4 @@
   background: var(--primary);
   border-color: transparent;
   font-weight: 600;
-}
-
-.dash-button-primary:hover {
-  background: var(--primary);
-  border-color: transparent;
-  opacity: 0.92;
 }
