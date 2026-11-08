@@ -1,4 +1,3 @@
-
 const db = require("../db");
 
 async function fetchBooks() {
@@ -31,7 +30,6 @@ async function addBook(
   totalCopies,
   image_url,
 ) {
-
   const connection = await db.getConnection();
 
   try {
@@ -55,16 +53,12 @@ async function addBook(
 
     await connection.commit();
     return itemID;
-
-
   } catch (error) {
     await connection.rollback();
     throw error;
   } finally {
     connection.release();
   }
-
-
 }
 
 async function deleteBook(itemID) {
@@ -81,7 +75,6 @@ async function deleteBook(itemID) {
 
   return result[0].affectedRows;
 }
-
 
 async function updateBook(
   itemID,
@@ -126,14 +119,11 @@ async function updateBook(
     );
 
     if (existingBook.length > 0) {
-      throw new Error(
-        "A book with this ISBN already exists.",
-      );
+      throw new Error("A book with this ISBN already exists.");
     }
 
     // Calculate currently borrowed copies
-    const borrowedCopies =
-      rows[0].total_copies - rows[0].available_copies;
+    const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
     // Prevent total copies from going below borrowed copies
     if (totalCopies < borrowedCopies) {
@@ -174,7 +164,6 @@ async function updateBook(
     await connection.commit();
 
     return true;
-
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -182,6 +171,5 @@ async function updateBook(
     connection.release();
   }
 }
-
 
 module.exports = { fetchBooks, addBook, deleteBook, updateBook };

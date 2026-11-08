@@ -1,4 +1,3 @@
-
 const db = require("../db");
 
 async function fetchMedia() {
@@ -22,7 +21,6 @@ async function fetchMedia() {
 }
 
 async function addMedia(title, totalCopies, author, image_url) {
-
   const connection = await db.getConnection();
 
   try {
@@ -72,16 +70,12 @@ async function addMedia(title, totalCopies, author, image_url) {
     await connection.commit();
 
     return itemID;
-
   } catch (error) {
     await connection.rollback();
     throw error;
   } finally {
     connection.release();
   }
-
-
-
 }
 
 async function deleteMedia(itemID) {
@@ -98,7 +92,6 @@ async function deleteMedia(itemID) {
 
   return result[0].affectedRows;
 }
-
 
 async function editMedia(itemID, title, totalCopies, author, image_url) {
   const connection = await db.getConnection();
@@ -144,8 +137,7 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
     }
 
     // Calculate currently borrowed copies
-    const borrowedCopies =
-      rows[0].total_copies - rows[0].available_copies;
+    const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
     // Prevent total copies from going below borrowed copies
     if (totalCopies < borrowedCopies) {
@@ -184,7 +176,6 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
     await connection.commit();
 
     return true;
-
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -192,6 +183,5 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
     connection.release();
   }
 }
-
 
 module.exports = { fetchMedia, addMedia, deleteMedia, editMedia };

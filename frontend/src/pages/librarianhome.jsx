@@ -46,8 +46,17 @@ function ActionIcon({ name }) {
     ),
   };
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
-      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {paths[name]}
     </svg>
   );
@@ -144,10 +153,30 @@ function LibrarianHome({
   }
 
   const actions = [
-    { view: "inventory", icon: "inv", title: "Manage Inventory", desc: "Add, edit, and track copies of books, media, and devices." },
-    { view: "users", icon: "users", title: "Manage Users", desc: "View and manage student and faculty accounts." },
-    { view: "loans", icon: "loans", title: "Manage Loans", desc: "Approve borrow and return requests." },
-    { view: "reports", icon: "reports", title: "Reports", desc: "Most-borrowed items, overdue lists, and the activity log." },
+    {
+      view: "inventory",
+      icon: "inv",
+      title: "Manage Inventory",
+      desc: "Add, edit, and track copies of books, media, and devices.",
+    },
+    {
+      view: "users",
+      icon: "users",
+      title: "Manage Users",
+      desc: "View and manage student and faculty accounts.",
+    },
+    {
+      view: "loans",
+      icon: "loans",
+      title: "Manage Loans",
+      desc: "Approve borrow and return requests.",
+    },
+    {
+      view: "reports",
+      icon: "reports",
+      title: "Reports",
+      desc: "Most-borrowed items, overdue lists, and the activity log.",
+    },
   ];
 
   return (
@@ -210,8 +239,16 @@ function LibrarianHome({
                     total={stats.active}
                     totalLabel="loans"
                     segments={[
-                      { label: "Students", value: stats.byRole.student || 0, color: "#4075aa" },
-                      { label: "Faculty", value: stats.byRole.faculty || 0, color: "#e5bf6d" },
+                      {
+                        label: "Students",
+                        value: stats.byRole.student || 0,
+                        color: "#4075aa",
+                      },
+                      {
+                        label: "Faculty",
+                        value: stats.byRole.faculty || 0,
+                        color: "#e5bf6d",
+                      },
                     ]}
                   />
                 ) : (
@@ -225,9 +262,21 @@ function LibrarianHome({
                     total={stats.totalItems}
                     totalLabel="items"
                     segments={[
-                      { label: "Books", value: stats.byType.Book || 0, color: "#4075aa" },
-                      { label: "Media", value: stats.byType.Media || 0, color: "#e5bf6d" },
-                      { label: "Devices", value: stats.byType.Device || 0, color: "#5fbf8a" },
+                      {
+                        label: "Books",
+                        value: stats.byType.Book || 0,
+                        color: "#4075aa",
+                      },
+                      {
+                        label: "Media",
+                        value: stats.byType.Media || 0,
+                        color: "#e5bf6d",
+                      },
+                      {
+                        label: "Devices",
+                        value: stats.byType.Device || 0,
+                        color: "#5fbf8a",
+                      },
                     ]}
                   />
                 ) : (
@@ -244,9 +293,7 @@ function LibrarianHome({
                   type="button"
                   className="dash-action"
                   onClick={() =>
-                    a.view === "inventory"
-                      ? onNavigate("catalog")
-                      : go(a.view)
+                    a.view === "inventory" ? onNavigate("catalog") : go(a.view)
                   }
                 >
                   <span className="dash-action-icon">
@@ -260,6 +307,28 @@ function LibrarianHome({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+        {view === "menu" && (
+          <div className="dash-menu">
+            {/* <button className="dash-button" onClick={() => go("inventory")}>
+            Manage Inventory
+          </button> */}
+            <button className="dash-button" onClick={() => go("users")}>
+              Manage users
+            </button>
+            <button className="dash-button" onClick={() => go("reports")}>
+              Reports
+            </button>
+            <button className="dash-button" onClick={() => go("loans")}>
+              Manage loans
+            </button>
+            <button
+              className="dash-button dash-button-primary"
+              onClick={() => onNavigate("catalog")}
+            >
+              Go to Catalog
+            </button>
           </div>
         )}
 

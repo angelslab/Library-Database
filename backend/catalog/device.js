@@ -1,4 +1,3 @@
-
 const db = require("../db");
 
 async function fetchDevices() {
@@ -23,11 +22,9 @@ async function fetchDevices() {
 }
 
 async function addDevice(title, totalCopies, brand, deviceType, image_url) {
-
   const connection = await db.getConnection();
 
   try {
-
     await connection.beginTransaction();
 
     const existingDevice = await connection.query(
@@ -45,7 +42,7 @@ async function addDevice(title, totalCopies, brand, deviceType, image_url) {
 
     if (existingDevice[0].length > 0) {
       throw new Error(
-        "This device already exists with the same title, brand, and device type."
+        "This device already exists with the same title, brand, and device type.",
       );
     }
 
@@ -73,16 +70,12 @@ async function addDevice(title, totalCopies, brand, deviceType, image_url) {
     await connection.commit();
 
     return itemID;
-
   } catch (error) {
     await connection.rollback();
     throw error;
   } finally {
     connection.release();
   }
-
-
-
 }
 
 async function deleteDevice(itemID) {
@@ -99,7 +92,6 @@ async function deleteDevice(itemID) {
 
   return result[0].affectedRows;
 }
-
 
 async function editDevice(
   itemID,
@@ -153,8 +145,7 @@ async function editDevice(
     }
 
     // Calculate currently borrowed copies
-    const borrowedCopies =
-      rows[0].total_copies - rows[0].available_copies;
+    const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
     // Prevent total copies from going below borrowed copies
     if (totalCopies < borrowedCopies) {
@@ -193,7 +184,6 @@ async function editDevice(
     await connection.commit();
 
     return true;
-
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -201,6 +191,5 @@ async function editDevice(
     connection.release();
   }
 }
-
 
 module.exports = { fetchDevices, addDevice, deleteDevice, editDevice };

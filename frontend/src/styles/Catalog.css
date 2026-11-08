@@ -159,7 +159,7 @@
 /* Responsive item grid */
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 18px;
   width: 100%;
 }
@@ -189,11 +189,6 @@
   .catalog-results-heading {
     align-items: flex-start;
   }
-}
-
-/* Main catalog grid */
-.catalog-results-section .catalog-grid {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 /* Tablet */
