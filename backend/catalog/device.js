@@ -22,28 +22,60 @@ async function fetchDevices() {
 }
 
 async function addDevice(title, totalCopies, brand, deviceType, image_url) {
-  // item table
-  const results = await db.query(
-    `
-      INSERT into items(title, item_type, total_copies, image_url)
-      VALUES (?, 'Device', ?, ?)
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const existingDevice = await connection.query(
+      `
+        SELECT items.itemID
+        FROM items, device
+        WHERE items.itemID = device.itemID
+          AND LOWER(TRIM(items.title)) = LOWER(TRIM(?))
+          AND LOWER(TRIM(device.brand)) = LOWER(TRIM(?))
+          AND LOWER(TRIM(device.device_type)) = LOWER(TRIM(?))
+          AND items.is_active = 1
+      `,
+      [title, brand, deviceType],
+    );
+
+    if (existingDevice[0].length > 0) {
+      throw new Error(
+        "This device already exists with the same title, brand, and device type.",
+      );
+    }
+
+    // item table
+    const results = await connection.query(
+      `
+      INSERT into items(title, item_type, total_copies, available_copies, image_url)
+      VALUES (?, 'Device', ?, ?, ?)
     
     `,
-    [title, totalCopies, image_url || null],
-  );
+      [title, totalCopies, totalCopies, image_url || null],
+    );
 
-  const itemID = results[0].insertId;
+    const itemID = results[0].insertId;
 
-  //device table
-  await db.query(
-    `
+    //device table
+    await connection.query(
+      `
     INSERT into device(itemID, device_type, brand)
     VALUES(?, ?, ?)
     `,
-    [itemID, deviceType, brand],
-  );
+      [itemID, deviceType, brand],
+    );
 
-  return itemID;
+    await connection.commit();
+
+    return itemID;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 async function deleteDevice(itemID) {
@@ -69,25 +101,53 @@ async function editDevice(
   deviceType,
   image_url,
 ) {
+  const connection = await db.getConnection();
+
   try {
-    const [rows] = await db.query(
-      `SELECT total_copies, available_copies
-       FROM items
-       WHERE itemID = ? 
-        AND item_type = 'Device'
-        AND is_active = 1
+    await connection.beginTransaction();
+
+    // Check whether the device exists
+    const [rows] = await connection.query(
+      `
+        SELECT total_copies, available_copies
+        FROM items
+        WHERE itemID = ?
+          AND item_type = 'Device'
+          AND is_active = 1
       `,
       [itemID],
     );
 
     if (rows.length === 0) {
+      await connection.rollback();
       return false;
     }
 
-    //calculate currently borrowed copies
+    // Check for duplicate devices, excluding the current item
+    const [existingDevice] = await connection.query(
+      `
+        SELECT items.itemID
+        FROM items, device
+        WHERE items.itemID = device.itemID
+          AND LOWER(TRIM(items.title)) = LOWER(TRIM(?))
+          AND LOWER(TRIM(device.brand)) = LOWER(TRIM(?))
+          AND LOWER(TRIM(device.device_type)) = LOWER(TRIM(?))
+          AND items.itemID != ?
+          AND items.is_active = 1
+      `,
+      [title, brand, deviceType, itemID],
+    );
+
+    if (existingDevice.length > 0) {
+      throw new Error(
+        "This device already exists with the same title, brand, and device type.",
+      );
+    }
+
+    // Calculate currently borrowed copies
     const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
-    //prevent totalcopies going below borrowedcopies
+    // Prevent total copies from going below borrowed copies
     if (totalCopies < borrowedCopies) {
       throw new Error(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
@@ -96,30 +156,39 @@ async function editDevice(
 
     const newAvailCopies = totalCopies - borrowedCopies;
 
-    // items table
-    await db.query(
+    // Update items table
+    await connection.query(
       `
-      UPDATE items
-      SET title = ? , total_copies = ?, available_copies = ? ,image_url = ?
-      WHERE itemID = ?
-        
-    `,
-      [title, totalCopies, newAvailCopies, image_url, itemID],
+        UPDATE items
+        SET title = ?,
+            total_copies = ?,
+            available_copies = ?,
+            image_url = ?
+        WHERE itemID = ?
+          AND item_type = 'Device'
+          AND is_active = 1
+      `,
+      [title, totalCopies, newAvailCopies, image_url || null, itemID],
     );
 
-    //device
-    await db.query(
+    // Update device table
+    await connection.query(
       `
-      UPDATE device
-      SET device_type =? , brand = ?
-      WHERE itemID = ?
-    `,
+        UPDATE device
+        SET device_type = ?, brand = ?
+        WHERE itemID = ?
+      `,
       [deviceType, brand, itemID],
     );
 
+    await connection.commit();
+
     return true;
   } catch (error) {
+    await connection.rollback();
     throw error;
+  } finally {
+    connection.release();
   }
 }
 

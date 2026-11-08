@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { money, usDate, downloadCSV } from "./reportHelpers";
 
 const CHARGE_TYPES = ["Late", "Printer", "Surcharge"];
@@ -53,25 +53,25 @@ function FinesReport({ onBack }) {
     const [ran, setRan] = useState(null); // { when, params } for the output header
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [search, setSearch] = useState(""); // free-text filter on the results
 
     const setParam = (name, value) => setParams({ ...params, [name]: value });
 
-    const viewReport = async (e) => {
-        e.preventDefault();
+    const runReport = async (p) => {
         setError("");
 
-        const borrower = params.borrower.trim();
+        const borrower = p.borrower.trim();
         if (borrower !== "" && borrower.length < 2) {
             setError("Type 2 or more characters to search for a borrower.");
             return;
         }
-    if (params.from && params.to && params.from > params.to) {
+    if (p.from && p.to && p.from > p.to) {
         setError("'Issued from' must be on or before 'Issued to'.");
         return;
     }
 
     const query = new URLSearchParams();
-    for (const [name, value] of Object.entries({ ...params, borrower })) {
+    for (const [name, value] of Object.entries({ ...p, borrower })) {
         if (value !== "") query.set(name, value);
     }
 
@@ -82,7 +82,7 @@ function FinesReport({ onBack }) {
         const data = await res.json();
         if (res.ok) {
             setRows(data);
-            setRan({ when: new Date(), params: { ...params, borrower } });
+            setRan({ when: new Date(), params: { ...p, borrower } });
         } else {
             setError(data.error || "Something went wrong");
         }
@@ -91,6 +91,17 @@ function FinesReport({ onBack }) {
     }
     setLoading(false);
     };
+
+    const viewReport = (e) => {
+        e.preventDefault();
+        runReport(params);
+    };
+
+    // show every charge straight away; the search narrows it down (TA feedback)
+    useEffect(() => {
+        runReport(EMPTY_PARAMS);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
   // ---------- request form ----------
     if (rows === null) {
@@ -184,7 +195,18 @@ function FinesReport({ onBack }) {
     }
 
   // ---------- formatted output ----------
-    const groups = groupByBorrower(rows);
+    const term = search.trim().toLowerCase();
+    const shownRows = term
+        ? rows.filter((r) =>
+            [r.borrower, r.item_title, r.item_type, r.charge_type, r.role]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase()
+                .includes(term),
+          )
+        : rows;
+
+    const groups = groupByBorrower(shownRows);
     const totals = groups.reduce(
     (t, g) => ({
         collected: t.collected + g.collected,
@@ -205,7 +227,7 @@ function FinesReport({ onBack }) {
         "Status",
         "Amount",
     ];
-    const data = rows.map((r) => [
+    const data = shownRows.map((r) => [
         r.borrower,
         r.role,
         usDate(r.issue_date),
@@ -260,10 +282,20 @@ return (
         }
         `}</style>
 
-        <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
             <button onClick={() => setRows(null)}>← Change parameters</button>
             <button onClick={saveCSV}>Save as CSV</button>
             <button onClick={() => window.print()}>Print / PDF</button>
+        </div>
+
+        <div className="report-screen" style={{ marginBottom: 16 }}>
+            <input
+                type="text"
+                placeholder="Search by borrower, item, charge type…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ width: "100%", maxWidth: 440 }}
+            />
         </div>
 
         <div
@@ -287,7 +319,7 @@ return (
             {describeFilters(ran.params)}
         </p>
 
-        {rows.length === 0 ? (
+        {shownRows.length === 0 ? (
             <p>No charges match these parameters.</p>
         ) : (
         <table

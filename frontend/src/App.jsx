@@ -6,6 +6,9 @@ import StudentHome from "./pages/studentHome";
 import FacultyHome from "./pages/facultyHome";
 import LibrarianHome from "./pages/librarianhome";
 import UserMenu from "./component/userMenu";
+import Sidebar from "./component/Sidebar";
+import TopBar from "./component/TopBar";
+import LibrarianSidebar from "./component/LibrarianSidebar";
 import Catalog from "./pages/Catalog";
 import ItemDetails from "./pages/ItemDetails";
 import AddItemForm from "./component/AddItemForm";
@@ -36,13 +39,25 @@ function App() {
         "profile",
         "notification",
         "librarianLoans",
+        "itemDetails",
       ];
+      // itemDetails can only be restored if we also know which item
+      if (saved === "itemDetails" && !localStorage.getItem("itemID")) {
+        return "catalog";
+      }
       return keep.includes(saved) ? saved : "catalog";
     } catch {
       return "catalog";
     }
   });
-  const [selectedItemID, setSelectedItemID] = useState(null);
+  const [selectedItemID, setSelectedItemID] = useState(() => {
+    try {
+      const saved = localStorage.getItem("itemID");
+      return saved ? Number(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [selectedItem, setSelectedItem] = useState(null);
   const [message, setMessage] = useState("");
   const [borrowItem, setBorrowItem] = useState(null);
@@ -57,6 +72,10 @@ function App() {
     setPage(nextPage);
     try {
       localStorage.setItem("page", nextPage);
+      // remember the item so a reload stays on its details page
+      if (nextPage === "itemDetails" && itemID != null) {
+        localStorage.setItem("itemID", String(itemID));
+      }
     } catch {
       // ignore: private mode / storage blocked
     }
@@ -110,6 +129,11 @@ function App() {
     setMessage("");
     setFocusLoanID(loanID);
     setPage("librarianLoans");
+    try {
+      localStorage.setItem("page", "librarianLoans");
+    } catch {
+      // ignore: storage blocked
+    }
   }
 
   // messages show at the top of the page, so scroll up to make sure they are seen
@@ -345,6 +369,47 @@ function App() {
     />
   );
 
+  // student / faculty get the persistent sidebar; librarian keeps the dropdown menu
+  const sidebar = currentUser && currentUser.role !== "librarian" && (
+    <Sidebar
+      activePage={page}
+      name={currentUser.first_name}
+      role={currentUser.role}
+      onNavigate={goTo}
+      onLogout={handleLogout}
+      unreadCount={unreadCount}
+    />
+  );
+
+  // top bar (user chip + bell) for student / faculty pages without their own search
+  const topBar = currentUser && currentUser.role !== "librarian" && (
+    <TopBar
+      name={currentUser.first_name}
+      unreadCount={unreadCount}
+      onBell={() => goTo("notification")}
+    />
+  );
+
+  // the catalog page IS the librarian's "Manage Inventory", so it shows the
+  // librarian sidebar (Manage Inventory active) instead of the dropdown menu
+  const librarianCatalogNav = currentUser && currentUser.role === "librarian" && (
+    <LibrarianSidebar
+      activeView="inventory"
+      onSelect={(target) => {
+        if (target === "inventory") return; // already on the catalog page
+        try {
+          localStorage.setItem("librarianView", target);
+        } catch {
+          // ignore: storage blocked
+        }
+        goTo("home");
+      }}
+      onNavigate={goTo}
+      onLogout={handleLogout}
+      unreadCount={unreadCount}
+    />
+  );
+
   if (page === "login") {
     return (
       <Login
@@ -359,17 +424,63 @@ function App() {
     <div className="app-container">
       {message && <p className="app-message">{message}</p>}
 
-      {currentUser && page === "profile" && (
+      {currentUser && page === "profile" && currentUser.role !== "librarian" && (
+        <div className="library-layout">
+          {sidebar}
+          <main className="library-content">
+            {topBar}
+            <Profile user={currentUser} />
+          </main>
+        </div>
+      )}
+
+      {currentUser && page === "profile" && currentUser.role === "librarian" && (
         <div className="profile-page">
           <div className="profile-page-menu">{userMenu}</div>
           <Profile user={currentUser} />
         </div>
       )}
 
-      {currentUser && page === "notification" && (
-        <div className="profile-page">
-          <div className="profile-page-menu">{userMenu}</div>
-          <main>
+      {currentUser && page === "notification" && currentUser.role !== "librarian" && (
+        <div className="library-layout">
+          {sidebar}
+          <main className="library-content">
+            {topBar}
+            <Notification
+              user={currentUser}
+              onReviewLoan={handleReviewLoan}
+              onChanged={refreshUnread}
+            />
+          </main>
+        </div>
+      )}
+
+      {currentUser && page === "notification" && currentUser.role === "librarian" && (
+        <div className="library-layout">
+          <LibrarianSidebar
+            activeView="notification"
+            onSelect={(target) => {
+              if (target === "inventory") {
+                goTo("catalog");
+                return;
+              }
+              try {
+                localStorage.setItem("librarianView", target);
+              } catch {
+                // ignore: storage blocked
+              }
+              goTo("home");
+            }}
+            onNavigate={goTo}
+            onLogout={handleLogout}
+            unreadCount={unreadCount}
+          />
+          <main className="library-content">
+            <TopBar
+              name={currentUser.first_name}
+              unreadCount={unreadCount}
+              onBell={() => goTo("notification")}
+            />
             <Notification
               user={currentUser}
               onReviewLoan={handleReviewLoan}
@@ -381,9 +492,10 @@ function App() {
 
       {currentUser && page === "loans" && currentUser.role !== "librarian" && (
         <div className="library-layout">
-          <aside className="library-nav">{userMenu}</aside>
+          {sidebar}
 
           <main className="library-content">
+            {topBar}
             <Loans user={currentUser} onBrowse={() => goTo("catalog")} />
 
             {/* fines live on the same page, under the loans */}
@@ -394,9 +506,10 @@ function App() {
 
       {currentUser && page === "holds" && currentUser.role !== "librarian" && (
         <div className="library-layout">
-          <aside className="library-nav">{userMenu}</aside>
+          {sidebar}
 
           <main className="library-content">
+            {topBar}
             <Holds
               user={currentUser}
               onBrowse={() => goTo("catalog")}
@@ -417,16 +530,15 @@ function App() {
       )}
 
       {currentUser && currentUser.role === "librarian" && (page === "home" || page === "librarianLoans") && (
-          <div>
-            <div className="profile-page-menu">{userMenu}</div>
-            <LibrarianHome
-              key={`${page}-${focusLoanID}`}
-              user={currentUser}
-              onNavigate={goTo}
-              initialView={page === "librarianLoans" ? "loans" : "menu"}
-              focusLoanID={focusLoanID}
-            />
-          </div>
+          <LibrarianHome
+            key={`${page}-${focusLoanID}`}
+            user={currentUser}
+            onNavigate={goTo}
+            onLogout={handleLogout}
+            unreadCount={unreadCount}
+            initialView={page === "librarianLoans" ? "loans" : "menu"}
+            focusLoanID={focusLoanID}
+          />
       )}
 
       {currentUser &&
@@ -447,10 +559,14 @@ function App() {
 
       {page === "catalog" && (
         <div className="library-layout">
-          <aside className="library-nav">
-            {currentUser ? (
-              userMenu
+          {currentUser ? (
+            currentUser.role === "librarian" ? (
+              librarianCatalogNav
             ) : (
+              sidebar
+            )
+          ) : (
+            <aside className="library-nav">
               <button
                 className="user-menu-button"
                 type="button"
@@ -458,8 +574,8 @@ function App() {
               >
                 Log In
               </button>
-            )}
-          </aside>
+            </aside>
+          )}
 
           <main className="library-content">
             <Catalog
@@ -480,6 +596,8 @@ function App() {
               onAddItem={() => goTo("addItems")}
               onDelete={handleDeleteItem}
               refreshKey={catalogVersion}
+              unreadCount={unreadCount}
+              onOpenNotifications={() => goTo("notification")}
             />
           </main>
         </div>

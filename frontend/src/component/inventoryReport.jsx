@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usDate, downloadCSV } from "./reportHelpers";
+import Donut from "./Donut";
 
 const EMPTY_PARAMS = { itemType: "", outOnly: false, from: "", to: "" };
 
@@ -69,23 +70,23 @@ function InventoryReport({ onBack }) {
   const [ran, setRan] = useState(null); // { when, params }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState(""); // free-text filter on the results
 
   const setParam = (name, value) => setParams({ ...params, [name]: value });
 
-  const viewReport = async (e) => {
-    e.preventDefault();
+  const runReport = async (p) => {
     setError("");
 
-    if (params.from && params.to && params.from > params.to) {
+    if (p.from && p.to && p.from > p.to) {
       setError("'Loans from' must be on or before 'Loans to'.");
       return;
     }
 
     const query = new URLSearchParams();
-    if (params.itemType) query.set("itemType", params.itemType);
-    if (params.outOnly) query.set("outOnly", "1");
-    if (params.from) query.set("from", params.from);
-    if (params.to) query.set("to", params.to);
+    if (p.itemType) query.set("itemType", p.itemType);
+    if (p.outOnly) query.set("outOnly", "1");
+    if (p.from) query.set("from", p.from);
+    if (p.to) query.set("to", p.to);
 
     setLoading(true);
     try {
@@ -95,7 +96,7 @@ function InventoryReport({ onBack }) {
       const data = await res.json();
       if (res.ok) {
         setRows(data);
-        setRan({ when: new Date(), params: { ...params } });
+        setRan({ when: new Date(), params: { ...p } });
       } else {
         setError(data.error || "Something went wrong");
       }
@@ -104,6 +105,17 @@ function InventoryReport({ onBack }) {
     }
     setLoading(false);
   };
+
+  const viewReport = (e) => {
+    e.preventDefault();
+    runReport(params);
+  };
+
+  // show every item straight away; the search narrows it down (TA feedback)
+  useEffect(() => {
+    runReport(EMPTY_PARAMS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---------- request form ----------
   if (rows === null) {
@@ -184,7 +196,25 @@ function InventoryReport({ onBack }) {
   }
 
   // ---------- formatted output ----------
-  const { groups, grand } = buildGroups(rows);
+  const term = search.trim().toLowerCase();
+  const shownRows = term
+    ? rows.filter((r) =>
+        [r.title, r.creator, r.type_name, r.isbn, r.brand]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(term),
+      )
+    : rows;
+
+  const { groups, grand } = buildGroups(shownRows);
+
+  // items by type for the donut
+  const byType = {};
+  shownRows.forEach((r) => {
+    const t = r.type_name || "Other";
+    byType[t] = (byType[t] || 0) + 1;
+  });
 
   const saveCSV = () => {
     const header = [
@@ -265,10 +295,43 @@ function InventoryReport({ onBack }) {
         }
       `}</style>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button onClick={() => setRows(null)}>← Change parameters</button>
         <button onClick={saveCSV}>Save as CSV</button>
         <button onClick={() => window.print()}>Print / PDF</button>
+      </div>
+
+      {/* on-screen search + chart (not included when printing the sheet) */}
+      <div className="report-screen" style={{ marginBottom: 18 }}>
+        <input
+          type="text"
+          placeholder="Search by title, author, brand, or ISBN…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "100%", maxWidth: 440, marginBottom: 16 }}
+        />
+        <div
+          style={{
+            background: "#10253e",
+            border: "1px solid #263e59",
+            borderRadius: 14,
+            padding: 20,
+            maxWidth: 540,
+          }}
+        >
+          <p style={{ fontFamily: "Georgia, serif", fontSize: 16, margin: "0 0 16px" }}>
+            Items by type {term && "(filtered)"}
+          </p>
+          <Donut
+            total={shownRows.length}
+            totalLabel="items"
+            segments={[
+              { label: "Books", value: byType.Book || 0, color: "#4075aa" },
+              { label: "Media", value: byType.Media || 0, color: "#e5bf6d" },
+              { label: "Devices", value: byType.Device || 0, color: "#5fbf8a" },
+            ]}
+          />
+        </div>
       </div>
 
       <div
@@ -293,7 +356,7 @@ function InventoryReport({ onBack }) {
           {describeFilters(ran.params)}
         </p>
 
-        {rows.length === 0 ? (
+        {shownRows.length === 0 ? (
           <p>No items match these parameters.</p>
         ) : (
           <table

@@ -1,0 +1,169 @@
+/* ============================================================
+   USER SIDEBAR (student / faculty)
+   Persistent navigation rail — matches the navy / gold theme.
+   ============================================================ */
+
+.lib-sidebar {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 40px);
+  padding: 22px 16px;
+  background: #0c1b33;
+  border: 1px solid #263e59;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.lib-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 26px;
+  font-family: var(--heading);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.lib-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #4075aa, #193550);
+  font-size: 15px;
+}
+
+.lib-role {
+  margin: -18px 0 22px 12px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.lib-menu-label {
+  margin: 0 0 10px 12px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #5e7087;
+}
+
+.lib-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lib-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.lib-nav-item:hover {
+  background: #11253f;
+  border-color: transparent;
+  color: var(--foreground);
+}
+
+.lib-nav-item.active {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.lib-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.lib-nav-item.active .lib-nav-icon {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.lib-nav-text {
+  flex: 1;
+}
+
+.lib-nav-badge {
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--destructive);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lib-sep {
+  height: 1px;
+  margin: 16px 6px;
+  background: #263e59;
+}
+
+.lib-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 8px 4px;
+}
+
+.lib-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(145deg, #4075aa, #2a4a6b);
+}
+
+.lib-user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lib-user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lib-user-role {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-transform: capitalize;
+}
+
+@media (max-width: 650px) {
+  .lib-sidebar {
+    position: static;
+    min-height: 0;
+    flex-direction: column;
+  }
+}

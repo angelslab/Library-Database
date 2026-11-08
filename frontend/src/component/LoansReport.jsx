@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usDate, downloadCSV } from "./reportHelpers";
+import Donut from "./Donut";
 
 const EMPTY_PARAMS = {
   role: "",
@@ -87,27 +88,25 @@ function LoansReport({ onBack }) {
   const [ran, setRan] = useState(null); // { when, params }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState(""); // free-text filter on the results
 
   const setParam = (name, value) => setParams({ ...params, [name]: value });
 
-  const viewReport = async (e) => {
-    e.preventDefault();
+  const runReport = async (p) => {
     setError("");
 
-    const dept = params.dept.trim();
+    const dept = p.dept.trim();
     if (dept !== "" && dept.length < 2) {
-      setError(
-        "Type 2 or more characters to search for a major or department.",
-      );
+      setError("Type 2 or more characters to search for a major or department.");
       return;
     }
-    if (params.from && params.to && params.from > params.to) {
+    if (p.from && p.to && p.from > p.to) {
       setError("'Borrowed from' must be on or before 'Borrowed to'.");
       return;
     }
 
     const query = new URLSearchParams();
-    for (const [name, value] of Object.entries({ ...params, dept })) {
+    for (const [name, value] of Object.entries({ ...p, dept })) {
       if (value !== "") query.set(name, value);
     }
 
@@ -119,7 +118,7 @@ function LoansReport({ onBack }) {
       const data = await res.json();
       if (res.ok) {
         setRows(data);
-        setRan({ when: new Date(), params: { ...params, dept } });
+        setRan({ when: new Date(), params: { ...p, dept } });
       } else {
         setError(data.error || "Something went wrong");
       }
@@ -128,6 +127,17 @@ function LoansReport({ onBack }) {
     }
     setLoading(false);
   };
+
+  const viewReport = (e) => {
+    e.preventDefault();
+    runReport(params);
+  };
+
+  // show every loan straight away; searches/filters narrow it down (TA feedback)
+  useEffect(() => {
+    runReport(EMPTY_PARAMS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---------- request form ----------
   if (rows === null) {
@@ -227,11 +237,29 @@ function LoansReport({ onBack }) {
   }
 
   // ---------- formatted output ----------
-  const roles = buildTree(rows);
+  const term = search.trim().toLowerCase();
+  const shownRows = term
+    ? rows.filter((r) =>
+        [r.title, r.borrower, r.group_name, r.item_type, r.role, r.isbn]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(term),
+      )
+    : rows;
+
+  const roles = buildTree(shownRows);
   const grand = roles.reduce(
     (t, r) => ({ count: t.count + r.count, out: t.out + r.out }),
     { count: 0, out: 0 },
   );
+
+  // loans by role for the donut
+  const byRole = {};
+  shownRows.forEach((r) => {
+    const k = String(r.role || "other").toLowerCase();
+    byRole[k] = (byRole[k] || 0) + 1;
+  });
 
   const saveCSV = () => {
     const header = [
@@ -245,7 +273,7 @@ function LoansReport({ onBack }) {
       "Returned",
       "Status",
     ];
-    const data = rows.map((r) => [
+    const data = shownRows.map((r) => [
       cap(r.role),
       r.group_name,
       r.item_type,
@@ -304,10 +332,42 @@ function LoansReport({ onBack }) {
         }
       `}</style>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <button onClick={() => setRows(null)}>← Change parameters</button>
         <button onClick={saveCSV}>Save as CSV</button>
         <button onClick={() => window.print()}>Print / PDF</button>
+      </div>
+
+      {/* on-screen search + chart (not included when printing the sheet) */}
+      <div className="report-screen" style={{ marginBottom: 18 }}>
+        <input
+          type="text"
+          placeholder="Search by title, borrower, type, or ISBN…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "100%", maxWidth: 440, marginBottom: 16 }}
+        />
+        <div
+          style={{
+            background: "#10253e",
+            border: "1px solid #263e59",
+            borderRadius: 14,
+            padding: 20,
+            maxWidth: 540,
+          }}
+        >
+          <p style={{ fontFamily: "Georgia, serif", fontSize: 16, margin: "0 0 16px" }}>
+            Loans by role {term && "(filtered)"}
+          </p>
+          <Donut
+            total={shownRows.length}
+            totalLabel="loans"
+            segments={[
+              { label: "Students", value: byRole.student || 0, color: "#4075aa" },
+              { label: "Faculty", value: byRole.faculty || 0, color: "#e5bf6d" },
+            ]}
+          />
+        </div>
       </div>
 
       <div
@@ -331,7 +391,7 @@ function LoansReport({ onBack }) {
           {describeFilters(ran.params)}
         </p>
 
-        {rows.length === 0 ? (
+        {shownRows.length === 0 ? (
           <p>No loans match these parameters.</p>
         ) : (
           <table

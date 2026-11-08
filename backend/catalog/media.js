@@ -11,7 +11,7 @@ async function fetchMedia() {
         items.image_url,
         media.author
       FROM items, media
-      WHERE items.itemiD = media.itemID
+      WHERE items.itemID = media.itemID
         AND items.is_active = 1
         
         `);
@@ -21,30 +21,61 @@ async function fetchMedia() {
 }
 
 async function addMedia(title, totalCopies, author, image_url) {
-  //items table
-  const result = await db.query(
-    `
-            INSERT into items (title, item_type, total_copies, image_url)
-            VALUES (?, 'Media', ?, ?)
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Check whether this media already exists
+    const [existingMedia] = await connection.query(
+      `SELECT items.itemID
+       FROM items
+       JOIN media ON items.itemID = media.itemID
+       WHERE LOWER(TRIM(items.title)) = LOWER(TRIM(?))
+         AND LOWER(TRIM(media.author)) = LOWER(TRIM(?))
+         AND items.is_active = 1`,
+      [title, author],
+    );
+
+    // Prevent duplicate media
+    if (existingMedia.length > 0) {
+      throw new Error(
+        "This media item already exists with the same title and author.",
+      );
+    }
+
+    //items table
+    const result = await connection.query(
+      `
+            INSERT into items (title, item_type, total_copies, available_copies, image_url)
+            VALUES (?, 'Media', ?, ?, ?)
         
         `,
-    [title, totalCopies, image_url || null],
-  );
+      [title, totalCopies, totalCopies, image_url || null],
+    );
 
-  const itemID = result[0].insertId;
+    const itemID = result[0].insertId;
 
-  //media table
+    //media table
 
-  await db.query(
-    `
+    await connection.query(
+      `
         INSERT into media(author, itemID)
         VALUES(?, ?)
     
     `,
-    [author, itemID],
-  );
+      [author, itemID],
+    );
 
-  return itemID;
+    await connection.commit();
+
+    return itemID;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 async function deleteMedia(itemID) {
@@ -63,27 +94,52 @@ async function deleteMedia(itemID) {
 }
 
 async function editMedia(itemID, title, totalCopies, author, image_url) {
+  const connection = await db.getConnection();
+
   try {
-    const [rows] = await db.query(
+    await connection.beginTransaction();
+
+    // Check whether the media exists
+    const [rows] = await connection.query(
       `
         SELECT total_copies, available_copies
         FROM items
-        WHERE itemID = ? 
+        WHERE itemID = ?
           AND item_type = 'Media'
           AND is_active = 1
-      
       `,
       [itemID],
     );
 
     if (rows.length === 0) {
+      await connection.rollback();
       return false;
     }
 
-    //calculate currently borrowed copies
+    // Check for duplicate media, excluding the current item
+    const [existingMedia] = await connection.query(
+      `
+        SELECT items.itemID
+        FROM items, media
+        WHERE items.itemID = media.itemID
+          AND LOWER(TRIM(items.title)) = LOWER(TRIM(?))
+          AND LOWER(TRIM(media.author)) = LOWER(TRIM(?))
+          AND items.itemID != ?
+          AND items.is_active = 1
+      `,
+      [title, author, itemID],
+    );
+
+    if (existingMedia.length > 0) {
+      throw new Error(
+        "This media item already exists with the same title and author.",
+      );
+    }
+
+    // Calculate currently borrowed copies
     const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
-    //prevent totalcopies going below borrowedcopies
+    // Prevent total copies from going below borrowed copies
     if (totalCopies < borrowedCopies) {
       throw new Error(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
@@ -92,31 +148,39 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
 
     const newAvailCopies = totalCopies - borrowedCopies;
 
-    //items table
-    await db.query(
-      `UPDATE items
-     SET title= ?, total_copies=?, available_copies = ?, image_url = ?
-     WHERE itemID = ?
-      AND item_type = 'Media'
-      AND is_active = 1
-    `,
+    // Update items table
+    await connection.query(
+      `
+        UPDATE items
+        SET title = ?,
+            total_copies = ?,
+            available_copies = ?,
+            image_url = ?
+        WHERE itemID = ?
+          AND item_type = 'Media'
+          AND is_active = 1
+      `,
       [title, totalCopies, newAvailCopies, image_url || null, itemID],
     );
 
-    //media
-    await db.query(
+    // Update media table
+    await connection.query(
       `
         UPDATE media
         SET author = ?
         WHERE itemID = ?
-    
-    `,
+      `,
       [author, itemID],
     );
 
+    await connection.commit();
+
     return true;
   } catch (error) {
+    await connection.rollback();
     throw error;
+  } finally {
+    connection.release();
   }
 }
 
