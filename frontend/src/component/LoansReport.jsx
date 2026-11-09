@@ -133,7 +133,7 @@ function LoansReport({ onBack }) {
     runReport(params);
   };
 
-  // show every loan straight away; searches/filters narrow it down (TA feedback)
+  // load all loans on mount
   useEffect(() => {
     runReport(EMPTY_PARAMS);
     // eslint-disable-next-line react-hooks/exhaustive-deps

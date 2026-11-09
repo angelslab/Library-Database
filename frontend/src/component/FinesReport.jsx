@@ -97,7 +97,7 @@ function FinesReport({ onBack }) {
         runReport(params);
     };
 
-    // show every charge straight away; the search narrows it down (TA feedback)
+    // load all charges on mount
     useEffect(() => {
         runReport(EMPTY_PARAMS);
         // eslint-disable-next-line react-hooks/exhaustive-deps
