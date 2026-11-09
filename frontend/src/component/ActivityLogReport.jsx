@@ -114,7 +114,7 @@ function ActivityLogReport({ onBack }) {
             fontSize: 14,
           }}
         >
-          Every borrow and return, recorded automatically by database triggers.
+          Every borrow and return, recorded automatically.
         </p>
 
         {loading && <p>Loading...</p>}
