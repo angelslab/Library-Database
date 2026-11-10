@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { money, usDate, downloadCSV } from "./reportHelpers";
+import { money, usDate, downloadCSV, CHART_COLORS, tally, segmentsFor } from "./reportHelpers";
+import PieChart from "./PieChart";
+import { Sheet, Stats, Section, Tag } from "./ReportSheet";
 
 const CHARGE_TYPES = ["Late", "Printer", "Surcharge"];
-const EMPTY_PARAMS = { borrower: "", type: "", paid: "", from: "", to: "" };
+const EMPTY_PARAMS = { search: "", type: "", paid: "", from: "", to: "" };
 
 const statusOf = (row) => (row.paid === 1 ? "Collected" : "Outstanding");
 
@@ -40,7 +42,7 @@ function describePeriod(p) {
 
 function describeFilters(p) {
     const parts = [];
-    if (p.borrower) parts.push(`Borrower contains "${p.borrower}"`);
+    if (p.search) parts.push(`Search: "${p.search.trim()}"`);
     if (p.type) parts.push(`Charge type: ${p.type}`);
     if (p.paid === "1") parts.push("Status: Collected");
     if (p.paid === "0") parts.push("Status: Outstanding");
@@ -53,26 +55,20 @@ function FinesReport({ onBack }) {
     const [ran, setRan] = useState(null); // { when, params } for the output header
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [search, setSearch] = useState(""); // free-text filter on the results
 
     const setParam = (name, value) => setParams({ ...params, [name]: value });
 
     const runReport = async (p) => {
         setError("");
 
-        const borrower = p.borrower.trim();
-        if (borrower !== "" && borrower.length < 2) {
-            setError("Type 2 or more characters to search for a borrower.");
-            return;
-        }
     if (p.from && p.to && p.from > p.to) {
         setError("'Issued from' must be on or before 'Issued to'.");
         return;
     }
 
     const query = new URLSearchParams();
-    for (const [name, value] of Object.entries({ ...p, borrower })) {
-        if (value !== "") query.set(name, value);
+    for (const [name, value] of Object.entries(p)) {
+        if (name !== "search" && value !== "") query.set(name, value);
     }
 
     setLoading(true);
@@ -82,7 +78,7 @@ function FinesReport({ onBack }) {
         const data = await res.json();
         if (res.ok) {
             setRows(data);
-            setRan({ when: new Date(), params: { ...p, borrower } });
+            setRan({ when: new Date(), params: { ...p } });
         } else {
             setError(data.error || "Something went wrong");
         }
@@ -118,14 +114,14 @@ function FinesReport({ onBack }) {
                 }}
             >
             <label style={{ ...field, gridColumn: "1 / span 2" }}>
-                Borrower
-                <input
-                    type="text"
-                    placeholder="Type 2 or more characters to search"
-                    value={params.borrower}
-                    onChange={(e) => setParam("borrower", e.target.value)}
-                    style={{ padding: 8 }}
-                />
+              Search results
+              <input
+                type="text"
+                placeholder="Search by borrower, item, charge type…"
+                value={params.search}
+                onChange={(e) => setParam("search", e.target.value)}
+                style={{ padding: 8 }}
+              />
             </label>
             <label style={field}>
                 Charge type
@@ -195,18 +191,31 @@ function FinesReport({ onBack }) {
     }
 
   // ---------- formatted output ----------
-    const term = search.trim().toLowerCase();
+    const term = (ran.params.search || "").trim().toLowerCase();
     const shownRows = term
-        ? rows.filter((r) =>
-            [r.borrower, r.item_title, r.item_type, r.charge_type, r.role]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase()
-                .includes(term),
-          )
-        : rows;
+      ? rows.filter((r) =>
+          [r.borrower, r.item_title, r.item_type, r.charge_type, r.role]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(term),
+        )
+      : rows;
 
     const groups = groupByBorrower(shownRows);
+
+    // amounts by status and by charge type for the pie charts
+    const amountOf = (r) => Number(r.amount) || 0;
+    const statusSegments = segmentsFor(
+        tally(shownRows, statusOf, amountOf),
+        ["Collected", "Outstanding"],
+        CHART_COLORS.pair,
+    );
+    const typeSegments = segmentsFor(
+        tally(shownRows, (r) => r.charge_type || "Other", amountOf),
+        CHARGE_TYPES,
+        CHART_COLORS.trio,
+    );
     const totals = groups.reduce(
     (t, g) => ({
         collected: t.collected + g.collected,
@@ -268,9 +277,6 @@ function FinesReport({ onBack }) {
     );
 };
 
-    const cell = { padding: "6px 10px", border: "1px solid #999" };
-    const headCell = { ...cell, background: "#d9d9d9", fontWeight: 700 };
-    const right = { textAlign: "right" };
 
 return (
     <div style={{ marginTop: 20, textAlign: "left" }}>
@@ -288,119 +294,103 @@ return (
             <button onClick={() => window.print()}>Print / PDF</button>
         </div>
 
-        <div className="report-screen" style={{ marginBottom: 16 }}>
-            <input
-                type="text"
-                placeholder="Search by borrower, item, charge type…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ width: "100%", maxWidth: 440 }}
-            />
+        {/* on-screen charts (not included when printing the sheet) */}
+        <div className="report-screen pie-charts" style={{ marginBottom: 18 }}>
+            <PieChart title="Amount by status" format={money} segments={statusSegments} />
+            <PieChart title="Amount by charge type" format={money} segments={typeSegments} />
         </div>
 
-        <div
-            className="report-sheet"
-            style={{ background: "#fff", color: "#111", padding: 16 }}
+        <Sheet
+            title="Fines and Charges Report"
+            period={describePeriod(ran.params)}
+            filters={describeFilters(ran.params)}
+            when={ran.when}
         >
-        <div
-            style={{
-                background: "#c0c0c0",
-                textAlign: "center",
-                fontWeight: 700,
-                padding: 8,
-            }}
-        >
-            Fines and Charges Report
-        </div>
-        <p style={{ textAlign: "center", margin: "10px 0 2px" }}>
-            {describePeriod(ran.params)}
-        </p>
-        <p style={{ textAlign: "center", margin: "0 0 14px", fontSize: 13 }}>
-            {describeFilters(ran.params)}
-        </p>
+            {shownRows.length === 0 ? (
+                <p className="rs-empty">No charges match these parameters.</p>
+            ) : (
+                <>
+                    <Stats
+                        items={[
+                            { label: "Charges", value: totals.count },
+                            { label: "Collected", value: money(totals.collected) },
+                            {
+                                label: "Outstanding",
+                                value: money(totals.outstanding),
+                                tone: totals.outstanding > 0 ? "bad" : undefined,
+                            },
+                            { label: "Total charged", value: money(totals.collected + totals.outstanding) },
+                        ]}
+                    />
 
-        {shownRows.length === 0 ? (
-            <p>No charges match these parameters.</p>
-        ) : (
-        <table
-            style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}
-        >
-            <thead>
-                <tr>
-                    <th style={headCell}>Issued</th>
-                    <th style={headCell}>Item</th>
-                    <th style={headCell}>Item type</th>
-                    <th style={headCell}>Charge type</th>
-                    <th style={headCell}>Status</th>
-                    <th style={{ ...headCell, ...right }}>Amount</th>
-                </tr>
-            </thead>
+                    <Section title="Summary by borrower" note={groups.length + (groups.length === 1 ? " borrower" : " borrowers")}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Borrower</th>
+                                    <th>Role</th>
+                                    <th className="num">Charges</th>
+                                    <th className="num">Collected</th>
+                                    <th className="num">Outstanding</th>
+                                    <th className="num">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {groups.map((g) => (
+                                    <tr key={g.userID}>
+                                        <td>{g.borrower}</td>
+                                        <td className="muted">{g.role ? g.role.charAt(0).toUpperCase() + g.role.slice(1) : "—"}</td>
+                                        <td className="num">{g.rows.length}</td>
+                                        <td className="num">{money(g.collected)}</td>
+                                        <td className="num">{money(g.outstanding)}</td>
+                                        <td className="num">{money(g.collected + g.outstanding)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colSpan={2}>Total</td>
+                                    <td className="num">{totals.count}</td>
+                                    <td className="num">{money(totals.collected)}</td>
+                                    <td className="num">{money(totals.outstanding)}</td>
+                                    <td className="num">{money(totals.collected + totals.outstanding)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </Section>
 
-            {groups.map((g) => (
-                <tbody key={g.userID}>
-                    <tr>
-                    <td
-                        colSpan={6}
-                        style={{ ...cell, background: "#e9e9e9", fontWeight: 700 }}
-                    > 
-                        Borrower: {g.borrower} ({g.role})
-                    </td>
-                    </tr>
-                {g.rows.map((r) => (
-                    <tr key={r.fineID}>
-                        <td style={cell}>{usDate(r.issue_date)}</td>
-                        <td style={cell}>{r.item_title}</td>
-                        <td style={cell}>{r.item_type}</td>
-                        <td style={cell}>{r.charge_type}</td>
-                        <td style={cell}>{statusOf(r)}</td>
-                        <td style={{ ...cell, ...right }}>{money(r.amount)}</td>
-                    </tr>
-                ))}
-                <tr>
-                    <td
-                        colSpan={5}
-                        style={{ ...cell, ...right, fontWeight: 700 }}
-                    >
-                    Sub Total (outstanding {money(g.outstanding)})
-                    </td>
-                    <td style={{ ...cell, ...right, fontWeight: 700 }}>
-                        {money(g.collected + g.outstanding)}
-                    </td>
-                </tr>
-                </tbody>
-            ))}
-
-            <tbody>
-                <tr>
-                    <td colSpan={5} style={{ ...cell, ...right }}>
-                        Total collected
-                    </td>
-                <td style={{ ...cell, ...right }}>{money(totals.collected)}</td>
-              </tr>
-              <tr>
-                <td colSpan={5} style={{ ...cell, ...right }}>
-                    Total outstanding
-                </td>
-                <td style={{ ...cell, ...right }}>
-                    {money(totals.outstanding)}
-                </td>
-                </tr>
-                <tr>
-                    <td colSpan={5} style={{ ...cell, ...right, fontWeight: 700 }}>
-                        Grand total ({totals.count} charges)
-                </td>
-                <td style={{ ...cell, ...right, fontWeight: 700 }}>
-                    {money(totals.collected + totals.outstanding)}
-                </td>
-                </tr>
-            </tbody>
-            </table>
-        )}
-
-        <p style={{ fontSize: 12, marginTop: 14, fontStyle: "italic" }}>
-            Run on {ran.when.toLocaleString()}
-        </p>
-        </div>
+                    <Section title="Charge details" note={totals.count + (totals.count === 1 ? " charge" : " charges")}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Issued</th>
+                                    <th>Borrower</th>
+                                    <th>Item</th>
+                                    <th>Charge type</th>
+                                    <th>Status</th>
+                                    <th className="num">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {groups.flatMap((g) => g.rows).map((r) => (
+                                    <tr key={r.fineID}>
+                                        <td className="nowrap">{usDate(r.issue_date)}</td>
+                                        <td>{r.borrower}</td>
+                                        <td>
+                                            {r.item_title}
+                                            {r.item_type && <span className="muted"> · {r.item_type}</span>}
+                                        </td>
+                                        <td>{r.charge_type}</td>
+                                        <td><Tag>{statusOf(r)}</Tag></td>
+                                        <td className="num">{money(r.amount)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </Section>
+                </>
+            )}
+        </Sheet>
     </div>
 );
 }

@@ -3,7 +3,7 @@ import { downloadCSV } from "./reportHelpers";
 
 // Activity Log: shows the audit_log table (written automatically by the
 // database triggers) so you can see every borrow and return in the app.
-function ActivityLogReport({ onBack }) {
+function ActivityLog() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -80,11 +80,6 @@ function ActivityLogReport({ onBack }) {
         className="activity-print-hide"
         style={{ display: "flex", gap: 10, marginBottom: 16 }}
       >
-        {onBack && (
-          <button className="app-back-button" onClick={onBack}>
-            ← All reports
-          </button>
-        )}
         {rows && rows.length > 0 && (
           <>
             <button onClick={saveCSV}>Save as CSV</button>
@@ -169,4 +164,4 @@ function ActivityLogReport({ onBack }) {
   );
 }
 
-export default ActivityLogReport;
+export default ActivityLog;

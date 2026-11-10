@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import UserManagment from "../component/userManage";
 import Reports from "../component/reportsPage";
+import ActivityLog from "../component/ActivityLog";
 import LibrarianLoans from "../component/LibrarianLoans";
 import LibrarianSidebar from "../component/LibrarianSidebar";
 import TopBar from "../component/TopBar";
@@ -11,7 +12,7 @@ const API = "http://localhost:3000";
 
 // sub-views that are safe to restore after a reload
 // (inventory now lives on the catalog page, not as a view here)
-const KEEP_VIEWS = ["users", "reports", "loans"];
+const KEEP_VIEWS = ["users", "reports", "loans", "activity"];
 
 // --- small inline icons for the quick-action cards ---
 function ActionIcon({ name }) {
@@ -175,7 +176,7 @@ function LibrarianHome({
       view: "reports",
       icon: "reports",
       title: "Reports",
-      desc: "Most-borrowed items, overdue lists, and the activity log.",
+      desc: "Fines, loans by role and item type, and inventory circulation.",
     },
   ];
 
@@ -334,6 +335,7 @@ function LibrarianHome({
 
         {view === "users" && <UserManagment />}
         {view === "reports" && <Reports />}
+        {view === "activity" && <ActivityLog />}
         {view === "loans" && (
           <LibrarianLoans user={user} focusLoanID={focusLoanID} />
         )}

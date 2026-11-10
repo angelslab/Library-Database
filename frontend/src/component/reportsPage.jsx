@@ -2,7 +2,6 @@ import { useState } from "react";
 import FinesReport from "./FinesReport";
 import LoansReport from "./LoansReport";
 import InventoryReport from "./inventoryReport";
-import ActivityLogReport from "./ActivityLogReport";
 
 function RIcon({ name }) {
   const paths = {
@@ -24,12 +23,6 @@ function RIcon({ name }) {
       <>
         <path d="M21 8l-9-5-9 5 9 5 9-5z" />
         <path d="M3 8v8l9 5 9-5V8" />
-      </>
-    ),
-    activity: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
       </>
     ),
   };
@@ -60,12 +53,6 @@ const REPORTS = [
     label: "Inventory and Circulation",
     desc: "Stock levels and how often items circulate.",
     Component: InventoryReport,
-  },
-  {
-    key: "activity",
-    label: "Activity Log (borrows & returns)",
-    desc: "Every borrow and return as it happens.",
-    Component: ActivityLogReport,
   },
 ];
 

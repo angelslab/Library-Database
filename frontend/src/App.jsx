@@ -18,6 +18,7 @@ import Loans from "./pages/Loans";
 import Holds from "./pages/Holds";
 import Fines from "./pages/Fines";
 import ConfirmBorrowModal from "./component/ConfirmBorrowModal";
+import ConfirmCancelHoldModal from "./component/ConfirmCancelHoldModal";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -61,6 +62,7 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [message, setMessage] = useState("");
   const [borrowItem, setBorrowItem] = useState(null);
+  const [cancelHold, setCancelHold] = useState(null); // { hold, resolve } while the cancel popup is open
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [focusLoanID, setFocusLoanID] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -265,34 +267,24 @@ function App() {
   }
 
   // leaves the line for an item (from the item card, item details or the My holds page)
-  async function handleCancelHold(hold) {
-    if (
-      !window.confirm(
-        `Cancel your hold on "${hold.title}"? You will lose your place in line.`,
-      )
-    ) {
-      return false;
-    }
+  // opens the in-app confirm popup; resolves true once the hold is cancelled,
+  // false if the user keeps it
+  function handleCancelHold(hold) {
+    return new Promise((resolve) => {
+      setCancelHold({ hold, resolve });
+    });
+  }
 
-    try {
-      const response = await fetch("http://localhost:3000/api/holds/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userID: currentUser.userID,
-          holdID: hold.holdID,
-        }),
-      });
-      const data = await response.json();
+  function closeCancelHold() {
+    cancelHold?.resolve(false);
+    setCancelHold(null);
+  }
 
-      setMessage(response.ok ? data.message : data.error);
-      await refreshHolds();
-
-      return response.ok;
-    } catch {
-      setMessage("Could not reach the server. Try again.");
-      return false;
-    }
+  async function handleHoldCancelled(data) {
+    cancelHold?.resolve(true);
+    setCancelHold(null);
+    setMessage(data.message);
+    await refreshHolds();
   }
 
   function handleBorrowed(result) {
@@ -632,6 +624,16 @@ function App() {
           item={borrowItem}
           onClose={() => setBorrowItem(null)}
           onBorrowed={handleBorrowed}
+        />
+      )}
+
+    {currentUser && cancelHold && (
+        <ConfirmCancelHoldModal
+          key={cancelHold.hold.holdID}
+          user={currentUser}
+          hold={cancelHold.hold}
+          onClose={closeCancelHold}
+          onCancelled={handleHoldCancelled}
         />
       )}
       </div>

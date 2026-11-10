@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../styles/ItemCard.css";
 import "../styles/HoldsFines.css";
+import ConfirmDialog from "./ConfirmDialog";
 
 function ItemCard({
   item,
@@ -17,6 +18,7 @@ function ItemCard({
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef(null);
 
   const coverColors = {
@@ -46,12 +48,10 @@ function ItemCard({
     setImageFailed(false);
   }, [item.image_url]);
 
+  // opens the in-app "delete this item?" popup
   const handleDelete = () => {
     setMenuOpen(false);
-
-    if (window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
-      onDelete?.(item);
-    }
+    setConfirmDelete(true);
   };
 
   const coverColor = coverColors[item.item_type] || "item-cover-default";
@@ -196,6 +196,26 @@ function ItemCard({
           </>
         )}
       </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete item"
+          details={[
+            { label: "Title", value: item.title },
+            { label: "Type", value: item.item_type },
+            { label: "Copies", value: item.total_copies },
+          ]}
+          note="This permanently removes the item from the catalog. It cannot be undone."
+          confirmLabel="Delete item"
+          busyLabel="Deleting..."
+          danger
+          onConfirm={async () => {
+            await onDelete?.(item);
+            setConfirmDelete(false);
+          }}
+          onClose={() => setConfirmDelete(false)}
+        />
+      )}
     </article>
   );
 }

@@ -60,7 +60,6 @@ function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
       // ignore: storage blocked
     }
   }
-  const [cancelling, setCancelling] = useState(null);
 
   // load when the page opens (and again after a borrow, when refreshKey changes)
   useEffect(() => {
@@ -69,18 +68,15 @@ function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
       .catch((err) => setError(err.message));
   }, [user.userID, refreshKey]);
 
-  // App asks "are you sure", cancels it and shows the message at the top
+  // App shows the in-app "cancel hold?" popup (which also sends the request
+  // and shows the message at the top); reload the list once it is cancelled
   async function handleCancel(hold) {
-    setCancelling(hold.holdID);
-
     try {
       if (await onCancelHold(hold)) {
         setData(await fetchHolds(user.userID));
       }
     } catch (err) {
       setError(err.message);
-    } finally {
-      setCancelling(null);
     }
   }
 
@@ -292,11 +288,8 @@ function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
                           type="button"
                           className="hf-cancel-button"
                           onClick={() => handleCancel(hold)}
-                          disabled={cancelling === hold.holdID}
                         >
-                          {cancelling === hold.holdID
-                            ? "Cancelling..."
-                            : "Cancel hold"}
+                          Cancel hold
                         </button>
                       </div>
                     </td>

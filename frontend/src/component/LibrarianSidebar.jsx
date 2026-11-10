@@ -38,6 +38,12 @@ function Icon({ name }) {
         <rect x="17" y="13" width="3" height="4" />
       </>
     ),
+    activity: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </>
+    ),
     browse: <path d="M3 11l9-8 9 8M5 10v10h14V10" />,
     notif: (
       <>
@@ -83,6 +89,7 @@ function LibrarianSidebar({
     { view: "inventory", label: "Catalog", icon: "inv" },
     { view: "users", label: "Manage Users", icon: "users" },
     { view: "loans", label: "Manage Loans", icon: "loans" },
+    { view: "activity", label: "Activity Log", icon: "activity" },
     { view: "reports", label: "Reports", icon: "reports" },
   ];
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/Loans.css";
 import "../styles/HoldsFines.css";
+import ConfirmDialog from "../component/ConfirmDialog";
 
 const TABS = [
   { key: "all", label: "All" },
@@ -45,7 +46,7 @@ function Fines({ user }) {
   const [tab, setTab] = useState("all");
   const [notice, setNotice] = useState("");
   const [actionError, setActionError] = useState("");
-  const [paying, setPaying] = useState(null);
+  const [payFine, setPayFine] = useState(null); // fine shown in the "pay?" popup
 
   // load when the page opens
   useEffect(() => {
@@ -54,33 +55,32 @@ function Fines({ user }) {
       .catch((err) => setError(err.message));
   }, [user.userID]);
 
-  async function handlePay(fine) {
-    if (!window.confirm(`Pay ${money(fine.amount)} for "${fine.title}"?`)) {
-      return;
-    }
-
-    setPaying(fine.fineID);
+  // opens the in-app "pay this fine?" popup
+  function handlePay(fine) {
     setNotice("");
     setActionError("");
+    setPayFine(fine);
+  }
 
+  // runs when the user confirms in the popup; errors show inside the popup
+  async function confirmPay() {
+    const response = await fetch("http://localhost:3000/api/fines/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userID: user.userID, fineID: payFine.fineID }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Could not pay this fine");
+    }
+
+    setPayFine(null);
+    setNotice(result.message);
     try {
-      const response = await fetch("http://localhost:3000/api/fines/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userID: user.userID, fineID: fine.fineID }),
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Could not pay this fine");
-      }
-
-      setNotice(result.message);
       setData(await fetchFines(user.userID));
     } catch (err) {
       setActionError(err.message);
-    } finally {
-      setPaying(null);
     }
   }
 
@@ -248,12 +248,12 @@ function Fines({ user }) {
                         type="button"
                         className="loans-return-button"
                         onClick={() => handlePay(fine)}
-                        disabled={paying === fine.fineID || fine.still_out}
+                        disabled={fine.still_out}
                         title={
                           fine.still_out ? "Return the item first" : undefined
                         }
                       >
-                        {paying === fine.fineID ? "Paying..." : "Pay"}
+                        Pay
                       </button>
                     )}
                   </td>
@@ -269,6 +269,23 @@ function Fines({ user }) {
           Late fees for items you still have keep going up each day. You can pay
           them once the item is returned.
         </p>
+      )}
+
+      {payFine && (
+        <ConfirmDialog
+          title="Pay fine"
+          details={[
+            { label: "Item", value: payFine.title },
+            ...(payFine.charge_type ? [{ label: "Charge", value: payFine.charge_type }] : []),
+            { label: "Issued", value: formatDate(payFine.issue_date) },
+            { label: "Amount", value: money(payFine.amount) },
+          ]}
+          note={`${money(payFine.amount)} will be marked as paid on your account.`}
+          confirmLabel={`Pay ${money(payFine.amount)}`}
+          busyLabel="Paying..."
+          onConfirm={confirmPay}
+          onClose={() => setPayFine(null)}
+        />
       )}
     </div>
   );

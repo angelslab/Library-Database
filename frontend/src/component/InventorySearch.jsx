@@ -4,9 +4,11 @@ function Inventory() {
     const [keyword, setKeyword] = useState('')
     const [results, setResults] = useState([])
     const [searched, setSearched] = useState(false)
+    const [error, setError] = useState('')
 
     const handleSearch = async (e) => {
     e.preventDefault()
+    setError('')
     try {
     const res = await fetch(
         'http://localhost:3000/api/items?q=' + encodeURIComponent(keyword)
@@ -15,12 +17,12 @@ function Inventory() {
     if (res.ok) {
         setResults(data)
     } else {
-        alert(data.error)
+        setError(data.error || 'Search failed')
         setResults([])
     }
     setSearched(true)
     } catch (err) {
-    alert('Cannot reach server: ' + err.message)
+    setError('Cannot reach server: ' + err.message)
     }
 }
 
@@ -44,6 +46,12 @@ return (
         />
         <button type="submit">Search</button>
     </form>
+
+    {error && (
+        <p role="alert" style={{ color: '#f14d4c', marginTop: 12 }}>
+        {error}
+        </p>
+    )}
 
     {searched && results.length === 0 && (
         <p style={{ opacity: 0.8 }}>

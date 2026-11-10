@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { usDate, downloadCSV } from "./reportHelpers";
-import Donut from "./Donut";
+import { usDate, downloadCSV, CHART_COLORS, ITEM_TYPES, tally, segmentsFor } from "./reportHelpers";
+import PieChart from "./PieChart";
+import { Sheet, Stats, Section, Tag } from "./ReportSheet";
 
-const EMPTY_PARAMS = { itemType: "", outOnly: false, from: "", to: "" };
+const EMPTY_PARAMS = { search: "", itemType: "", outOnly: false, from: "", to: "" };
 
 // add one item row's numbers into a running total
 function addTo(total, row) {
@@ -59,6 +60,7 @@ function describeLoanPeriod(p) {
 
 function describeFilters(p) {
   const parts = [];
+  if (p.search) parts.push(`Search: "${p.search.trim()}"`);
   if (p.itemType) parts.push(`Item type: ${p.itemType}`);
   if (p.outOnly) parts.push("Only items currently out");
   return parts.length > 0 ? parts.join(" · ") : "No other filters";
@@ -70,7 +72,6 @@ function InventoryReport({ onBack }) {
   const [ran, setRan] = useState(null); // { when, params }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState(""); // free-text filter on the results
 
   const setParam = (name, value) => setParams({ ...params, [name]: value });
 
@@ -127,6 +128,16 @@ function InventoryReport({ onBack }) {
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
           >
+            <label style={{ ...field, gridColumn: "1 / span 2" }}>
+              Search results
+              <input
+                type="text"
+                placeholder="Search by title, author/brand, item type, or ISBN…"
+                value={params.search}
+                onChange={(e) => setParam("search", e.target.value)}
+                style={{ padding: 8 }}
+              />
+            </label>
             <label style={field}>
               Item type
               <select
@@ -196,10 +207,10 @@ function InventoryReport({ onBack }) {
   }
 
   // ---------- formatted output ----------
-  const term = search.trim().toLowerCase();
+  const term = (ran.params.search || "").trim().toLowerCase();
   const shownRows = term
     ? rows.filter((r) =>
-        [r.title, r.creator, r.type_name, r.isbn, r.brand]
+        [r.title, r.creator, r.type_name, r.isbn]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
@@ -209,12 +220,14 @@ function InventoryReport({ onBack }) {
 
   const { groups, grand } = buildGroups(shownRows);
 
-  // items by type for the donut
-  const byType = {};
-  shownRows.forEach((r) => {
-    const t = r.type_name || "Other";
-    byType[t] = (byType[t] || 0) + 1;
-  });
+  // items and loans (circulation) by type for the pie charts
+  const typeOf = (r) => r.type_name || "Other";
+  const itemSegments = segmentsFor(tally(shownRows, typeOf), ITEM_TYPES, CHART_COLORS.trio);
+  const loanSegments = segmentsFor(
+    tally(shownRows, typeOf, (r) => Number(r.loans_in_period) || 0),
+    ITEM_TYPES,
+    CHART_COLORS.trio,
+  );
 
   const saveCSV = () => {
     const header = [
@@ -269,20 +282,9 @@ function InventoryReport({ onBack }) {
     );
   };
 
-  const cell = { padding: "6px 10px", border: "1px solid #999" };
-  const headCell = { ...cell, background: "#d9d9d9", fontWeight: 700 };
-  const num = { textAlign: "right" };
-  const totalRow = (label, t, key, bold) => (
-    <tr key={key}>
-      <td colSpan={2} style={{ ...cell, ...num, fontWeight: bold ? 700 : 400 }}>
-        {label} ({t.items} {t.items === 1 ? "item" : "items"})
-      </td>
-      <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.copies}</td>
-      <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.out}</td>
-      <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.available}</td>
-      <td style={{ ...cell, ...num, fontWeight: 700 }}>{t.loans}</td>
-      <td style={cell}></td>
-    </tr>
+  const mismatches = groups.reduce(
+    (n, g) => n + g.items.filter((it) => !it.counterOk).length,
+    0,
   );
 
   return (
@@ -301,121 +303,114 @@ function InventoryReport({ onBack }) {
         <button onClick={() => window.print()}>Print / PDF</button>
       </div>
 
-      {/* on-screen search + chart (not included when printing the sheet) */}
-      <div className="report-screen" style={{ marginBottom: 18 }}>
-        <input
-          type="text"
-          placeholder="Search by title, author, brand, or ISBN…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: "100%", maxWidth: 440, marginBottom: 16 }}
-        />
-        <div
-          style={{
-            background: "#10253e",
-            border: "1px solid #263e59",
-            borderRadius: 14,
-            padding: 20,
-            maxWidth: 540,
-          }}
-        >
-          <p style={{ fontFamily: "Georgia, serif", fontSize: 16, margin: "0 0 16px" }}>
-            Items by type {term && "(filtered)"}
-          </p>
-          <Donut
-            total={shownRows.length}
-            totalLabel="items"
-            segments={[
-              { label: "Books", value: byType.Book || 0, color: "#4075aa" },
-              { label: "Media", value: byType.Media || 0, color: "#e5bf6d" },
-              { label: "Devices", value: byType.Device || 0, color: "#5fbf8a" },
-            ]}
-          />
-        </div>
+      {/* on-screen chart (not included when printing the sheet) */}
+      <div className="report-screen pie-charts" style={{ marginBottom: 18 }}>
+        <PieChart title="Items by type" unit="items" segments={itemSegments} />
+        <PieChart title="Loans by item type" unit="loans" segments={loanSegments} />
       </div>
 
-      <div
-        className="report-sheet"
-        style={{ background: "#fff", color: "#111", padding: 16 }}
+      <Sheet
+        title="Inventory and Circulation"
+        period={"Loans counted " + describeLoanPeriod(ran.params)}
+        filters={describeFilters(ran.params)}
+        when={ran.when}
       >
-        <div
-          style={{
-            background: "#c0c0c0",
-            textAlign: "center",
-            fontWeight: 700,
-            padding: 8,
-          }}
-        >
-          Inventory and Circulation Report
-        </div>
-        <p style={{ textAlign: "center", margin: "10px 0 2px" }}>
-          Copies as of {ran.when.toLocaleDateString()} · Loans counted{" "}
-          {describeLoanPeriod(ran.params)}
-        </p>
-        <p style={{ textAlign: "center", margin: "0 0 14px", fontSize: 13 }}>
-          {describeFilters(ran.params)}
-        </p>
-
         {shownRows.length === 0 ? (
-          <p>No items match these parameters.</p>
+          <p className="rs-empty">No items match these parameters.</p>
         ) : (
-          <table
-            style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}
-          >
-            <thead>
-              <tr>
-                <th style={headCell}>Title</th>
-                <th style={headCell}>Author / Brand</th>
-                <th style={{ ...headCell, ...num }}>Total copies</th>
-                <th style={{ ...headCell, ...num }}>Out now</th>
-                <th style={{ ...headCell, ...num }}>Available</th>
-                <th style={{ ...headCell, ...num }}>Loans in period</th>
-                <th style={headCell}>Counter check</th>
-              </tr>
-            </thead>
+          <>
+            <Stats
+              items={[
+                { label: "Items", value: grand.items },
+                { label: "Total copies", value: grand.copies },
+                { label: "Out now", value: grand.out },
+                { label: "Loans in period", value: grand.loans },
+              ]}
+            />
 
-            {groups.map((g) => (
-              <tbody key={g.name}>
-                <tr>
-                  <td
-                    colSpan={7}
-                    style={{ ...cell, background: "#e0e0e0", fontWeight: 700 }}
-                  >
-                    Item type: {g.name}
-                  </td>
-                </tr>
-                {g.items.map((it) => (
-                  <tr key={it.itemID}>
-                    <td style={cell}>{it.title}</td>
-                    <td style={cell}>{it.creator || "—"}</td>
-                    <td style={{ ...cell, ...num }}>{it.copies}</td>
-                    <td style={{ ...cell, ...num }}>{it.out}</td>
-                    <td style={{ ...cell, ...num }}>{it.available}</td>
-                    <td style={{ ...cell, ...num }}>{it.loans}</td>
-                    <td
-                      style={{
-                        ...cell,
-                        color: it.counterOk ? "#111" : "#b00020",
-                      }}
-                    >
-                      {it.counterOk
-                        ? "OK"
-                        : `Stored count says ${it.stored_available}`}
-                    </td>
+            <Section title="Summary by item type">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item type</th>
+                    <th className="num">Items</th>
+                    <th className="num">Total copies</th>
+                    <th className="num">Out now</th>
+                    <th className="num">Available</th>
+                    <th className="num">Loans in period</th>
                   </tr>
-                ))}
-                {totalRow(`Total ${g.name}`, g.total, g.name + "-total", false)}
-              </tbody>
-            ))}
+                </thead>
+                <tbody>
+                  {groups.map((g) => (
+                    <tr key={g.name}>
+                      <td>{g.name}</td>
+                      <td className="num">{g.total.items}</td>
+                      <td className="num">{g.total.copies}</td>
+                      <td className="num">{g.total.out}</td>
+                      <td className="num">{g.total.available}</td>
+                      <td className="num">{g.total.loans}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td>Total</td>
+                    <td className="num">{grand.items}</td>
+                    <td className="num">{grand.copies}</td>
+                    <td className="num">{grand.out}</td>
+                    <td className="num">{grand.available}</td>
+                    <td className="num">{grand.loans}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </Section>
 
-            <tbody>{totalRow("Total", grand, "grand", true)}</tbody>
-          </table>
+            <Section
+              title="Item details"
+              note={
+                mismatches > 0
+                  ? mismatches + (mismatches === 1 ? " stored count to check" : " stored counts to check")
+                  : "All stored counts match"
+              }
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Author / Brand</th>
+                    <th>Type</th>
+                    <th className="num">Copies</th>
+                    <th className="num">Out now</th>
+                    <th className="num">Available</th>
+                    <th className="num">Loans in period</th>
+                    <th>Counter check</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groups.flatMap((g) => g.items).map((it) => (
+                    <tr key={it.itemID}>
+                      <td>{it.title}</td>
+                      <td className="muted">{it.creator || "—"}</td>
+                      <td>{it.type_name}</td>
+                      <td className="num">{it.copies}</td>
+                      <td className="num">{it.out}</td>
+                      <td className="num">{it.available}</td>
+                      <td className="num">{it.loans}</td>
+                      <td>
+                        {it.counterOk ? (
+                          <Tag>OK</Tag>
+                        ) : (
+                          <Tag tone="bad">Stored count says {it.stored_available}</Tag>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Section>
+          </>
         )}
-
-        <p style={{ fontSize: 12, marginTop: 14, fontStyle: "italic" }}>
-          Run on {ran.when.toLocaleString()}
-        </p>
-      </div>
+      </Sheet>
     </div>
   );
 }
