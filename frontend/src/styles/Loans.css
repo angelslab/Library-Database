@@ -183,7 +183,7 @@
   color: #e6ecf2;
   background: #4075aa;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   transition: background 180ms ease;
@@ -238,7 +238,7 @@
   color: #e6ecf2;
   background: #4075aa;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
 }
 

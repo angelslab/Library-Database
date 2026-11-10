@@ -1,4 +1,49 @@
 const db = require("./db");
+const { createTriggers } = require("./triggers");
+
+// removes CHECK rules on a table. schema.js does not create any, but some databases
+// got extra ones added by hand (e.g. holds_chk_1, fines_chk_1) that block holds and fines
+async function dropCheckRules(table) {
+  const [rules] = await db.query(
+    `SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_TYPE = 'CHECK'`,
+    [table],
+  );
+
+  for (const rule of rules) {
+    await db.query(
+      `ALTER TABLE ${table} DROP CONSTRAINT \`${rule.CONSTRAINT_NAME}\``,
+    );
+  }
+}
+
+// adds AUTO_INCREMENT to an id column made without it (tables created before the fix)
+async function addAutoIncrement(table, column) {
+  const [rows] = await db.query(
+    `SELECT EXTRA FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [table, column],
+  );
+
+  if (rows.length > 0 && !/auto_increment/i.test(rows[0].EXTRA)) {
+    await db.query(
+      `ALTER TABLE ${table} MODIFY ${column} INT NOT NULL AUTO_INCREMENT`,
+    );
+  }
+}
+
+// adds a column to a table that was created before the column existed
+async function addColumn(table, column, definition) {
+  const [rows] = await db.query(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [table, column],
+  );
+
+  if (rows.length === 0) {
+    await db.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
 
 async function initDB() {
   //users
@@ -33,11 +78,22 @@ async function initDB() {
       title VARCHAR(100) NOT NULL,
       item_type VARCHAR(100),
       total_copies INT NOT NULL DEFAULT 1,
-      available_copies INT NOT NULL DEFAULT 1
+      available_copies INT NOT NULL DEFAULT 1,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      image_url VARCHAR(500) NULL
+
     )
   `);
 
   console.log("Items table created");
+
+  // older databases made the items table before these columns existed, add them once
+  await addColumn("items", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
+  await addColumn("items", "image_url", "VARCHAR(500) NULL");
+
+  // some databases got CHECK rules added by hand (e.g. items_chk_4) that block
+  // normal copy-count updates on return; schema.js does not create any, so drop them
+  await dropCheckRules("items");
 
   //student
   await db.query(`
@@ -145,17 +201,13 @@ async function initDB() {
       AND COLUMN_NAME = 'loanID'`,
   );
 
-  if (loanIdColumn.length > 0 && !/auto_increment/i.test(loanIdColumn[0].EXTRA)) {
-    // fines/notifications have foreign keys to loans.loanID, so MySQL blocks the
-    // ALTER unless foreign key checks are off. Use one connection so the SET applies.
-    const conn = await db.getConnection();
-    try {
-      await conn.query("SET FOREIGN_KEY_CHECKS = 0");
-      await conn.query("ALTER TABLE loans MODIFY loanID INT NOT NULL AUTO_INCREMENT");
-    } finally {
-      await conn.query("SET FOREIGN_KEY_CHECKS = 1");
-      conn.release();
-    }
+  if (
+    loanIdColumn.length > 0 &&
+    !/auto_increment/i.test(loanIdColumn[0].EXTRA)
+  ) {
+    await db.query(
+      "ALTER TABLE loans MODIFY loanID INT NOT NULL AUTO_INCREMENT",
+    );
   }
 
   console.log("Loans table created");
@@ -165,9 +217,9 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS holds (
       userID INT NOT NULL,
       itemID INT NOT NULL,
-      holdID INT PRIMARY KEY NOT NULL,
+      holdID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
       requestDate DATE DEFAULT (CURRENT_DATE),
-      status VARCHAR(20) NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'waiting',
 
       FOREIGN KEY (userID) REFERENCES users(userID)
       ON DELETE CASCADE,
@@ -177,6 +229,10 @@ async function initDB() {
     )
   `);
 
+  // older databases made holdID without AUTO_INCREMENT, fix it once
+  await addAutoIncrement("holds", "holdID");
+  await dropCheckRules("holds");
+
   console.log("Holds table created");
 
   //fines
@@ -185,7 +241,7 @@ async function initDB() {
       loanID INT,
       userID INT NOT NULL,
       itemID INT NOT NULL,
-      fineID INT PRIMARY KEY NOT NULL,
+      fineID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
       charge_type VARCHAR(20) NOT NULL,
       paid TINYINT(1) NOT NULL DEFAULT 0,
       issue_date DATE DEFAULT (CURRENT_DATE),
@@ -197,6 +253,10 @@ async function initDB() {
 
     )
   `);
+
+  // older databases made fineID without AUTO_INCREMENT, fix it once
+  await addAutoIncrement("fines", "fineID");
+  await dropCheckRules("fines");
 
   console.log("Fines table created");
 
@@ -222,6 +282,44 @@ async function initDB() {
 
   console.log("Notifications table created");
 
+  //audit_log (history of every borrow and return, written by the triggers)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS audit_log (
+      auditID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+      action VARCHAR(20) NOT NULL,
+      userID INT,
+      itemID INT,
+      loanID INT,
+      logged_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  console.log("Audit_log table created");
+
+  // every librarian account needs a row in the librarian table,
+  // otherwise they never get return-request notifications
+  await db.query(
+    `INSERT INTO librarian (userID)
+      SELECT userID FROM users
+      WHERE role = 'librarian'
+      AND userID NOT IN (SELECT userID FROM librarian)`,
+  );
+
+  // repair any item whose available copy count drifted out of sync:
+  // available should be total copies minus the copies currently checked out
+  await db.query(
+    `UPDATE items i
+      SET i.available_copies = GREATEST(0, LEAST(i.total_copies,
+        i.total_copies - (
+          SELECT COUNT(*) FROM loans l
+          WHERE l.itemID = i.itemID AND l.returned_date IS NULL
+        )))`,
+  );
+
+  console.log("Item copy counts reconciled");
+
+  // late fee, hold-ready and audit triggers (see triggers.js)
+  await createTriggers();
 }
 
 module.exports = initDB;

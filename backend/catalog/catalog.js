@@ -8,6 +8,7 @@ async function fetchAllItems() {
       item_type,
       total_copies,
       available_copies,
+      image_url,
 
       (SELECT author FROM book WHERE book.itemID = items.itemID) AS book_author,
 
@@ -22,6 +23,7 @@ async function fetchAllItems() {
       (SELECT brand FROM device WHERE device.itemID = items.itemID) AS brand
 
       FROM items
+      WHERE is_active = 1
     `);
 
   const rows = result[0];
@@ -37,6 +39,7 @@ async function getItemByID(itemID) {
       item_type,
       total_copies,
       available_copies,
+      image_url,
 
       -- Book details
       (SELECT author
@@ -66,8 +69,10 @@ async function getItemByID(itemID) {
        WHERE device.itemID = items.itemID) AS brand
 
     FROM items
-    WHERE itemID = ?`,
-    [itemID]
+    WHERE itemID = ? 
+      AND is_active = 1
+    `,
+    [itemID],
   );
 
   const rows = result[0];

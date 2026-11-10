@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "../styles/AddItemForm.css";
+import API_URL from "../api";
 
 function AddItemForm() {
   const [itemType, setItemType] = useState("Book");
@@ -18,6 +19,8 @@ function AddItemForm() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const [imageURL, setImageURL] = useState("");
+
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -27,6 +30,7 @@ function AddItemForm() {
     const itemData = {
       title,
       total_copies: Number(totalCopies),
+      image_url: imageURL,
     };
 
     if (itemType === "Book") {
@@ -44,7 +48,7 @@ function AddItemForm() {
       let response;
 
       if (itemType === "Book") {
-        response = await fetch("http://localhost:3000/books", {
+        response = await fetch(`${API_URL}/books`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -52,7 +56,7 @@ function AddItemForm() {
           body: JSON.stringify(itemData),
         });
       } else if (itemType === "Media") {
-        response = await fetch("http://localhost:3000/media", {
+        response = await fetch(`${API_URL}/media`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -60,7 +64,7 @@ function AddItemForm() {
           body: JSON.stringify(itemData),
         });
       } else {
-        response = await fetch("http://localhost:3000/device", {
+        response = await fetch(`${API_URL}/device`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -85,6 +89,7 @@ function AddItemForm() {
       setPublicationYear("");
       setBrand("");
       setDeviceType("");
+      setImageURL("");
     } catch (err) {
       setError(err.message || "Something went wrong.");
     }
@@ -224,6 +229,18 @@ function AddItemForm() {
               </>
             )}
           </div>
+
+          <div className="add-item-field">
+            <label htmlFor="imageUrl">Image URL (Optional):</label>
+
+            <input
+              id="imageURL"
+              type="url"
+              placeholder="Paste image URL"
+              value={imageURL}
+              onChange={(e) => setImageURL(e.target.value)}
+            />
+          </div>
         </section>
 
         {message && (
@@ -252,6 +269,7 @@ function AddItemForm() {
               setDeviceType("");
               setMessage("");
               setError("");
+              setImageURL("");
             }}
           >
             Clear Form

@@ -1,10 +1,22 @@
 import { useEffect, useState } from "react";
 import "../styles/ItemDetails.css";
+import "../styles/HoldsFines.css";
+import API_URL from "../api";
 
-function ItemDetails({ itemID, user, onBack, onBorrow, refreshKey }) {
+function ItemDetails({
+  itemID,
+  user,
+  onBack,
+  onBorrow,
+  onPlaceHold,
+  onCancelHold,
+  hold,
+  refreshKey,
+}) {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     async function fetchItem() {
@@ -13,7 +25,7 @@ function ItemDetails({ itemID, user, onBack, onBorrow, refreshKey }) {
         setError("");
         setItem(null);
 
-        const response = await fetch(`http://localhost:3000/items/${itemID}`);
+        const response = await fetch(`${API_URL}/items/${itemID}`);
 
         if (!response.ok) {
           throw new Error("Failed to load item details");
@@ -32,6 +44,11 @@ function ItemDetails({ itemID, user, onBack, onBorrow, refreshKey }) {
       fetchItem();
     }
   }, [itemID, refreshKey]);
+
+  // Reset image failure when the item or its image URL changes
+  useEffect(() => {
+    setImageFailed(false);
+  }, [item?.image_url, itemID]);
 
   if (loading) {
     return (
@@ -75,11 +92,22 @@ function ItemDetails({ itemID, user, onBack, onBorrow, refreshKey }) {
             item.item_type || "default"
           ).toLowerCase()}`}
         >
-          <span className="item-details-type">{item.item_type}</span>
+          {item.image_url && !imageFailed ? (
+            <img
+              src={item.image_url}
+              alt={`${item.title} cover`}
+              className="item-details-cover-image"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <>
+              <span className="item-details-type">{item.item_type}</span>
 
-          <div className="item-details-cover-title">
-            <h1>{item.title}</h1>
-          </div>
+              <div className="item-details-cover-title">
+                <h1>{item.title}</h1>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="item-details-content">
@@ -147,18 +175,50 @@ function ItemDetails({ itemID, user, onBack, onBorrow, refreshKey }) {
             )}
           </div>
 
-          <button
-            type="button"
-            className="item-details-borrow"
-            disabled={!isAvailable || !onBorrow}
-            onClick={() => onBorrow(item)}
-          >
-            {!isAvailable
-              ? "Unavailable"
-              : onBorrow
-                ? "Borrow Item"
-                : "Borrowing unavailable"}
-          </button>
+          {hold && (
+            <p
+              className={`item-hold-note ${hold.ready ? "item-hold-ready" : ""}`}
+            >
+              {hold.ready
+                ? "You have a hold on this item · a copy is ready for you"
+                : `You have a hold on this item · #${hold.queue_position} of ${hold.queue_length} in line`}
+            </p>
+          )}
+
+          {(user?.role === "student" || user?.role === "faculty") && (
+            <>
+              {!isAvailable && hold && onCancelHold ? (
+                <button
+                  type="button"
+                  className="item-details-borrow item-button-cancel-hold"
+                  onClick={() => onCancelHold(hold)}
+                >
+                  Cancel hold
+                </button>
+              ) : !isAvailable && onPlaceHold ? (
+                <button
+                  type="button"
+                  className="item-details-borrow"
+                  onClick={() => onPlaceHold(item)}
+                >
+                  Place hold
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="item-details-borrow"
+                  disabled={!isAvailable || !onBorrow}
+                  onClick={() => onBorrow(item)}
+                >
+                  {!isAvailable
+                    ? "Unavailable"
+                    : onBorrow
+                      ? "Borrow Item"
+                      : "Borrowing unavailable"}
+                </button>
+              )}
+            </>
+          )}
         </div>
       </section>
     </main>

@@ -29,7 +29,10 @@ const { getUserDetails } = require("./queries/manageUsers");
 const { getFinesReport } = require("./reports/fines");
 const { getLoansReport } = require("./reports/loans");
 const { getInventoryReport } = require("./reports/inventory");
+const { getAuditReport } = require("./reports/audit");
 const { handleLoanRoutes } = require("./loans/routes");
+const { handleHoldRoutes } = require("./holds/routes");
+const { handleFineRoutes } = require("./fines/routes");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -39,7 +42,10 @@ const CORS_HEADERS = {
 };
 
 function sendJSON(res, status, body) {
-  res.writeHead(status, { "Content-Type": "application/json", ...CORS_HEADERS });
+  res.writeHead(status, {
+    "Content-Type": "application/json",
+    ...CORS_HEADERS,
+  });
   res.end(JSON.stringify(body));
 }
 
@@ -78,14 +84,16 @@ async function startServer() {
 
       res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-      // Handle CORS preflight requests
-      if (req.method === "OPTIONS") {
-        res.writeHead(204);
-        res.end();
+      // borrowing, returns and notifications
+      // holds and fines
+      if (await handleHoldRoutes(req, res, CORS_HEADERS)) {
         return;
       }
 
-      // borrowing, returns and notifications
+      if (await handleFineRoutes(req, res, CORS_HEADERS)) {
+        return;
+      }
+
       if (await handleLoanRoutes(req, res, CORS_HEADERS)) {
         return;
       }
@@ -108,6 +116,8 @@ async function startServer() {
           res.end(
             JSON.stringify({
               message: "Failed to retrieve catalog",
+              error: error.message,
+              code: error.code,
             }),
           );
 
@@ -216,6 +226,7 @@ async function startServer() {
             data.isbn,
             data.publication_year,
             data.total_copies,
+            data.image_url,
           );
 
           res.writeHead(201, {
@@ -339,6 +350,7 @@ async function startServer() {
             book.isbn,
             book.publication_year,
             book.total_copies,
+            book.image_url,
           );
 
           if (!result) {
@@ -348,9 +360,10 @@ async function startServer() {
 
             res.end(
               JSON.stringify({
-                error: "Device item not found",
+                error: "Book item not found",
               }),
             );
+            return;
           }
 
           res.writeHead(200, {
@@ -419,6 +432,7 @@ async function startServer() {
             media.title,
             media.total_copies,
             media.author,
+            media.image_url,
           );
 
           res.writeHead(200, {
@@ -558,6 +572,7 @@ async function startServer() {
             data.title,
             data.total_copies,
             data.author,
+            data.image_url,
           );
 
           if (!edited) {
@@ -570,6 +585,7 @@ async function startServer() {
                 error: "Media item not found",
               }),
             );
+            return;
           }
 
           res.writeHead(200, {
@@ -637,6 +653,7 @@ async function startServer() {
             device.total_copies,
             device.brand,
             device.device_type,
+            device.image_url,
           );
 
           res.writeHead(200, {
@@ -745,7 +762,7 @@ async function startServer() {
 
           let body = "";
 
-          for await (chunk of req) {
+          for await (const chunk of req) {
             body += chunk;
           }
 
@@ -756,7 +773,8 @@ async function startServer() {
             data.title,
             data.total_copies,
             data.brand,
-            data.deviceType,
+            data.device_type,
+            data.image_url,
           );
 
           if (!result) {
@@ -769,6 +787,7 @@ async function startServer() {
                 error: "Device item not found",
               }),
             );
+            return;
           }
 
           res.writeHead(200, {
@@ -1031,16 +1050,22 @@ async function startServer() {
             return;
           }
 
-    res.writeHead(200, { "Content-Type": "application/json", ...CORS_HEADERS });
-    res.end(JSON.stringify(rows));
-  } catch (error) {
-    console.error("Error getting user detail:", error);
-    res.writeHead(500, { "Content-Type": "application/json", ...CORS_HEADERS });
-    res.end(JSON.stringify({ error: "Failed to get user detail" }));
-  }
-  return;
-}
-            // fines and charges report
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+          res.end(JSON.stringify(rows));
+        } catch (error) {
+          console.error("Error getting user detail:", error);
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+          res.end(JSON.stringify({ error: "Failed to get user detail" }));
+        }
+        return;
+      }
+      // fines and charges report
       if (req.method === "GET" && req.url.startsWith("/api/reports/fines")) {
         try {
           const params = new URL(req.url, "http://localhost").searchParams;
@@ -1050,7 +1075,8 @@ async function startServer() {
           const to = params.get("to") || null;
           const borrower = (params.get("borrower") || "").trim() || null;
           const paidRaw = params.get("paid");
-          const paid = paidRaw === "0" || paidRaw === "1" ? Number(paidRaw) : null;
+          const paid =
+            paidRaw === "0" || paidRaw === "1" ? Number(paidRaw) : null;
 
           const dateOk = (d) => d === null || /^\d{4}-\d{2}-\d{2}$/.test(d);
           if (
@@ -1099,7 +1125,14 @@ async function startServer() {
             return;
           }
 
-          const rows = await getLoansReport({ from, to, role, itemType, status, dept });
+          const rows = await getLoansReport({
+            from,
+            to,
+            role,
+            itemType,
+            status,
+            dept,
+          });
           sendJSON(res, 200, rows);
         } catch (error) {
           console.error("Error running loans report:", error);
@@ -1109,7 +1142,10 @@ async function startServer() {
       }
 
       // Inventory and Circulation report
-      if (req.method === "GET" && req.url.startsWith("/api/reports/inventory")) {
+      if (
+        req.method === "GET" &&
+        req.url.startsWith("/api/reports/inventory")
+      ) {
         try {
           const params = new URL(req.url, "http://localhost").searchParams;
 
@@ -1132,7 +1168,12 @@ async function startServer() {
             return;
           }
 
-          const rows = await getInventoryReport({ from, to, itemType, outOnly });
+          const rows = await getInventoryReport({
+            from,
+            to,
+            itemType,
+            outOnly,
+          });
           sendJSON(res, 200, rows);
         } catch (error) {
           console.error("Error running inventory report:", error);
@@ -1141,9 +1182,24 @@ async function startServer() {
         return;
       }
 
+      // activity log (audit) report
+      if (req.method === "GET" && req.url.startsWith("/api/reports/audit")) {
+        try {
+          const rows = await getAuditReport();
+          sendJSON(res, 200, rows);
+        } catch (error) {
+          console.error("Error running activity log report:", error);
+          sendJSON(res, 500, { error: "Failed to run activity log report" });
+        }
+        return;
+      }
+
       // nothing above answered this request, so reply instead of leaving it hanging
       if (!res.headersSent && !res.writableEnded) {
-        res.writeHead(404, { "Content-Type": "application/json", ...CORS_HEADERS });
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+          ...CORS_HEADERS,
+        });
         res.end(JSON.stringify({ error: "Not found" }));
       }
     });

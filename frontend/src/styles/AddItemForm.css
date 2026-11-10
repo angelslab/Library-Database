@@ -43,7 +43,7 @@
   height: 48px;
   padding: 0 14px;
   border: 1px solid var(--border, #394354);
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--card, #202b3c);
   color: var(--card-foreground, inherit);
   font: inherit;
@@ -82,7 +82,7 @@
   height: 48px;
   padding: 0 14px;
   border: 1px solid var(--input, var(--border, #394354));
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--card, transparent);
   color: var(--card-foreground, inherit);
   font-family: inherit;
@@ -100,16 +100,16 @@
 .add-item-field input:focus,
 .add-item-type-section select:focus {
   outline: none;
-  border-color: var(--accent, #c4a46b);
+  border-color: var(--primary, #4075aa);
   box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--accent, #c4a46b) 20%, transparent);
+    color-mix(in srgb, var(--primary, #4075aa) 20%, transparent);
 }
 
 .add-item-message {
   margin: 0 0 18px;
   padding: 12px 14px;
   border: 1px solid var(--border, #394354);
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -141,7 +141,7 @@
   min-height: 46px;
   padding: 11px 22px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -153,17 +153,19 @@
 
 .add-item-clear-button {
   background: transparent;
-  color: var(--muted-foreground, inherit);
+  border-color: #263e59;
+  color: var(--foreground, inherit);
 }
 
 .add-item-clear-button:hover {
-  background: var(--secondary, rgba(128, 128, 128, 0.12));
+  background: #193550;
+  border-color: #4075aa;
 }
 
 .add-item-submit-button {
   min-width: 130px;
-  background: var(--accent, #c4a46b);
-  color: var(--accent-foreground, #172033);
+  background: var(--primary, #4075aa);
+  color: var(--primary-foreground, #f6f9fc);
 }
 
 .add-item-submit-button:hover {
