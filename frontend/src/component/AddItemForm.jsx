@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../styles/AddItemForm.css";
 import API_URL from "../api";
+import { formatISBN } from "../utils/isbn";
 
 function AddItemForm() {
   const [itemType, setItemType] = useState("Book");
@@ -35,7 +36,7 @@ function AddItemForm() {
 
     if (itemType === "Book") {
       itemData.author = author;
-      itemData.isbn = isbn;
+      itemData.isbn = isbn.replace(/[^0-9]/g, "").slice(0, 13);
       itemData.publication_year = Number(publicationYear);
     } else if (itemType === "Media") {
       itemData.author = author;
@@ -166,9 +167,10 @@ function AddItemForm() {
                   <input
                     id="isbn"
                     type="text"
-                    placeholder="e.g. 978-0-19-283012-4"
+                    placeholder="e.g. 9780192830124"
                     value={isbn}
-                    onChange={(e) => setIsbn(e.target.value)}
+                    maxLength={17}
+                    onChange={(e) => setIsbn(formatISBN(e.target.value))}
                     required
                   />
                 </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "../styles/ItemDetails.css";
 import "../styles/HoldsFines.css";
 import API_URL from "../api";
+import { formatISBN } from "../utils/isbn";
 
 function ItemDetails({
   itemID,
@@ -143,7 +144,9 @@ function ItemDetails({
 
                 <div className="item-details-row">
                   <span>ISBN</span>
-                  <span>{item.isbn || "Not provided"}</span>
+                  <span>
+                    {item.isbn ? formatISBN(item.isbn) : "Not provided"}
+                  </span>
                 </div>
 
                 <div className="item-details-row">
