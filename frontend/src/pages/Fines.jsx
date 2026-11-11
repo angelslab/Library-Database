@@ -101,8 +101,11 @@ function Fines({ user }) {
       <header className="loans-header hf-section-header">
         <h2 className="loans-title">My fines</h2>
         <p className="loans-subtitle">
-          Charges on your account. Late fees are {money(data.late_fee_per_day)}{" "}
-          for each day an item is kept past its due date.
+          Charges on your account. Late fees are{" "}
+          {money(data.late_fee_rules.book.per_day)} a day for books (up to{" "}
+          {money(data.late_fee_rules.book.max)}) and{" "}
+          {money(data.late_fee_rules.laptop.per_day)} a day for laptops (up to{" "}
+          {money(data.late_fee_rules.laptop.max)}) kept past the due date.
         </p>
       </header>
 
