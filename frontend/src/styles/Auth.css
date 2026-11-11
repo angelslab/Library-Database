@@ -11,6 +11,8 @@
   box-sizing: border-box;
   background:
     radial-gradient(900px 520px at 50% -8%, rgb(64 117 170 / 18%), transparent 70%),
+    linear-gradient(rgb(11 21 44 / 72%), rgb(11 21 44 / 86%)),
+    url("/login-bg.svg") center / cover no-repeat,
     var(--background);
 }
 
