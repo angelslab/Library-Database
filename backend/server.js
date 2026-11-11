@@ -22,6 +22,7 @@ const {
 } = require("./catalog/device");
 const { login, register } = require("./auth/auth");
 const { getProfile } = require("./user/user");
+const { updateUserStatus } = require("./queries/manageUsers");
 
 const { searchItems } = require("./queries/inventory");
 const { manageUsers } = require("./queries/users");
@@ -1062,6 +1063,80 @@ async function startServer() {
             ...CORS_HEADERS,
           });
           res.end(JSON.stringify({ error: "Failed to get user detail" }));
+        }
+        return;
+      }
+
+      // activate or deactivate a user
+      if (req.method === "PUT" && req.url.startsWith("/api/users/")) {
+        try {
+          const userID = Number(req.url.split("/")[3]);
+
+          if (!Number.isInteger(userID) || userID < 1) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS,
+            });
+            res.end(JSON.stringify({ error: "Invalid userID" }));
+            return;
+          }
+
+          let body = "";
+          for await (const chunk of req) {
+            body += chunk;
+          }
+
+          const data = JSON.parse(body);
+
+          if (data.is_active !== 0 && data.is_active !== 1) {
+            res.writeHead(400, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS,
+            });
+            res.end(JSON.stringify({ error: "Invalid user status" }));
+            return;
+          }
+
+          //updateUserStatus is in backend/queries/manageuser.js
+          const result = await updateUserStatus(userID, data.is_active);
+
+          if (result.hasActiveLoans) {
+            res.writeHead(409, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS,
+            });
+            res.end(
+              JSON.stringify({
+                error:
+                  "This user cannot be deactivated because they still have outstanding loans.",
+              }),
+            );
+            return;
+          }
+
+          if (!result.updated) {
+            res.writeHead(404, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS,
+            });
+            res.end(JSON.stringify({ error: "User not found" }));
+            return;
+          }
+
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+          res.end(
+            JSON.stringify({ message: "User status updated successfully" }),
+          );
+        } catch (error) {
+          console.error("Error updating user status:", error);
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+          res.end(JSON.stringify({ error: "Failed to update user status" }));
         }
         return;
       }

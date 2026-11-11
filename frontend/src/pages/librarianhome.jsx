@@ -6,6 +6,7 @@ import LibrarianSidebar from "../component/LibrarianSidebar";
 import TopBar from "../component/TopBar";
 import Donut from "../component/Donut";
 import "../styles/Librarian.css";
+import API_URL from "../api";
 
 const API = "http://localhost:3000";
 
@@ -179,6 +180,32 @@ function LibrarianHome({
     },
   ];
 
+  const handleToggleUserStatus = async (user) => {
+    const isActive = Number(user.is_active) === 1;
+    const newStatus = isActive ? 0 : 1;
+
+    try {
+      const response = await fetch(`${API}/api/users/${user.userID}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ is_active: newStatus }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update user status.");
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      alert(error.message || "Failed to update user status.");
+    }
+  };
+
   return (
     <div className="library-layout">
       <LibrarianSidebar
@@ -332,7 +359,9 @@ function LibrarianHome({
           </div>
         )}
 
-        {view === "users" && <UserManagment />}
+        {view === "users" && (
+          <UserManagment onToggleActive={handleToggleUserStatus} />
+        )}
         {view === "reports" && <Reports />}
         {view === "loans" && (
           <LibrarianLoans user={user} focusLoanID={focusLoanID} />
