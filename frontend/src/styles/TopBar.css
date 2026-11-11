@@ -4,7 +4,7 @@
 
 .user-topbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* keep the avatar and bell at the top when search results make the slot taller */
   gap: 16px;
   margin-bottom: 24px;
 }
