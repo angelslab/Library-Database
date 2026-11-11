@@ -109,8 +109,6 @@ function Catalog({
             holdsByItem={holdsByItem}
             onSearchChange={setIsSearching}
             user={user}
-            onEdit={onEdit}
-            onDelete={onDelete}
           />
         </div>
       </TopBar>
