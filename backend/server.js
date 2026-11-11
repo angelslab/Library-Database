@@ -848,6 +848,20 @@ async function startServer() {
             return;
           }
 
+          if (user.error) {
+            res.writeHead(403, {
+              "Content-Type": "application/json",
+              ...CORS_HEADERS,
+            });
+
+            res.end(
+              JSON.stringify({
+                error: user.error,
+              }),
+            );
+            return;
+          }
+
           res.writeHead(200, {
             "Content-Type": "application/json",
             ...CORS_HEADERS,

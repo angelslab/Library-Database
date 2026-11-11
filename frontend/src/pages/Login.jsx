@@ -1,35 +1,35 @@
-import { useState } from 'react'
-import Register from './Register'
-import '../styles/Auth.css'
+import { useState } from "react";
+import Register from "./Register";
+import "../styles/Auth.css";
 
 function Login({ onLogin, message, onBack }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [showRegister, setShowRegister] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showRegister, setShowRegister] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
     try {
-      const res = await fetch('http://localhost:3000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("http://localhost:3000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
       if (res.ok) {
-        onLogin(data)
+        onLogin(data);
       } else {
-        setError(data.error)
+        setError(data.error);
       }
     } catch (err) {
-      setError('Cannot reach server: ' + err.message)
+      setError("Cannot reach server: " + err.message);
     }
-  }
+  };
 
   if (showRegister) {
-    return <Register onLogin={onLogin} onBack={() => setShowRegister(false)} />
+    return <Register onLogin={onLogin} onBack={() => setShowRegister(false)} />;
   }
 
   return (
@@ -45,7 +45,9 @@ function Login({ onLogin, message, onBack }) {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-field">
-            <label className="auth-label" htmlFor="login-email">Email</label>
+            <label className="auth-label" htmlFor="login-email">
+              Email
+            </label>
             <input
               id="login-email"
               className="auth-input"
@@ -53,14 +55,16 @@ function Login({ onLogin, message, onBack }) {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => {
-                setEmail(e.target.value)
-                setError('')
+                setEmail(e.target.value);
+                setError("");
               }}
             />
           </div>
 
           <div className="auth-field">
-            <label className="auth-label" htmlFor="login-password">Password</label>
+            <label className="auth-label" htmlFor="login-password">
+              Password
+            </label>
             <input
               id="login-password"
               className="auth-input"
@@ -68,8 +72,8 @@ function Login({ onLogin, message, onBack }) {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => {
-                setPassword(e.target.value)
-                setError('')
+                setPassword(e.target.value);
+                setError("");
               }}
             />
           </div>
@@ -100,7 +104,7 @@ function Login({ onLogin, message, onBack }) {
         </form>
       </div>
     </div>
-  )
+  );
 }
 
-export default Login
+export default Login;
