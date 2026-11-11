@@ -87,7 +87,7 @@ async function deleteDevice(itemID) {
 
   if (activeLoans[0].count > 0) {
     const error = new Error(
-      `Cannot delete: ${activeLoans[0].count} copy(ies) still on loan. Return them first.`,
+      `Cannot delete this device because it is currently on loan.`,
     );
     error.status = 409;
     throw error;

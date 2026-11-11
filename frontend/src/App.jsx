@@ -19,6 +19,7 @@ import Holds from "./pages/Holds";
 import Fines from "./pages/Fines";
 import ConfirmBorrowModal from "./component/ConfirmBorrowModal";
 import ConfirmCancelHoldModal from "./component/ConfirmCancelHoldModal";
+import AlertDialog from "./component/AlertDialog";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -67,6 +68,7 @@ function App() {
   const [focusLoanID, setFocusLoanID] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [myHolds, setMyHolds] = useState([]);
+  const [deleteError, setDeleteError] = useState("");
 
   function goTo(nextPage, itemID = null) {
     setMessage("");
@@ -189,7 +191,7 @@ function App() {
         setUnreadCount(data.unread);
       }
     } catch {
-    // the badge just keeps its old number if the server can't be reached
+      // the badge just keeps its old number if the server can't be reached
     }
   }, [currentUser]);
 
@@ -223,7 +225,7 @@ function App() {
       return;
     }
 
-        if (currentUser.role === "librarian") {
+    if (currentUser.role === "librarian") {
       setMessage("Librarian accounts can't borrow items.");
       return;
     }
@@ -347,7 +349,7 @@ function App() {
       window.location.reload();
     } catch (error) {
       console.error("Error deleting item:", error);
-      setMessage(error.message || "Failed to delete item.");
+      setDeleteError(error.message || "Failed to delete item.");
     }
   };
 
@@ -384,23 +386,24 @@ function App() {
 
   // the catalog page IS the librarian's "Manage Inventory", so it shows the
   // librarian sidebar (Manage Inventory active) instead of the dropdown menu
-  const librarianCatalogNav = currentUser && currentUser.role === "librarian" && (
-    <LibrarianSidebar
-      activeView="inventory"
-      onSelect={(target) => {
-        if (target === "inventory") return; // already on the catalog page
-        try {
-          localStorage.setItem("librarianView", target);
-        } catch {
-          // ignore: storage blocked
-        }
-        goTo("home");
-      }}
-      onNavigate={goTo}
-      onLogout={handleLogout}
-      unreadCount={unreadCount}
-    />
-  );
+  const librarianCatalogNav = currentUser &&
+    currentUser.role === "librarian" && (
+      <LibrarianSidebar
+        activeView="inventory"
+        onSelect={(target) => {
+          if (target === "inventory") return; // already on the catalog page
+          try {
+            localStorage.setItem("librarianView", target);
+          } catch {
+            // ignore: storage blocked
+          }
+          goTo("home");
+        }}
+        onNavigate={goTo}
+        onLogout={handleLogout}
+        unreadCount={unreadCount}
+      />
+    );
 
   if (page === "login") {
     return (
@@ -416,71 +419,79 @@ function App() {
     <div className="app-container">
       {message && <p className="app-message">{message}</p>}
 
-      {currentUser && page === "profile" && currentUser.role !== "librarian" && (
-        <div className="library-layout">
-          {sidebar}
-          <main className="library-content">
-            {topBar}
+      {currentUser &&
+        page === "profile" &&
+        currentUser.role !== "librarian" && (
+          <div className="library-layout">
+            {sidebar}
+            <main className="library-content">
+              {topBar}
+              <Profile user={currentUser} />
+            </main>
+          </div>
+        )}
+
+      {currentUser &&
+        page === "profile" &&
+        currentUser.role === "librarian" && (
+          <div className="profile-page">
+            <div className="profile-page-menu">{userMenu}</div>
             <Profile user={currentUser} />
-          </main>
-        </div>
-      )}
+          </div>
+        )}
 
-      {currentUser && page === "profile" && currentUser.role === "librarian" && (
-        <div className="profile-page">
-          <div className="profile-page-menu">{userMenu}</div>
-          <Profile user={currentUser} />
-        </div>
-      )}
+      {currentUser &&
+        page === "notification" &&
+        currentUser.role !== "librarian" && (
+          <div className="library-layout">
+            {sidebar}
+            <main className="library-content">
+              {topBar}
+              <Notification
+                user={currentUser}
+                onReviewLoan={handleReviewLoan}
+                onChanged={refreshUnread}
+              />
+            </main>
+          </div>
+        )}
 
-      {currentUser && page === "notification" && currentUser.role !== "librarian" && (
-        <div className="library-layout">
-          {sidebar}
-          <main className="library-content">
-            {topBar}
-            <Notification
-              user={currentUser}
-              onReviewLoan={handleReviewLoan}
-              onChanged={refreshUnread}
-            />
-          </main>
-        </div>
-      )}
-
-      {currentUser && page === "notification" && currentUser.role === "librarian" && (
-        <div className="library-layout">
-          <LibrarianSidebar
-            activeView="notification"
-            onSelect={(target) => {
-              if (target === "inventory") {
-                goTo("catalog");
-                return;
-              }
-              try {
-                localStorage.setItem("librarianView", target);
-              } catch {
-                // ignore: storage blocked
-              }
-              goTo("home");
-            }}
-            onNavigate={goTo}
-            onLogout={handleLogout}
-            unreadCount={unreadCount}
-          />
-          <main className="library-content">
-            <TopBar
-              name={currentUser.first_name}
+      {currentUser &&
+        page === "notification" &&
+        currentUser.role === "librarian" && (
+          <div className="library-layout">
+            <LibrarianSidebar
+              activeView="notification"
+              onSelect={(target) => {
+                if (target === "inventory") {
+                  goTo("catalog");
+                  return;
+                }
+                try {
+                  localStorage.setItem("librarianView", target);
+                } catch {
+                  // ignore: storage blocked
+                }
+                goTo("home");
+              }}
+              onNavigate={goTo}
+              onLogout={handleLogout}
               unreadCount={unreadCount}
-              onBell={() => goTo("notification")}
             />
-            <Notification
-              user={currentUser}
-              onReviewLoan={handleReviewLoan}
-              onChanged={refreshUnread}
-            />
-          </main>
-        </div>
-      )}
+            <main className="library-content">
+              <TopBar
+                name={currentUser.first_name}
+                unreadCount={unreadCount}
+                onBell={() => goTo("notification")}
+              />
+              <Notification
+                user={currentUser}
+                onReviewLoan={handleReviewLoan}
+                onChanged={refreshUnread}
+              />
+            </main>
+          </div>
+        )}
 
       {currentUser && page === "loans" && currentUser.role !== "librarian" && (
         <div className="library-layout">
@@ -521,7 +532,9 @@ function App() {
         <FacultyHome user={currentUser} />
       )}
 
-      {currentUser && currentUser.role === "librarian" && (page === "home" || page === "librarianLoans") && (
+      {currentUser &&
+        currentUser.role === "librarian" &&
+        (page === "home" || page === "librarianLoans") && (
           <LibrarianHome
             key={`${page}-${focusLoanID}`}
             user={currentUser}
@@ -531,7 +544,7 @@ function App() {
             initialView={page === "librarianLoans" ? "loans" : "menu"}
             focusLoanID={focusLoanID}
           />
-      )}
+        )}
 
       {currentUser &&
         currentUser.role === "librarian" &&
@@ -618,7 +631,7 @@ function App() {
         />
       )}
 
-    {currentUser && borrowItem && (
+      {currentUser && borrowItem && (
         <ConfirmBorrowModal
           user={currentUser}
           item={borrowItem}
@@ -627,7 +640,7 @@ function App() {
         />
       )}
 
-    {currentUser && cancelHold && (
+      {currentUser && cancelHold && (
         <ConfirmCancelHoldModal
           key={cancelHold.hold.holdID}
           user={currentUser}
@@ -636,7 +649,15 @@ function App() {
           onCancelled={handleHoldCancelled}
         />
       )}
-      </div>
+
+      {deleteError && (
+        <AlertDialog
+          title="Unable to Delete Item"
+          message={deleteError}
+          onClose={() => setDeleteError("")}
+        />
+      )}
+    </div>
   );
 }
 

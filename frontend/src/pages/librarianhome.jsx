@@ -8,6 +8,7 @@ import LibrarianSidebar from "../component/LibrarianSidebar";
 import TopBar from "../component/TopBar";
 import Donut from "../component/Donut";
 import "../styles/Librarian.css";
+import AlertDialog from "../component/AlertDialog";
 import API_URL from "../api";
 
 const API = "http://localhost:3000";
@@ -84,6 +85,7 @@ function LibrarianHome({
   });
 
   const [stats, setStats] = useState(null);
+  const [userStatusMessage, setUserStatusMessage] = useState("");
 
   // dashboard numbers
   useEffect(() => {
@@ -204,7 +206,7 @@ function LibrarianHome({
       window.location.reload();
     } catch (error) {
       console.error("Error updating user status:", error);
-      alert(error.message || "Failed to update user status.");
+      setUserStatusMessage(error.message || "Failed to update user status.");
     }
   };
 
@@ -371,6 +373,13 @@ function LibrarianHome({
           <LibrarianLoans user={user} focusLoanID={focusLoanID} />
         )}
       </main>
+      {userStatusMessage && (
+        <AlertDialog
+          title="Unable to Deactivate User"
+          message={userStatusMessage}
+          onClose={() => setUserStatusMessage("")}
+        />
+      )}
     </div>
   );
 }
