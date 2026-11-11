@@ -150,9 +150,11 @@ function UserManagment({ onToggleActive }) {
             {term ? "No matches." : "None yet."}
           </p>
         ) : (
+          <div style={{ overflowX: "auto" }}>
           <table
             style={{
               width: "100%",
+              minWidth: 640,
               borderCollapse: "collapse",
               textAlign: "left",
               fontSize: 13,
@@ -189,7 +191,7 @@ function UserManagment({ onToggleActive }) {
                       {Number(u.is_active) === 1 ? "Active" : "Deactivated"}
                     </span>
                   </td>
-                  <td style={td}>
+                  <td style={{ ...td, whiteSpace: "nowrap" }}>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -204,6 +206,7 @@ function UserManagment({ onToggleActive }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     );
