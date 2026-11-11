@@ -340,29 +340,6 @@ function LibrarianHome({
             </div>
           </div>
         )}
-        {view === "menu" && (
-          <div className="dash-menu">
-            {/* <button className="dash-button" onClick={() => go("inventory")}>
-            Manage Inventory
-          </button> */}
-            <button className="dash-button" onClick={() => go("users")}>
-              Manage users
-            </button>
-            <button className="dash-button" onClick={() => go("reports")}>
-              Reports
-            </button>
-            <button className="dash-button" onClick={() => go("loans")}>
-              Manage loans
-            </button>
-            <button
-              className="dash-button dash-button-primary"
-              onClick={() => onNavigate("catalog")}
-            >
-              Go to Catalog
-            </button>
-          </div>
-        )}
-
         {view === "users" && (
           <UserManagment onToggleActive={handleToggleUserStatus} />
         )}
