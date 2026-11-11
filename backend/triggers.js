@@ -1,39 +1,55 @@
 const db = require("./db");
-const { LATE_FEE_PER_DAY } = require("./fines/fines");
+const { FEE_PER_DAY_SQL, FEE_MAX_SQL } = require("./fines/fines");
 
-// The two database triggers. schema.js calls createTriggers() on startup.
+// The database triggers. schema.js calls createTriggers() on startup.
 // Each one is dropped and made again, so a change here reaches every database.
 
 // 1) Late fee: when a loan gets its returned_date and it came back after the
 //    due date, MySQL charges the late fee in the fines table by itself.
+//    The rate and the maximum depend on the item (see LATE_FEE_RULES in fines.js:
+//    books and laptops are charged, other items are not).
 //    If a late fine already exists for the loan (it was overdue while still
-//    checked out), the unpaid amount is set to the final number of days late.
+//    checked out), the unpaid amount is set to the final amount.
 const LATE_FEE_TRIGGER = `
   CREATE TRIGGER trg_loans_late_fee
   AFTER UPDATE ON loans
   FOR EACH ROW
   BEGIN
+    DECLARE v_rate DECIMAL(10,2) DEFAULT NULL;
+    DECLARE v_cap DECIMAL(10,2) DEFAULT NULL;
+    DECLARE v_amount DECIMAL(10,2);
+
     IF OLD.returned_date IS NULL
       AND NEW.returned_date IS NOT NULL
       AND NEW.returned_date > NEW.due_date THEN
 
-      UPDATE fines
-        SET amount = DATEDIFF(NEW.returned_date, NEW.due_date) * ${LATE_FEE_PER_DAY}
-        WHERE loanID = NEW.loanID AND charge_type = 'Late' AND paid = 0;
+      SELECT ${FEE_PER_DAY_SQL}, ${FEE_MAX_SQL}
+        INTO v_rate, v_cap
+        FROM items i
+        LEFT JOIN device d ON d.itemID = i.itemID
+        WHERE i.itemID = NEW.itemID;
 
-      IF NOT EXISTS (
-        SELECT 1 FROM fines WHERE loanID = NEW.loanID AND charge_type = 'Late'
-      ) THEN
-        INSERT INTO fines (loanID, userID, itemID, charge_type, paid, issue_date, amount)
-          VALUES (
-            NEW.loanID,
-            NEW.userID,
-            NEW.itemID,
-            'Late',
-            0,
-            DATE_ADD(NEW.due_date, INTERVAL 1 DAY),
-            DATEDIFF(NEW.returned_date, NEW.due_date) * ${LATE_FEE_PER_DAY}
-          );
+      IF v_rate IS NOT NULL THEN
+        SET v_amount = LEAST(DATEDIFF(NEW.returned_date, NEW.due_date) * v_rate, v_cap);
+
+        UPDATE fines
+          SET amount = v_amount
+          WHERE loanID = NEW.loanID AND charge_type = 'Late' AND paid = 0;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM fines WHERE loanID = NEW.loanID AND charge_type = 'Late'
+        ) THEN
+          INSERT INTO fines (loanID, userID, itemID, charge_type, paid, issue_date, amount)
+            VALUES (
+              NEW.loanID,
+              NEW.userID,
+              NEW.itemID,
+              'Late',
+              0,
+              DATE_ADD(NEW.due_date, INTERVAL 1 DAY),
+              v_amount
+            );
+        END IF;
       END IF;
     END IF;
   END`;
