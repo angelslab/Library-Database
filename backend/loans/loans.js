@@ -41,6 +41,31 @@ async function borrowItem(userID, itemID) {
       throw new LoanError(403, "Only student and faculty accounts can borrow items");
     }
 
+    // an overdue item blocks new borrows until it is returned. A loan that already
+    // has a return request waiting for the librarian is not counted against the user.
+    const [overdueRows] = await conn.query(
+      `SELECT items.title, DATE_FORMAT(loans.due_date, '%Y-%m-%d') AS due_date
+        FROM loans
+        JOIN items ON items.itemID = loans.itemID
+        WHERE loans.userID = ?
+        AND loans.returned_date IS NULL
+        AND loans.status <> 'return_requested'
+        AND loans.due_date < CURDATE()
+        ORDER BY loans.due_date`,
+      [userID],
+    );
+
+    if (overdueRows.length > 0) {
+      const first = overdueRows[0];
+
+      throw new LoanError(
+        409,
+        overdueRows.length === 1
+          ? `You have an overdue item: "${first.title}" was due on ${first.due_date}. Return it before borrowing anything else.`
+          : `You have ${overdueRows.length} overdue items, including "${first.title}" (due ${first.due_date}). Return them before borrowing anything else.`,
+      );
+    }
+
     const [activeRows] = await conn.query(
       "SELECT COUNT(*) AS count FROM loans WHERE userID = ? AND returned_date IS NULL",
       [userID],
