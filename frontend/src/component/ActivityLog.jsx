@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { downloadCSV } from "./reportHelpers";
 
 // Activity Log: shows the audit_log table (written automatically by the
-// database triggers) so you can see every borrow and return in the app.
+// database triggers) plus print payments, so you can see every borrow,
+// return, and printer use in the app.
 function ActivityLog() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState("");
@@ -109,7 +110,7 @@ function ActivityLog() {
             fontSize: 14,
           }}
         >
-          Every borrow and return, recorded automatically.
+          Every borrow, return, and print payment, recorded automatically.
         </p>
 
         {loading && <p>Loading...</p>}
@@ -135,13 +136,18 @@ function ActivityLog() {
               </thead>
               <tbody>
                 {shown.map((r) => (
-                  <tr key={r.auditID}>
+                  <tr key={r.row_key || r.auditID}>
                     <td>{r.logged_at}</td>
                     <td
                       style={{
                         textTransform: "capitalize",
                         fontWeight: 600,
-                        color: r.action === "return" ? "#5fbf8a" : "#e5bf6d",
+                        color:
+                          r.action === "return"
+                            ? "#5fbf8a"
+                            : r.action === "print"
+                              ? "#6fb0e8"
+                              : "#e5bf6d",
                       }}
                     >
                       {r.action}
