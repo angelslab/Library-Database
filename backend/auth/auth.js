@@ -10,6 +10,7 @@ async function login(email, password) {
         users.last_name,
         users.email,
         users.role,
+        users.is_active,
         user_credentials.password_hash,
 
         student.studentID,
@@ -37,6 +38,13 @@ async function login(email, password) {
 
   if (!ok) {
     return null;
+  }
+
+  //check whether account is active)
+  if (Number(user.is_active) === 0) {
+    return {
+      error: "Your account has been disabled. Please contact the librarian.",
+    };
   }
 
   delete user.password_hash;
@@ -77,10 +85,9 @@ async function register(data) {
     return { error: "Faculty ID and department are required" };
   }
 
-  const existing = await db.query(
-    `SELECT userID FROM users WHERE email = ?`,
-    [email],
-  );
+  const existing = await db.query(`SELECT userID FROM users WHERE email = ?`, [
+    email,
+  ]);
 
   if (existing[0].length > 0) {
     return { error: "This email is already registered" };
@@ -126,11 +133,16 @@ async function register(data) {
 
     return {
       user: {
-        userID, first_name, last_name, email, role,
+        userID,
+        first_name,
+        last_name,
+        email,
+        role,
         studentID: role === "student" ? data.studentID : null,
         major: role === "student" ? data.major.trim().toUpperCase() : null,
         facultyID: role === "faculty" ? data.facultyID : null,
-        department: role === "faculty" ? data.department.trim().toUpperCase() : null,
+        department:
+          role === "faculty" ? data.department.trim().toUpperCase() : null,
       },
     };
   } catch (error) {
