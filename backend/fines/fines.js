@@ -1,11 +1,31 @@
 const db = require("../db");
 const { LoanError } = require("../loans/loans");
 
-// Late fee per day an item is kept past its due date.
-const LATE_FEE_PER_DAY = 0.25;
+// Late fee rules: a fee for each day an item is kept past its due date, up to a maximum.
+// Items that are not a book or a laptop are not charged a late fee.
+const LATE_FEE_RULES = {
+  book: { per_day: 0.2, max: 12 },
+  laptop: { per_day: 1, max: 60 },
+};
+
+// SQL that picks the rate and the maximum for an item. They expect the items table
+// as "i" and the device table as "d" (LEFT JOIN device d ON d.itemID = i.itemID).
+// triggers.js uses the same two pieces, so the rules live in one place.
+const FEE_PER_DAY_SQL = `CASE
+    WHEN i.item_type = 'Book' THEN ${LATE_FEE_RULES.book.per_day}
+    WHEN i.item_type = 'Device' AND d.device_type = 'Laptop' THEN ${LATE_FEE_RULES.laptop.per_day}
+  END`;
+
+const FEE_MAX_SQL = `CASE
+    WHEN i.item_type = 'Book' THEN ${LATE_FEE_RULES.book.max}
+    WHEN i.item_type = 'Device' AND d.device_type = 'Laptop' THEN ${LATE_FEE_RULES.laptop.max}
+  END`;
 
 // Days late: until the return date if it came back, otherwise until today.
 const DAYS_LATE = "DATEDIFF(COALESCE(l.returned_date, CURDATE()), l.due_date)";
+
+// Fine for a loan: days late times the rate, never more than the maximum.
+const LATE_FEE_AMOUNT = `LEAST(${DAYS_LATE} * (${FEE_PER_DAY_SQL}), ${FEE_MAX_SQL})`;
 
 // Makes sure every late loan has a "Late" fine with the right amount.
 // - a loan that is (or was) returned after its due date gets one fine
@@ -48,24 +68,28 @@ async function writeLateFines() {
     `INSERT INTO fines (loanID, userID, itemID, charge_type, paid, issue_date, amount)
       SELECT l.loanID, l.userID, l.itemID, 'Late', 0,
         DATE_ADD(l.due_date, INTERVAL 1 DAY),
-        ${DAYS_LATE} * ?
+        ${LATE_FEE_AMOUNT}
       FROM loans l
+      JOIN items i ON i.itemID = l.itemID
+      LEFT JOIN device d ON d.itemID = l.itemID
       WHERE ${DAYS_LATE} > 0
+      AND (${FEE_PER_DAY_SQL}) IS NOT NULL
       AND NOT EXISTS (
         SELECT 1 FROM fines f
         WHERE f.loanID = l.loanID AND f.charge_type = 'Late'
       )`,
-    [LATE_FEE_PER_DAY],
   );
 
   await db.query(
     `UPDATE fines f
       JOIN loans l ON l.loanID = f.loanID
-      SET f.amount = ${DAYS_LATE} * ?
+      JOIN items i ON i.itemID = l.itemID
+      LEFT JOIN device d ON d.itemID = l.itemID
+      SET f.amount = ${LATE_FEE_AMOUNT}
       WHERE f.charge_type = 'Late'
       AND f.paid = 0
-      AND ${DAYS_LATE} > 0`,
-    [LATE_FEE_PER_DAY],
+      AND ${DAYS_LATE} > 0
+      AND (${FEE_PER_DAY_SQL}) IS NOT NULL`,
   );
 }
 
@@ -125,7 +149,7 @@ async function fetchUserFines(userID) {
     fines,
     unpaid_total: Number(unpaidTotal.toFixed(2)),
     paid_total: Number(paidTotal.toFixed(2)),
-    late_fee_per_day: LATE_FEE_PER_DAY,
+    late_fee_rules: LATE_FEE_RULES,
   };
 }
 
@@ -187,7 +211,9 @@ async function payFine(userID, fineID) {
 }
 
 module.exports = {
-  LATE_FEE_PER_DAY,
+  LATE_FEE_RULES,
+  FEE_PER_DAY_SQL,
+  FEE_MAX_SQL,
   syncLateFines,
   fetchUserFines,
   payFine,
