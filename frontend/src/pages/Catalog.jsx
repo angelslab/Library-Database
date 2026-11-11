@@ -108,6 +108,7 @@ function Catalog({
             onCancelHold={onCancelHold}
             holdsByItem={holdsByItem}
             onSearchChange={setIsSearching}
+            user={user}
           />
         </div>
       </TopBar>

@@ -10,6 +10,7 @@ function ItemSearch({
   onCancelHold,
   holdsByItem = {},
   onSearchChange,
+  user,
 }) {
   const [keyword, setKeyword] = useState("");
 
@@ -58,6 +59,7 @@ function ItemSearch({
               onPlaceHold={onPlaceHold}
               onCancelHold={onCancelHold}
               hold={holdsByItem[item.itemID]}
+              user={user}
             />
           ))}
         </div>

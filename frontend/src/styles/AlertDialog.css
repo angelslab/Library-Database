@@ -1,0 +1,37 @@
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.dialog-card {
+  width: 90%;
+  max-width: 420px;
+  padding: 28px;
+  background: #10253e;
+  color: #e6ecf2;
+  border: 1px solid #e6ecf21f;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.dialog-card h2 {
+  margin-bottom: 14px;
+}
+
+.dialog-card p {
+  margin-bottom: 24px;
+}
+
+.dialog-card button {
+  background: #4075aa;
+  color: #e6ecf2;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  cursor: pointer;
+}
