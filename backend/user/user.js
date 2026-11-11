@@ -42,7 +42,7 @@ async function getProfile(userID) {
     return null;
   }
 
-    const profile = rows[0];
+  const profile = rows[0];
 
   // the borrow limit comes from the loan rules (students 3, faculty 5)
   const policy = getLoanPolicy(profile.role);

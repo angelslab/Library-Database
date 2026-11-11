@@ -1,9 +1,10 @@
 const db = require("../db");
 
 async function manageUsers(q) {
-    const term = `%${q}%`;
-    const [rows] = await db.query(`   
-        SELECT u.userID, u.first_name, u.last_name, u.email, u.role,
+  const term = `%${q}%`;
+  const [rows] = await db.query(
+    `   
+        SELECT u.userID, u.first_name, u.last_name, u.email, u.role, u.is_active,
         COALESCE(s.studentID, f.facultyID) AS id_number,
         COALESCE(s.major, f.department)    AS major_or_department
         FROM users u
@@ -13,9 +14,9 @@ async function manageUsers(q) {
         OR u.last_name  LIKE ?
         OR s.studentID  = ?
         OR f.facultyID  = ?`,
-    [term, term, q, q]
-);
-    return rows;
+    [term, term, q, q],
+  );
+  return rows;
 }
 
 module.exports = { manageUsers };
