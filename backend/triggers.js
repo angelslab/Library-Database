@@ -74,7 +74,31 @@ const HOLD_READY_TRIGGER = `
     END IF;
   END`;
 
-// 3) Audit log: record every borrow (a new loan) and every return (a loan
+// 3) Low stock: when the available copies of an active item go down and are
+//    3 or fewer, every librarian gets a notification (a different message
+//    when the last copy is gone).
+const LOW_STOCK_TRIGGER = `
+  CREATE TRIGGER trg_items_low_stock
+  AFTER UPDATE ON items
+  FOR EACH ROW
+  BEGIN
+    IF NEW.is_active = 1
+       AND NEW.available_copies <= 3
+       AND NEW.available_copies < OLD.available_copies THEN
+      INSERT INTO notifications (userID, type, message, itemID)
+        SELECT librarian.userID,
+          'low_stock',
+          IF(NEW.available_copies <= 0,
+            CONCAT('Out of stock: "', NEW.title, '" has no copies left.'),
+            CONCAT('Low stock: "', NEW.title, '" has only ', NEW.available_copies,
+              IF(NEW.available_copies = 1, ' copy', ' copies'), ' left.')),
+          NEW.itemID
+        FROM librarian
+        JOIN users ON users.userID = librarian.userID;
+    END IF;
+  END`;
+
+// 4) Audit log: record every borrow (a new loan) and every return (a loan
 //    getting its returned_date) in the audit_log table, so there is a full
 //    history of who took out and returned each item and when.
 const AUDIT_BORROW_TRIGGER = `
@@ -100,6 +124,7 @@ const AUDIT_RETURN_TRIGGER = `
 const TRIGGERS = [
   { name: "trg_loans_late_fee", sql: LATE_FEE_TRIGGER },
   { name: "trg_items_hold_ready", sql: HOLD_READY_TRIGGER },
+  { name: "trg_items_low_stock", sql: LOW_STOCK_TRIGGER },
   { name: "trg_loans_audit_borrow", sql: AUDIT_BORROW_TRIGGER },
   { name: "trg_loans_audit_return", sql: AUDIT_RETURN_TRIGGER },
 ];
