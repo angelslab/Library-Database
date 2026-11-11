@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { money, usDate, downloadCSV, CHART_COLORS, tally, segmentsFor } from "./reportHelpers";
 import PieChart from "./PieChart";
 import { Sheet, Stats, Section, Tag } from "./ReportSheet";
@@ -95,11 +95,6 @@ function FinesReport({ onBack }) {
         runReport(params);
     };
 
-    // load all charges on mount
-    useEffect(() => {
-        runReport(EMPTY_PARAMS);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
   // ---------- request form ----------
     if (rows === null) {

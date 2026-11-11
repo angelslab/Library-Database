@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usDate, downloadCSV, CHART_COLORS, ITEM_TYPES, tally, segmentsFor } from "./reportHelpers";
 import PieChart from "./PieChart";
 import { Sheet, Stats, Section, Tag } from "./ReportSheet";
@@ -127,11 +127,6 @@ function LoansReport({ onBack }) {
     runReport(params);
   };
 
-  // load all loans on mount
-  useEffect(() => {
-    runReport(EMPTY_PARAMS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // ---------- request form ----------
   if (rows === null) {
