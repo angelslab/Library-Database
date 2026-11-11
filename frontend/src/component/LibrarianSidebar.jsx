@@ -105,7 +105,7 @@ function LibrarianSidebar({
     <aside className="lib-sidebar">
       <div className="lib-brand">
         <span className="lib-mark" aria-hidden="true">
-          📚
+          <img src="/library.png" alt="" />
         </span>
         <span>The Library</span>
       </div>

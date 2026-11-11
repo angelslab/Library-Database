@@ -40,7 +40,7 @@ function Register({ onLogin, onBack }) {
     <div className="auth-page">
       <div className="auth-card auth-card-wide">
         <div className="auth-brand">
-          <div className="auth-logo">📚</div>
+          <div className="auth-logo"><img src="/library.png" alt="" /></div>
           <h1 className="auth-title">Create account</h1>
           <p className="auth-subtitle">Join the library to borrow and reserve items</p>
         </div>

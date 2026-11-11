@@ -34,8 +34,12 @@
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: linear-gradient(145deg, #4075aa, #193550);
-  font-size: 15px;
+}
+
+.lib-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .lib-role {

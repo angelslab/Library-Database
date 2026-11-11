@@ -36,7 +36,7 @@ function Login({ onLogin, message, onBack }) {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="auth-logo">📚</div>
+          <div className="auth-logo"><img src="/library.png" alt="" /></div>
           <h1 className="auth-title">Library</h1>
           <p className="auth-subtitle">Sign in to your account</p>
         </div>
