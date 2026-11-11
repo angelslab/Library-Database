@@ -13,7 +13,9 @@ function groupByBorrower(rows) {
     const groups = [];
     const byUser = new Map();
     for (const row of rows) {
-        if (!byUser.has(row.userID)) {
+        // a walk-in print payment has no userID, so group those by the name given
+        const key = row.userID ?? `walk-in:${row.borrower}`;
+        if (!byUser.has(key)) {
             const group = {
             userID: row.userID,
             borrower: row.borrower,
@@ -22,10 +24,10 @@ function groupByBorrower(rows) {
             collected: 0,
             outstanding: 0,
         };
-        byUser.set(row.userID, group);
+        byUser.set(key, group);
         groups.push(group);
     }
-    const group = byUser.get(row.userID);
+    const group = byUser.get(key);
     group.rows.push(row);
     if (row.paid === 1) group.collected += Number(row.amount);
     else group.outstanding += Number(row.amount);
@@ -373,7 +375,7 @@ return (
                             </thead>
                             <tbody>
                                 {groups.flatMap((g) => g.rows).map((r) => (
-                                    <tr key={r.fineID}>
+                                    <tr key={r.row_key || r.fineID}>
                                         <td className="nowrap">{usDate(r.issue_date)}</td>
                                         <td>{r.borrower}</td>
                                         <td>

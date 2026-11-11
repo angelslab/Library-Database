@@ -33,6 +33,7 @@ const { getAuditReport } = require("./reports/audit");
 const { handleLoanRoutes } = require("./loans/routes");
 const { handleHoldRoutes } = require("./holds/routes");
 const { handleFineRoutes } = require("./fines/routes");
+const { handlePrintRoutes } = require("./printing/routes");
 
 // lets the React app (different port) call the API
 const CORS_HEADERS = {
@@ -91,6 +92,10 @@ async function startServer() {
       }
 
       if (await handleFineRoutes(req, res, CORS_HEADERS)) {
+        return;
+      }
+
+      if (await handlePrintRoutes(req, res, CORS_HEADERS)) {
         return;
       }
 
@@ -304,13 +309,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error deleting book:", error);
 
-          res.writeHead(500, {
+          res.writeHead(error.status || 500, {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to delete book",
+              message: error.status ? error.message : "Failed to delete book",
             }),
           );
         }
@@ -508,13 +513,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error deleting Media:", error);
 
-          res.writeHead(500, {
+          res.writeHead(error.status || 500, {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to delete Media",
+              message: error.status ? error.message : "Failed to delete Media",
             }),
           );
         }
@@ -729,13 +734,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error deleting Device:", error);
 
-          res.writeHead(500, {
+          res.writeHead(error.status || 500, {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to delete Device",
+              message: error.status ? error.message : "Failed to delete Device",
             }),
           );
         }

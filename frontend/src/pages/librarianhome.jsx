@@ -3,6 +3,7 @@ import UserManagment from "../component/userManage";
 import Reports from "../component/reportsPage";
 import ActivityLog from "../component/ActivityLog";
 import LibrarianLoans from "../component/LibrarianLoans";
+import PrintPayments from "../component/PrintPayments";
 import LibrarianSidebar from "../component/LibrarianSidebar";
 import TopBar from "../component/TopBar";
 import Donut from "../component/Donut";
@@ -12,7 +13,7 @@ const API = "http://localhost:3000";
 
 // sub-views that are safe to restore after a reload
 // (inventory now lives on the catalog page, not as a view here)
-const KEEP_VIEWS = ["users", "reports", "loans", "activity"];
+const KEEP_VIEWS = ["users", "reports", "loans", "activity", "printing"];
 
 // --- small inline icons for the quick-action cards ---
 function ActionIcon({ name }) {
@@ -336,6 +337,7 @@ function LibrarianHome({
         {view === "users" && <UserManagment />}
         {view === "reports" && <Reports />}
         {view === "activity" && <ActivityLog />}
+        {view === "printing" && <PrintPayments user={user} />}
         {view === "loans" && (
           <LibrarianLoans user={user} focusLoanID={focusLoanID} />
         )}

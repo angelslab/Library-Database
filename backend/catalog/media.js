@@ -79,6 +79,20 @@ async function addMedia(title, totalCopies, author, image_url) {
 }
 
 async function deleteMedia(itemID) {
+  // block deleting an item that is still checked out
+  const [activeLoans] = await db.query(
+    `SELECT COUNT(*) AS count FROM loans WHERE itemID = ? AND returned_date IS NULL`,
+    [itemID],
+  );
+
+  if (activeLoans[0].count > 0) {
+    const error = new Error(
+      `Cannot delete: ${activeLoans[0].count} copy(ies) still on loan. Return them first.`,
+    );
+    error.status = 409;
+    throw error;
+  }
+
   const result = await db.query(
     `
     UPDATE items

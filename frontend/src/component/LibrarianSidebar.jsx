@@ -44,6 +44,13 @@ function Icon({ name }) {
         <path d="M12 7v5l3 2" />
       </>
     ),
+    print: (
+      <>
+        <path d="M6 9V3h12v6" />
+        <rect x="3" y="9" width="18" height="8" rx="2" />
+        <rect x="7" y="14" width="10" height="7" />
+      </>
+    ),
     browse: <path d="M3 11l9-8 9 8M5 10v10h14V10" />,
     notif: (
       <>
@@ -89,6 +96,7 @@ function LibrarianSidebar({
     { view: "inventory", label: "Catalog", icon: "inv" },
     { view: "users", label: "Manage Users", icon: "users" },
     { view: "loans", label: "Manage Loans", icon: "loans" },
+    { view: "printing", label: "Print Payments", icon: "print" },
     { view: "activity", label: "Activity Log", icon: "activity" },
     { view: "reports", label: "Reports", icon: "reports" },
   ];

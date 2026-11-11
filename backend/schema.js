@@ -296,6 +296,37 @@ async function initDB() {
 
   console.log("Audit_log table created");
 
+  //print_payments (librarian records what a person paid for printing)
+  // A failure here is logged but does not stop the server, so the rest of the app keeps working.
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS print_payments (
+        paymentID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+        userID INT NULL,
+        payer_name VARCHAR(100) NOT NULL,
+        librarianID INT NOT NULL,
+        bw_sheets INT NOT NULL DEFAULT 0,
+        color_sheets INT NOT NULL DEFAULT 0,
+        bw_rate DECIMAL(4,2) NOT NULL,
+        color_rate DECIMAL(4,2) NOT NULL,
+        computed_amount DECIMAL(10,2) NOT NULL,
+        amount_charged DECIMAL(10,2) NOT NULL,
+        payment_method VARCHAR(20) NOT NULL DEFAULT 'cash',
+        note VARCHAR(255) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  
+        FOREIGN KEY (userID) REFERENCES users(userID)
+        ON DELETE SET NULL
+      )
+    `);
+
+    console.log("Print_payments table created");
+  } catch (error) {
+    console.error(
+      `Could not create the print_payments table: ${error.message}. Print payments will not work until it exists.`,
+    );
+  }
+
   // every librarian account needs a row in the librarian table,
   // otherwise they never get return-request notifications
   await db.query(
