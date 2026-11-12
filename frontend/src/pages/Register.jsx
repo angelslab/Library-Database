@@ -4,7 +4,7 @@ import '../styles/Auth.css'
 function Register({ onLogin, onBack }) {
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', password: '', confirm: '',
-    role: 'student', studentID: '', major: '', facultyID: '', department: ''
+    role: 'student', studentID: '', major: ''
   })
   const [error, setError] = useState('')
 
@@ -42,7 +42,7 @@ function Register({ onLogin, onBack }) {
         <div className="auth-brand">
           <div className="auth-logo"><img src="/library.png" alt="" /></div>
           <h1 className="auth-title">Create account</h1>
-          <p className="auth-subtitle">Join the library to borrow and reserve items</p>
+          <p className="auth-subtitle">Student sign-up. Faculty accounts are created by a librarian.</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -73,37 +73,16 @@ function Register({ onLogin, onBack }) {
             </div>
           </div>
 
-          <div className="auth-field">
-            <label className="auth-label">I am a</label>
-            <select className="auth-select" value={form.role} onChange={update('role')}>
-              <option value="student">Student</option>
-              <option value="faculty">Faculty</option>
-            </select>
+          <div className="auth-row">
+            <div className="auth-field">
+              <label className="auth-label">Student ID</label>
+              <input className="auth-input" type="number" min="1" step="1" placeholder="Student ID" value={form.studentID} onChange={update('studentID')} required />
+            </div>
+            <div className="auth-field">
+              <label className="auth-label">Major</label>
+              <input className="auth-input" placeholder="e.g. CS" value={form.major} onChange={(e) => { setForm({ ...form, major: e.target.value.toUpperCase() }); setError('') }} required />
+            </div>
           </div>
-
-          {form.role === 'student' ? (
-            <div className="auth-row">
-              <div className="auth-field">
-                <label className="auth-label">Student ID</label>
-                <input className="auth-input" type="number" placeholder="Student ID" value={form.studentID} onChange={update('studentID')} required />
-              </div>
-              <div className="auth-field">
-                <label className="auth-label">Major</label>
-                <input className="auth-input" placeholder="e.g. CS" value={form.major} onChange={(e) => { setForm({ ...form, major: e.target.value.toUpperCase() }); setError('') }} required />
-              </div>
-            </div>
-          ) : (
-            <div className="auth-row">
-              <div className="auth-field">
-                <label className="auth-label">Faculty ID</label>
-                <input className="auth-input" type="number" placeholder="Faculty ID" value={form.facultyID} onChange={update('facultyID')} required />
-              </div>
-              <div className="auth-field">
-                <label className="auth-label">Department</label>
-                <input className="auth-input" placeholder="e.g. CS" value={form.department} onChange={(e) => { setForm({ ...form, department: e.target.value.toUpperCase() }); setError('') }} required />
-              </div>
-            </div>
-          )}
 
           {error && <p className="auth-error">{error}</p>}
 

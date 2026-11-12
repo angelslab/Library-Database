@@ -73,12 +73,26 @@ async function register(data) {
     return { error: "Please fill in all fields" };
   }
 
-  if (role !== "student" && role !== "faculty") {
-    return { error: "Role must be student or faculty" };
+  if (role === "faculty") {
+    return { error: "Faculty accounts are created by a librarian" };
+  }
+
+  if (role !== "student") {
+    return { error: "Role must be student" };
   }
 
   if (role === "student" && (!data.studentID || !data.major)) {
     return { error: "Student ID and major are required" };
+  }
+
+  // the student ID must be a positive whole number that fits the INT column
+  const studentID = Number(data.studentID);
+
+  if (
+    role === "student" &&
+    (!Number.isInteger(studentID) || studentID <= 0 || studentID > 2147483647)
+  ) {
+    return { error: "Student ID must be a positive whole number" };
   }
 
   if (role === "faculty" && (!data.facultyID || !data.department)) {
@@ -119,7 +133,7 @@ async function register(data) {
       await conn.query(
         `INSERT INTO student (userID, studentID, major)
           VALUES (?, ?, ?)`,
-        [userID, data.studentID, data.major.trim().toUpperCase()],
+        [userID, studentID, data.major.trim().toUpperCase()],
       );
     } else {
       await conn.query(
@@ -138,7 +152,7 @@ async function register(data) {
         last_name,
         email,
         role,
-        studentID: role === "student" ? data.studentID : null,
+        studentID: role === "student" ? studentID : null,
         major: role === "student" ? data.major.trim().toUpperCase() : null,
         facultyID: role === "faculty" ? data.facultyID : null,
         department:
@@ -158,4 +172,84 @@ async function register(data) {
   }
 }
 
-module.exports = { login, setPassword, register };
+// A librarian creates a faculty account (faculty cannot sign themselves up).
+// returns { user } on success or { error, status } if something is wrong
+async function createFaculty(data) {
+  const { librarianID, first_name, last_name, email, password, department } = data;
+  const facultyID = Number(data.facultyID);
+
+  const [librarians] = await db.query(
+    "SELECT role FROM users WHERE userID = ?",
+    [librarianID],
+  );
+
+  if (librarians.length === 0 || librarians[0].role !== "librarian") {
+    return { error: "Only librarians can create faculty accounts", status: 403 };
+  }
+
+  if (!first_name || !last_name || !email || !password || !department) {
+    return { error: "Please fill in all fields", status: 400 };
+  }
+
+  if (!Number.isInteger(facultyID) || facultyID <= 0) {
+    return { error: "Faculty ID must be a positive whole number", status: 400 };
+  }
+
+  const [existing] = await db.query("SELECT userID FROM users WHERE email = ?", [
+    email,
+  ]);
+
+  if (existing.length > 0) {
+    return { error: "This email is already registered", status: 409 };
+  }
+
+  const hash = await bcrypt.hash(password, 10);
+  const dept = String(department).trim().toUpperCase();
+  const conn = await db.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    const [result] = await conn.query(
+      `INSERT INTO users (first_name, last_name, email, role)
+        VALUES (?, ?, ?, 'faculty')`,
+      [first_name.trim(), last_name.trim(), email.trim()],
+    );
+
+    await conn.query(
+      "INSERT INTO user_credentials (userID, password_hash) VALUES (?, ?)",
+      [result.insertId, hash],
+    );
+
+    await conn.query(
+      "INSERT INTO faculty (userID, facultyID, department) VALUES (?, ?, ?)",
+      [result.insertId, facultyID, dept],
+    );
+
+    await conn.commit();
+
+    return {
+      user: {
+        userID: result.insertId,
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        email: email.trim(),
+        role: "faculty",
+        facultyID,
+        department: dept,
+      },
+    };
+  } catch (error) {
+    await conn.rollback();
+
+    if (error.code === "ER_DUP_ENTRY") {
+      return { error: "That faculty ID is already taken", status: 409 };
+    }
+
+    throw error;
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = { login, setPassword, register, createFaculty };

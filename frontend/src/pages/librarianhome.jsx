@@ -341,7 +341,10 @@ function LibrarianHome({
           </div>
         )}
         {view === "users" && (
-          <UserManagment onToggleActive={handleToggleUserStatus} />
+          <UserManagment
+            onToggleActive={handleToggleUserStatus}
+            librarianID={user.userID}
+          />
         )}
         {view === "reports" && <Reports />}
         {view === "activity" && <ActivityLog />}

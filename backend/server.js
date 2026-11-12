@@ -20,7 +20,7 @@ const {
   deleteDevice,
   editDevice,
 } = require("./catalog/device");
-const { login, register } = require("./auth/auth");
+const { login, register, createFaculty } = require("./auth/auth");
 const { getProfile } = require("./user/user");
 const { updateUserStatus } = require("./queries/manageUsers");
 
@@ -881,6 +881,37 @@ async function startServer() {
               error: "Failed to log in",
             }),
           );
+        }
+
+        return;
+      }
+
+      // a librarian creates a faculty account
+      if (req.method === "POST" && req.url === "/api/users/faculty") {
+        try {
+          let body = "";
+
+          for await (const chunk of req) {
+            body += chunk;
+          }
+
+          const result = await createFaculty(JSON.parse(body || "{}"));
+
+          res.writeHead(result.error ? result.status || 400 : 201, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+
+          res.end(JSON.stringify(result.error ? { error: result.error } : result.user));
+        } catch (error) {
+          console.error("Error creating faculty:", error);
+
+          res.writeHead(500, {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          });
+
+          res.end(JSON.stringify({ error: "Failed to create faculty account" }));
         }
 
         return;

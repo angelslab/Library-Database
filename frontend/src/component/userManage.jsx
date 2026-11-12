@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import UserDetail from "./UserDetail";
+import AddFacultyForm from "./AddFacultyForm";
 
-function UserManagment({ onToggleActive }) {
+function UserManagment({ onToggleActive, librarianID }) {
   const [keyword, setKeyword] = useState("");
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showAddFaculty, setShowAddFaculty] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [selectedUserID, setSelectedUserID] = useState(() => {
     try {
       const saved = localStorage.getItem("userDetailID");
@@ -44,7 +47,7 @@ function UserManagment({ onToggleActive }) {
       }
     };
     loadUsers();
-  }, []);
+  }, [reloadKey]);
 
   // Live client-side filter — no extra server call while typing.
   const term = keyword.trim().toLowerCase();
@@ -232,6 +235,23 @@ function UserManagment({ onToggleActive }) {
       >
         Manage Users
       </h2>
+
+      <div style={{ marginBottom: 16 }}>
+        <button type="button" onClick={() => setShowAddFaculty((open) => !open)}>
+          {showAddFaculty ? "Close" : "+ Add faculty"}
+        </button>
+      </div>
+
+      {showAddFaculty && (
+        <AddFacultyForm
+          librarianID={librarianID}
+          onClose={() => setShowAddFaculty(false)}
+          onCreated={() => {
+            setShowAddFaculty(false);
+            setReloadKey((k) => k + 1);
+          }}
+        />
+      )}
 
       <input
         type="text"
