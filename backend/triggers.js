@@ -75,23 +75,20 @@ const HOLD_READY_TRIGGER = `
   END`;
 
 // 3) Low stock: when the available copies of an active item go down and are
-//    3 or fewer, every librarian gets a notification (a different message
-//    when the last copy is gone).
+//    between 1 and 3, every librarian gets a notification.
 const LOW_STOCK_TRIGGER = `
   CREATE TRIGGER trg_items_low_stock
   AFTER UPDATE ON items
   FOR EACH ROW
   BEGIN
     IF NEW.is_active = 1
-       AND NEW.available_copies <= 3
+       AND NEW.available_copies BETWEEN 1 AND 3
        AND NEW.available_copies < OLD.available_copies THEN
       INSERT INTO notifications (userID, type, message, itemID)
         SELECT librarian.userID,
           'low_stock',
-          IF(NEW.available_copies <= 0,
-            CONCAT('Out of stock: "', NEW.title, '" has no copies left.'),
-            CONCAT('Low stock: "', NEW.title, '" has only ', NEW.available_copies,
-              IF(NEW.available_copies = 1, ' copy', ' copies'), ' left.')),
+          CONCAT('Low stock: "', NEW.title, '" has only ', NEW.available_copies,
+            IF(NEW.available_copies = 1, ' copy', ' copies'), ' left.'),
           NEW.itemID
         FROM librarian
         JOIN users ON users.userID = librarian.userID;
