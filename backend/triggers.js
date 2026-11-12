@@ -74,28 +74,7 @@ const HOLD_READY_TRIGGER = `
     END IF;
   END`;
 
-// 3) Low stock: when the available copies of an active item go down and are
-//    between 1 and 3, every librarian gets a notification.
-const LOW_STOCK_TRIGGER = `
-  CREATE TRIGGER trg_items_low_stock
-  AFTER UPDATE ON items
-  FOR EACH ROW
-  BEGIN
-    IF NEW.is_active = 1
-       AND NEW.available_copies BETWEEN 1 AND 3
-       AND NEW.available_copies < OLD.available_copies THEN
-      INSERT INTO notifications (userID, type, message, itemID)
-        SELECT librarian.userID,
-          'low_stock',
-          CONCAT('Low stock: "', NEW.title, '" has only ', NEW.available_copies,
-            IF(NEW.available_copies = 1, ' copy', ' copies'), ' left.'),
-          NEW.itemID
-        FROM librarian
-        JOIN users ON users.userID = librarian.userID;
-    END IF;
-  END`;
-
-// 4) Audit log: record every borrow (a new loan) and every return (a loan
+// 3) Audit log: record every borrow (a new loan) and every return (a loan
 //    getting its returned_date) in the audit_log table, so there is a full
 //    history of who took out and returned each item and when.
 const AUDIT_BORROW_TRIGGER = `
@@ -121,12 +100,14 @@ const AUDIT_RETURN_TRIGGER = `
 const TRIGGERS = [
   { name: "trg_loans_late_fee", sql: LATE_FEE_TRIGGER },
   { name: "trg_items_hold_ready", sql: HOLD_READY_TRIGGER },
-  { name: "trg_items_low_stock", sql: LOW_STOCK_TRIGGER },
   { name: "trg_loans_audit_borrow", sql: AUDIT_BORROW_TRIGGER },
   { name: "trg_loans_audit_return", sql: AUDIT_RETURN_TRIGGER },
 ];
 
 async function createTriggers() {
+  // the low stock trigger was removed; drop it from databases that still have it
+  await db.query("DROP TRIGGER IF EXISTS trg_items_low_stock").catch(() => {});
+
   for (const trigger of TRIGGERS) {
     try {
       await db.query(`DROP TRIGGER IF EXISTS ${trigger.name}`);

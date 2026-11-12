@@ -57,6 +57,9 @@ async function initDB() {
     )
   `);
 
+  // accounts can be deactivated by a librarian; older databases need the column added
+  await addColumn("users", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
+
   console.log("Users table created");
 
   //user_credentials (one password per user)
