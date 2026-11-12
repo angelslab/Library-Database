@@ -76,7 +76,7 @@ function Register({ onLogin, onBack }) {
           <div className="auth-row">
             <div className="auth-field">
               <label className="auth-label">Student ID</label>
-              <input className="auth-input" type="number" min="1" step="1" placeholder="Student ID" value={form.studentID} onChange={update('studentID')} required />
+              <input className="auth-input" type="text" inputMode="numeric" pattern="[1-9][0-9]*" maxLength={10} placeholder="Student ID" value={form.studentID} onChange={(e) => { setForm({ ...form, studentID: e.target.value.replace(/\D/g, '').replace(/^0+/, '') }); setError('') }} required />
             </div>
             <div className="auth-field">
               <label className="auth-label">Major</label>

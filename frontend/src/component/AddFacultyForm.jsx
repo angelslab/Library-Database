@@ -86,7 +86,19 @@ function AddFacultyForm({ librarianID, onCreated, onClose }) {
         </label>
         <label style={field}>
           Faculty ID
-          <input style={input} type="number" min="1" value={form.facultyID} onChange={update("facultyID")} required />
+          <input
+            style={input}
+            type="text"
+            inputMode="numeric"
+            pattern="[1-9][0-9]*"
+            maxLength={10}
+            value={form.facultyID}
+            onChange={(e) => {
+              setForm({ ...form, facultyID: e.target.value.replace(/\D/g, "").replace(/^0+/, "") });
+              setError("");
+            }}
+            required
+          />
         </label>
         <label style={field}>
           Department
