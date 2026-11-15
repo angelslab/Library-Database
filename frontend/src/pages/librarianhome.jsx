@@ -88,6 +88,7 @@ function LibrarianHome({
 
   // dashboard numbers
   useEffect(() => {
+    if (view !== "menu") return;
     let cancelled = false;
     async function loadStats() {
       try {
@@ -98,7 +99,7 @@ function LibrarianHome({
         const items = await itemsRes.json();
         const loansData = await loansRes.json();
         const loans = Array.isArray(loansData.loans) ? loansData.loans : [];
-        const today = new Date().toISOString().slice(0, 10);
+        const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
         const active = loans.filter((l) => !l.returned_date).length;
         const pending = loans.filter(
           (l) => !l.returned_date && l.status === "return_requested",
@@ -142,7 +143,7 @@ function LibrarianHome({
     return () => {
       cancelled = true;
     };
-  }, [user.userID]);
+  }, [user.userID, view]);
 
   // save view
   function go(next) {

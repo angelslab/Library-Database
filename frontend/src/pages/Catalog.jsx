@@ -77,7 +77,7 @@ function Catalog({
   });
 
   const authorOf = (it) =>
-    it?.book_author || it?.media_author || it?.device_author || "";
+    it?.book_author || it?.media_author || it?.brand || "";
 
   const recommended = items.slice(0, 4);
   // featured item

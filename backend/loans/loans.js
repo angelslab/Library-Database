@@ -26,12 +26,16 @@ async function borrowItem(userID, itemID) {
 
     // lock user row
     const [users] = await conn.query(
-      "SELECT userID, role FROM users WHERE userID = ? FOR UPDATE",
+      "SELECT userID, role, is_active FROM users WHERE userID = ? FOR UPDATE",
       [userID],
     );
 
     if (users.length === 0) {
       throw new LoanError(404, "User not found");
+    }
+
+    if (!users[0].is_active) {
+      throw new LoanError(403, "This account has been deactivated");
     }
 
     const role = users[0].role;
@@ -79,7 +83,7 @@ async function borrowItem(userID, itemID) {
 
     // lock item row
     const [items] = await conn.query(
-      "SELECT itemID, title, total_copies, available_copies FROM items WHERE itemID = ? FOR UPDATE",
+      "SELECT itemID, title, total_copies, available_copies FROM items WHERE itemID = ? AND is_active = 1 FOR UPDATE",
       [itemID],
     );
 
@@ -93,6 +97,46 @@ async function borrowItem(userID, itemID) {
       throw new LoanError(409, `"${item.title}" has no copies available right now`);
     }
 
+    // close stale holds
+    await conn.query(
+      `UPDATE holds h
+        SET h.status = 'fulfilled'
+        WHERE h.itemID = ?
+        AND h.status = 'waiting'
+        AND EXISTS (
+          SELECT 1 FROM loans l
+          WHERE l.userID = h.userID
+          AND l.itemID = h.itemID
+          AND l.returned_date IS NULL
+        )`,
+      [itemID],
+    );
+
+    // check hold line
+    const [myHold] = await conn.query(
+      `SELECT holdID FROM holds
+        WHERE userID = ? AND itemID = ? AND status = 'waiting'
+        ORDER BY holdID LIMIT 1`,
+      [userID, itemID],
+    );
+    const myHoldID = myHold.length > 0 ? myHold[0].holdID : null;
+
+    const [ahead] = await conn.query(
+      `SELECT COUNT(*) AS count FROM holds
+        WHERE itemID = ? AND status = 'waiting' AND userID <> ?
+        AND (? IS NULL OR holdID < ?)`,
+      [itemID, userID, myHoldID, myHoldID],
+    );
+
+    if (item.available_copies <= ahead[0].count) {
+      throw new LoanError(
+        409,
+        myHoldID
+          ? `"${item.title}" is reserved for people ahead of you in line`
+          : `"${item.title}" is reserved for people on the hold list. Place a hold to get in line.`,
+      );
+    }
+
     const [insert] = await conn.query(
       `INSERT INTO loans (userID, itemID, borrow_date, due_date, status)
         VALUES (?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL ? DAY), 'active')`,
@@ -103,6 +147,11 @@ async function borrowItem(userID, itemID) {
       "UPDATE items SET available_copies = available_copies - 1 WHERE itemID = ?",
       [itemID],
     );
+
+    // fulfill hold
+    if (myHoldID) {
+      await conn.query("UPDATE holds SET status = 'fulfilled' WHERE holdID = ?", [myHoldID]);
+    }
 
     const [loanRows] = await conn.query(
       `SELECT

@@ -80,6 +80,10 @@ function ItemDetails({
   const author = item.book_author || item.media_author || item.device_author;
 
   const isAvailable = item.available_copies > 0;
+  // copies not reserved by holds
+  const canBorrow = hold
+    ? hold.ready
+    : item.available_copies - Number(item.waiting_holds || 0) > 0;
 
   return (
     <main className="item-details-page">
@@ -190,7 +194,7 @@ function ItemDetails({
 
           {(user?.role === "student" || user?.role === "faculty") && (
             <>
-              {!isAvailable && hold && onCancelHold ? (
+              {!canBorrow && hold && onCancelHold ? (
                 <button
                   type="button"
                   className="item-details-borrow item-button-cancel-hold"
@@ -198,7 +202,7 @@ function ItemDetails({
                 >
                   Cancel hold
                 </button>
-              ) : !isAvailable && onPlaceHold ? (
+              ) : !canBorrow && onPlaceHold ? (
                 <button
                   type="button"
                   className="item-details-borrow"
@@ -210,10 +214,10 @@ function ItemDetails({
                 <button
                   type="button"
                   className="item-details-borrow"
-                  disabled={!isAvailable || !onBorrow}
+                  disabled={!canBorrow || !onBorrow}
                   onClick={() => onBorrow(item)}
                 >
-                  {!isAvailable
+                  {!canBorrow
                     ? "Unavailable"
                     : onBorrow
                       ? "Borrow Item"

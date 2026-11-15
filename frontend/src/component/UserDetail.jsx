@@ -110,7 +110,7 @@ return (
                 <tr key={loan.loanID}>
                 <td style={cell}>{loan.title}</td>
                 <td style={cell}>{loan.item_type}</td>
-                <td style={cell}>{new Date(loan.due_date).toLocaleDateString()}</td>
+                <td style={cell}>{new Date(loan.borrow_date).toLocaleDateString()}</td>
                 <td style={cell}>{new Date(loan.due_date).toLocaleDateString()}</td>
                 <td style={cell}>
                 {loan.days_overdue > 0 ? (

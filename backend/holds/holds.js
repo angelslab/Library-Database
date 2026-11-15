@@ -30,12 +30,16 @@ async function placeHold(userID, itemID) {
 
     // lock user row
     const [users] = await conn.query(
-      "SELECT userID, role FROM users WHERE userID = ? FOR UPDATE",
+      "SELECT userID, role, is_active FROM users WHERE userID = ? FOR UPDATE",
       [userID],
     );
 
     if (users.length === 0) {
       throw new LoanError(404, "User not found");
+    }
+
+    if (!users[0].is_active) {
+      throw new LoanError(403, "This account has been deactivated");
     }
 
     if (!getLoanPolicy(users[0].role)) {
@@ -46,7 +50,7 @@ async function placeHold(userID, itemID) {
     }
 
     const [items] = await conn.query(
-      "SELECT itemID, title, available_copies FROM items WHERE itemID = ?",
+      "SELECT itemID, title, available_copies FROM items WHERE itemID = ? AND is_active = 1",
       [itemID],
     );
 
@@ -56,7 +60,12 @@ async function placeHold(userID, itemID) {
 
     const item = items[0];
 
-    if (item.available_copies > 0) {
+    const [reserved] = await conn.query(
+      "SELECT COUNT(*) AS count FROM holds WHERE itemID = ? AND status = 'waiting'",
+      [itemID],
+    );
+
+    if (item.available_copies > reserved[0].count) {
       throw new LoanError(
         409,
         `"${item.title}" is available right now, you can borrow it instead`,

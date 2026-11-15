@@ -29,7 +29,8 @@ function ItemSearch({
       item.author?.toLowerCase().includes(search) ||
       item.book_author?.toLowerCase().includes(search) ||
       item.media_author?.toLowerCase().includes(search) ||
-      item.device_type?.toLowerCase().includes(search)
+      item.device_type?.toLowerCase().includes(search) ||
+      item.brand?.toLowerCase().includes(search)
     );
   });
 

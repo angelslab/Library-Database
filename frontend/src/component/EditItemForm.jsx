@@ -61,7 +61,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
 
     if (itemType === "Book") {
       itemData.author = author;
-      itemData.isbn = isbn;
+      itemData.isbn = isbn.replace(/[^0-9]/g, "").slice(0, 13);
       itemData.publication_year = Number(publicationYear);
     } else if (itemType === "Media") {
       itemData.author = author;

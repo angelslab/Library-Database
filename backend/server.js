@@ -58,10 +58,24 @@ async function startServer() {
   try {
     // init db
 
+    // log errors, don't crash
+    process.on("unhandledRejection", (err) => {
+      console.error("Unhandled error:", err);
+    });
+
     await initDB();
     console.log("Database initialized successfully");
 
     const server = http.createServer(async (req, res) => {
+      // bad URL
+      try {
+        new URL(req.url, "http://localhost");
+      } catch {
+        res.writeHead(400, { "Content-Type": "text/plain" });
+        res.end("Bad request");
+        return;
+      }
+
       // CORS preflight
       if (req.method === "OPTIONS") {
         res.writeHead(204, CORS_HEADERS);
@@ -225,6 +239,11 @@ async function startServer() {
           }
 
           const data = JSON.parse(body);
+          if (!Number.isInteger(data.total_copies) || data.total_copies < 1) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            return;
+          }
 
           const itemID = await addBook(
             data.title,
@@ -348,6 +367,11 @@ async function startServer() {
           }
 
           const book = JSON.parse(body);
+          if (!Number.isInteger(book.total_copies) || book.total_copies < 1) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            return;
+          }
 
           const result = await updateBook(
             itemID,
@@ -433,6 +457,11 @@ async function startServer() {
           }
 
           const media = JSON.parse(body);
+          if (!Number.isInteger(media.total_copies) || media.total_copies < 1) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            return;
+          }
 
           const itemID = await addMedia(
             media.title,
@@ -653,6 +682,11 @@ async function startServer() {
           }
 
           const device = JSON.parse(body);
+          if (!Number.isInteger(device.total_copies) || device.total_copies < 1) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            return;
+          }
 
           const itemID = await addDevice(
             device.title,
@@ -773,6 +807,11 @@ async function startServer() {
           }
 
           const data = JSON.parse(body);
+          if (!Number.isInteger(data.total_copies) || data.total_copies < 1) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            return;
+          }
 
           const result = await editDevice(
             itemID,

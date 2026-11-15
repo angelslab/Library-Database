@@ -20,7 +20,10 @@ async function fetchAllItems() {
 
       (SELECT device_type FROM device WHERE device.itemID = items.itemID) AS device_type,
 
-      (SELECT brand FROM device WHERE device.itemID = items.itemID) AS brand
+      (SELECT brand FROM device WHERE device.itemID = items.itemID) AS brand,
+
+      (SELECT COUNT(*) FROM holds
+       WHERE holds.itemID = items.itemID AND holds.status = 'waiting') AS waiting_holds
 
       FROM items
       WHERE is_active = 1
@@ -66,7 +69,10 @@ async function getItemByID(itemID) {
 
       (SELECT brand
        FROM device
-       WHERE device.itemID = items.itemID) AS brand
+       WHERE device.itemID = items.itemID) AS brand,
+
+      (SELECT COUNT(*) FROM holds
+       WHERE holds.itemID = items.itemID AND holds.status = 'waiting') AS waiting_holds
 
     FROM items
     WHERE itemID = ? 

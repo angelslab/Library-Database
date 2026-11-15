@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import UserDetail from "./UserDetail";
 import AddFacultyForm from "./AddFacultyForm";
+import ConfirmDialog from "./ConfirmDialog";
 
 function UserManagment({ onToggleActive, librarianID }) {
   const [keyword, setKeyword] = useState("");
@@ -9,6 +10,7 @@ function UserManagment({ onToggleActive, librarianID }) {
   const [error, setError] = useState("");
   const [showAddFaculty, setShowAddFaculty] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [confirmUser, setConfirmUser] = useState(null);
   const [selectedUserID, setSelectedUserID] = useState(() => {
     try {
       const saved = localStorage.getItem("userDetailID");
@@ -116,21 +118,12 @@ function UserManagment({ onToggleActive, librarianID }) {
   };
   const td = { padding: "12px 16px", borderBottom: `1px solid ${C.border}` };
 
+  // open confirm popup
   const handleToggleActive = (selectedUser) => {
-    const isActive = Number(selectedUser.is_active) === 1;
-
-    const action = isActive ? "deactivate" : "activate";
-
-    if (
-      !window.confirm(
-        `Are you sure you want to ${action} ${selectedUser.first_name} ${selectedUser.last_name}?`,
-      )
-    ) {
-      return;
-    }
-
-    onToggleActive?.(selectedUser);
+    setConfirmUser(selectedUser);
   };
+
+  const confirmActive = confirmUser && Number(confirmUser.is_active) === 1;
 
   const UserTable = ({ rows, kind }) => {
     const deptLabel = kind === "faculty" ? "Department" : "Major";
@@ -288,6 +281,30 @@ function UserManagment({ onToggleActive, librarianID }) {
             <UserTable rows={students} kind="student" />
           </div>
         </>
+      )}
+
+      {confirmUser && (
+        <ConfirmDialog
+          title={confirmActive ? "Deactivate user" : "Activate user"}
+          details={[
+            { label: "Name", value: `${confirmUser.first_name} ${confirmUser.last_name}` },
+            { label: "Email", value: confirmUser.email },
+            { label: "Role", value: confirmUser.role },
+          ]}
+          note={
+            confirmActive
+              ? "This user will not be able to log in or borrow items."
+              : "This user will be able to log in and borrow items again."
+          }
+          confirmLabel={confirmActive ? "Deactivate" : "Activate"}
+          busyLabel={confirmActive ? "Deactivating..." : "Activating..."}
+          danger={confirmActive}
+          onConfirm={async () => {
+            await onToggleActive?.(confirmUser);
+            setConfirmUser(null);
+          }}
+          onClose={() => setConfirmUser(null)}
+        />
       )}
     </div>
   );

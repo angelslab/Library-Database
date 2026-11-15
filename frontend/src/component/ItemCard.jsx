@@ -15,6 +15,10 @@ function ItemCard({
   onDelete,
 }) {
   const isLowStock = item.available_copies <= 1;
+  // copies not reserved by holds
+  const canBorrow = hold
+    ? hold.ready
+    : item.available_copies - Number(item.waiting_holds || 0) > 0;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
@@ -122,7 +126,7 @@ function ItemCard({
               )}
 
               {item.item_type === "Device" && (
-                <p className="item-cover-author">{item.device_author}</p>
+                <p className="item-cover-author">{item.brand}</p>
               )}
             </div>
           </>
@@ -167,7 +171,7 @@ function ItemCard({
 
         {user?.role !== "librarian" && (
           <>
-            {item.available_copies <= 0 && hold && onCancelHold ? (
+            {!canBorrow && hold && onCancelHold ? (
               <button
                 type="button"
                 onClick={() => onCancelHold(hold)}
@@ -175,7 +179,7 @@ function ItemCard({
               >
                 Cancel hold
               </button>
-            ) : item.available_copies <= 0 && onPlaceHold ? (
+            ) : !canBorrow && onPlaceHold ? (
               <button
                 type="button"
                 onClick={() => onPlaceHold(item)}
@@ -187,10 +191,10 @@ function ItemCard({
               <button
                 type="button"
                 onClick={() => onBorrow && onBorrow(item)}
-                disabled={item.available_copies <= 0}
+                disabled={!canBorrow}
                 className="item-button item-button-borrow"
               >
-                {item.available_copies <= 0 ? "Unavailable" : "Borrow"}
+                {!canBorrow ? "Unavailable" : "Borrow"}
               </button>
             )}
           </>
