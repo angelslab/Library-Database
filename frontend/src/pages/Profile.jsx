@@ -1,5 +1,45 @@
 import { useEffect, useState } from "react";
 
+const C = {
+  card: "#10253e", border: "#263e59", field: "#0e1f36",
+  fg: "#e6ecf2", muted: "#8295a9", gold: "#e5bf6d", primary: "#4075aa",
+  green: "#5fbf8a", red: "#f3a0a0",
+};
+
+const card = {
+  background: C.card,
+  border: `1px solid ${C.border}`,
+  borderRadius: 16,
+  boxSizing: "border-box",
+};
+
+const Stat = ({ label, value, color }) => (
+  <div style={{ ...card, padding: "18px 20px" }}>
+    <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: ".5px" }}>
+      {label}
+    </div>
+    <div style={{ fontSize: 26, fontWeight: 700, marginTop: 8, color: color || C.fg }}>
+      {value}
+    </div>
+  </div>
+);
+
+const Row = ({ label, value }) =>
+  value ? (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 16,
+        padding: "13px 0",
+        borderBottom: `1px solid ${C.border}`,
+      }}
+    >
+      <span style={{ color: C.muted, fontSize: 14 }}>{label}</span>
+      <span style={{ fontSize: 14, fontWeight: 500, textAlign: "right" }}>{value}</span>
+    </div>
+  ) : null;
+
 function Profile({ user }) {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState("");
@@ -13,12 +53,6 @@ function Profile({ user }) {
       })
       .catch((err) => setError("Cannot reach server: " + err.message));
   }, [user.userID]);
-
-  const C = {
-    card: "#10253e", border: "#263e59", field: "#0e1f36",
-    fg: "#e6ecf2", muted: "#8295a9", gold: "#e5bf6d", primary: "#4075aa",
-    green: "#5fbf8a", red: "#f3a0a0",
-  };
 
   if (error)
     return (
@@ -45,40 +79,6 @@ function Profile({ user }) {
     ? Math.max(0, profile.max_limit - profile.current_loans)
     : null;
   const fines = Number(profile.unpaid_fines || 0);
-
-  const card = {
-    background: C.card,
-    border: `1px solid ${C.border}`,
-    borderRadius: 16,
-    boxSizing: "border-box",
-  };
-
-  const Stat = ({ label, value, color }) => (
-    <div style={{ ...card, padding: "18px 20px" }}>
-      <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: ".5px" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 26, fontWeight: 700, marginTop: 8, color: color || C.fg }}>
-        {value}
-      </div>
-    </div>
-  );
-
-  const Row = ({ label, value }) =>
-    value ? (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 16,
-          padding: "13px 0",
-          borderBottom: `1px solid ${C.border}`,
-        }}
-      >
-        <span style={{ color: C.muted, fontSize: 14 }}>{label}</span>
-        <span style={{ fontSize: 14, fontWeight: 500, textAlign: "right" }}>{value}</span>
-      </div>
-    ) : null;
 
   return (
     <div style={{ marginTop: 20, maxWidth: 760 }}>

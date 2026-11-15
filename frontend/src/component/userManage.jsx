@@ -3,6 +3,135 @@ import UserDetail from "./UserDetail";
 import AddFacultyForm from "./AddFacultyForm";
 import ConfirmDialog from "./ConfirmDialog";
 
+// styles
+const C = {
+  card: "#10253e",
+  border: "#263e59",
+  field: "#0e1f36",
+  fg: "#e6ecf2",
+  muted: "#8295a9",
+  gold: "#e5bf6d",
+  blue: "#6fb0e8",
+};
+const panel = {
+  background: C.card,
+  border: `1px solid ${C.border}`,
+  borderRadius: 14,
+  overflow: "hidden",
+};
+const panelHead = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "14px 16px",
+  borderBottom: `1px solid ${C.border}`,
+};
+const panelTitle = {
+  fontFamily: "Georgia, serif",
+  fontSize: 18,
+  fontWeight: 600,
+};
+const countBadge = {
+  fontSize: 12,
+  color: C.muted,
+  background: "#193550",
+  padding: "3px 10px",
+  borderRadius: 999,
+};
+const th = {
+  textAlign: "left",
+  padding: "10px 16px",
+  color: C.muted,
+  fontSize: 11,
+  textTransform: "uppercase",
+  letterSpacing: ".5px",
+  borderBottom: `1px solid ${C.border}`,
+};
+const td = { padding: "12px 16px", borderBottom: `1px solid ${C.border}` };
+
+const UserTable = ({ rows, kind, searching, onOpen, onToggle }) => {
+  const deptLabel = kind === "faculty" ? "Department" : "Major";
+  const title = kind === "faculty" ? "Faculty" : "Students";
+  return (
+    <div style={panel}>
+      <div style={panelHead}>
+        <span
+          style={{
+            ...panelTitle,
+            color: kind === "faculty" ? C.gold : C.blue,
+          }}
+        >
+          {title}
+        </span>
+        <span style={countBadge}>{rows.length}</span>
+      </div>
+      {rows.length === 0 ? (
+        <p style={{ padding: "18px 16px", color: C.muted, margin: 0 }}>
+          {searching ? "No matches." : "None yet."}
+        </p>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            minWidth: 640,
+            borderCollapse: "collapse",
+            textAlign: "left",
+            fontSize: 13,
+          }}
+        >
+          <thead>
+            <tr>
+              <th style={th}>ID</th>
+              <th style={th}>Name</th>
+              <th style={th}>{deptLabel}</th>
+              <th style={th}>Status</th>
+              <th style={th}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((u) => (
+              <tr
+                key={u.userID}
+                onClick={() => onOpen(u.userID)}
+                style={{ cursor: "pointer" }}
+              >
+                <td style={{ ...td, color: C.muted }}>{u.id_number}</td>
+                <td style={td}>
+                  <div style={{ fontWeight: 500 }}>
+                    {u.first_name} {u.last_name}
+                  </div>
+                  <div style={{ color: C.muted, fontSize: 12 }}>
+                    {u.email}
+                  </div>
+                </td>
+                <td style={td}>{u.major_or_department}</td>
+                <td style={td}>
+                  <span>
+                    {Number(u.is_active) === 1 ? "Active" : "Deactivated"}
+                  </span>
+                </td>
+                <td style={{ ...td, whiteSpace: "nowrap" }}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggle(u);
+                    }}
+                  >
+                    {Number(u.is_active) === 1 ? "Deactivate" : "Activate"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 function UserManagment({ onToggleActive, librarianID }) {
   const [keyword, setKeyword] = useState("");
   const [allUsers, setAllUsers] = useState([]);
@@ -72,141 +201,12 @@ function UserManagment({ onToggleActive, librarianID }) {
   const faculty = visible.filter((u) => role(u) === "faculty");
   const students = visible.filter((u) => role(u) === "student");
 
-  // styles
-  const C = {
-    card: "#10253e",
-    border: "#263e59",
-    field: "#0e1f36",
-    fg: "#e6ecf2",
-    muted: "#8295a9",
-    gold: "#e5bf6d",
-    blue: "#6fb0e8",
-  };
-  const panel = {
-    background: C.card,
-    border: `1px solid ${C.border}`,
-    borderRadius: 14,
-    overflow: "hidden",
-  };
-  const panelHead = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "14px 16px",
-    borderBottom: `1px solid ${C.border}`,
-  };
-  const panelTitle = {
-    fontFamily: "Georgia, serif",
-    fontSize: 18,
-    fontWeight: 600,
-  };
-  const countBadge = {
-    fontSize: 12,
-    color: C.muted,
-    background: "#193550",
-    padding: "3px 10px",
-    borderRadius: 999,
-  };
-  const th = {
-    textAlign: "left",
-    padding: "10px 16px",
-    color: C.muted,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: ".5px",
-    borderBottom: `1px solid ${C.border}`,
-  };
-  const td = { padding: "12px 16px", borderBottom: `1px solid ${C.border}` };
-
   // open confirm popup
   const handleToggleActive = (selectedUser) => {
     setConfirmUser(selectedUser);
   };
 
   const confirmActive = confirmUser && Number(confirmUser.is_active) === 1;
-
-  const UserTable = ({ rows, kind }) => {
-    const deptLabel = kind === "faculty" ? "Department" : "Major";
-    const title = kind === "faculty" ? "Faculty" : "Students";
-    return (
-      <div style={panel}>
-        <div style={panelHead}>
-          <span
-            style={{
-              ...panelTitle,
-              color: kind === "faculty" ? C.gold : C.blue,
-            }}
-          >
-            {title}
-          </span>
-          <span style={countBadge}>{rows.length}</span>
-        </div>
-        {rows.length === 0 ? (
-          <p style={{ padding: "18px 16px", color: C.muted, margin: 0 }}>
-            {term ? "No matches." : "None yet."}
-          </p>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              minWidth: 640,
-              borderCollapse: "collapse",
-              textAlign: "left",
-              fontSize: 13,
-            }}
-          >
-            <thead>
-              <tr>
-                <th style={th}>ID</th>
-                <th style={th}>Name</th>
-                <th style={th}>{deptLabel}</th>
-                <th style={th}>Status</th>
-                <th style={th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((u) => (
-                <tr
-                  key={u.userID}
-                  onClick={() => openUser(u.userID)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td style={{ ...td, color: C.muted }}>{u.id_number}</td>
-                  <td style={td}>
-                    <div style={{ fontWeight: 500 }}>
-                      {u.first_name} {u.last_name}
-                    </div>
-                    <div style={{ color: C.muted, fontSize: 12 }}>
-                      {u.email}
-                    </div>
-                  </td>
-                  <td style={td}>{u.major_or_department}</td>
-                  <td style={td}>
-                    <span>
-                      {Number(u.is_active) === 1 ? "Active" : "Deactivated"}
-                    </span>
-                  </td>
-                  <td style={{ ...td, whiteSpace: "nowrap" }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleActive(u);
-                      }}
-                    >
-                      {Number(u.is_active) === 1 ? "Deactivate" : "Activate"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   if (selectedUserID !== null) {
     return (
@@ -277,8 +277,20 @@ function UserManagment({ onToggleActive, librarianID }) {
               alignItems: "start",
             }}
           >
-            <UserTable rows={faculty} kind="faculty" />
-            <UserTable rows={students} kind="student" />
+            <UserTable
+              rows={faculty}
+              kind="faculty"
+              searching={Boolean(term)}
+              onOpen={openUser}
+              onToggle={handleToggleActive}
+            />
+            <UserTable
+              rows={students}
+              kind="student"
+              searching={Boolean(term)}
+              onOpen={openUser}
+              onToggle={handleToggleActive}
+            />
           </div>
         </>
       )}

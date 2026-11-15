@@ -51,7 +51,7 @@ function ActivityLog() {
       r.loanID ?? "",
     ]);
     downloadCSV(
-      `activity-log-${new Date().toISOString().slice(0, 10)}.csv`,
+      `activity-log-${new Date().toLocaleDateString("en-CA")}.csv`,
       header,
       data,
     );

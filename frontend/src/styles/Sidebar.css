@@ -127,43 +127,6 @@
   background: #263e59;
 }
 
-.lib-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: auto;
-  padding: 12px 8px 4px;
-}
-
-.lib-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: linear-gradient(145deg, #4075aa, #2a4a6b);
-}
-
-.lib-user-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.lib-user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--foreground);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lib-user-role {
-  font-size: 12px;
-  color: var(--muted-foreground);
-  text-transform: capitalize;
-}
-
 @media (max-width: 650px) {
   .lib-sidebar {
     position: static;

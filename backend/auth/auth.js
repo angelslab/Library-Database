@@ -1,8 +1,24 @@
 const bcrypt = require("bcryptjs");
 const db = require("../db");
 
+// trimmed string
+const str = (v) => (typeof v === "string" ? v.trim() : "");
+
+// check lengths
+function lengthError({ first_name, last_name, email, major, department }) {
+  if (first_name.length > 50 || last_name.length > 50) {
+    return "Names must be 50 characters or less";
+  }
+  if (email.length > 100) return "Email must be 100 characters or less";
+  if ((major || "").length > 50) return "Major must be 50 characters or less";
+  if ((department || "").length > 50) return "Department must be 50 characters or less";
+  return null;
+}
+
 // check login, return user or null
 async function login(email, password) {
+  if (typeof password !== "string") return null;
+
   const result = await db.query(
     `SELECT
         users.userID,
@@ -23,7 +39,7 @@ async function login(email, password) {
       LEFT JOIN student ON student.userID = users.userID
       LEFT JOIN faculty ON faculty.userID = users.userID
       WHERE users.email = ?`,
-    [email],
+    [str(email)],
   );
 
   const rows = result[0];
@@ -66,11 +82,21 @@ async function setPassword(userID, password) {
 
 // register student or faculty
 async function register(data) {
-  const { first_name, last_name, email, password, role } = data;
+  const { password, role } = data;
+  const first_name = str(data.first_name);
+  const last_name = str(data.last_name);
+  const email = str(data.email);
 
-  if (!first_name || !last_name || !email || !password || !role) {
+  if (!first_name || !last_name || !email || typeof password !== "string" || !role) {
     return { error: "Please fill in all fields" };
   }
+
+  if (password.length < 6) {
+    return { error: "Password must be at least 6 characters" };
+  }
+
+  const tooLong = lengthError({ first_name, last_name, email, major: str(data.major) });
+  if (tooLong) return { error: tooLong };
 
   if (role === "faculty") {
     return { error: "Faculty accounts are created by a librarian" };
@@ -80,7 +106,7 @@ async function register(data) {
     return { error: "Role must be student" };
   }
 
-  if (role === "student" && (!data.studentID || !data.major)) {
+  if (role === "student" && (!data.studentID || !str(data.major))) {
     return { error: "Student ID and major are required" };
   }
 
@@ -132,13 +158,13 @@ async function register(data) {
       await conn.query(
         `INSERT INTO student (userID, studentID, major)
           VALUES (?, ?, ?)`,
-        [userID, studentID, data.major.trim().toUpperCase()],
+        [userID, studentID, String(data.major).trim().toUpperCase()],
       );
     } else {
       await conn.query(
         `INSERT INTO faculty (userID, facultyID, department)
           VALUES (?, ?, ?)`,
-        [userID, data.facultyID, data.department.trim().toUpperCase()],
+        [userID, data.facultyID, String(data.department).trim().toUpperCase()],
       );
     }
 
@@ -152,17 +178,21 @@ async function register(data) {
         email,
         role,
         studentID: role === "student" ? studentID : null,
-        major: role === "student" ? data.major.trim().toUpperCase() : null,
+        major: role === "student" ? String(data.major).trim().toUpperCase() : null,
         facultyID: role === "faculty" ? data.facultyID : null,
         department:
-          role === "faculty" ? data.department.trim().toUpperCase() : null,
+          role === "faculty" ? String(data.department).trim().toUpperCase() : null,
       },
     };
   } catch (error) {
     await conn.rollback();
 
     if (error.code === "ER_DUP_ENTRY") {
-      return { error: "That student or faculty ID is already taken" };
+      return {
+        error: String(error.message).includes("uq_users_email")
+          ? "This email is already registered"
+          : "That student or faculty ID is already taken",
+      };
     }
 
     throw error;
@@ -173,7 +203,11 @@ async function register(data) {
 
 // librarian creates faculty account
 async function createFaculty(data) {
-  const { librarianID, first_name, last_name, email, password, department } = data;
+  const { librarianID, password } = data;
+  const first_name = str(data.first_name);
+  const last_name = str(data.last_name);
+  const email = str(data.email);
+  const department = str(data.department);
   const facultyID = Number(data.facultyID);
 
   const [librarians] = await db.query(
@@ -185,16 +219,23 @@ async function createFaculty(data) {
     return { error: "Only librarians can create faculty accounts", status: 403 };
   }
 
-  if (!first_name || !last_name || !email || !password || !department) {
+  if (!first_name || !last_name || !email || typeof password !== "string" || !department) {
     return { error: "Please fill in all fields", status: 400 };
   }
 
-  if (!Number.isInteger(facultyID) || facultyID <= 0) {
+  if (password.length < 6) {
+    return { error: "Password must be at least 6 characters", status: 400 };
+  }
+
+  const tooLong = lengthError({ first_name, last_name, email, department });
+  if (tooLong) return { error: tooLong, status: 400 };
+
+  if (!Number.isInteger(facultyID) || facultyID <= 0 || facultyID > 2147483647) {
     return { error: "Faculty ID must be a positive whole number", status: 400 };
   }
 
   const [existing] = await db.query("SELECT userID FROM users WHERE email = ?", [
-    email,
+    email.trim(),
   ]);
 
   if (existing.length > 0) {
@@ -241,7 +282,12 @@ async function createFaculty(data) {
     await conn.rollback();
 
     if (error.code === "ER_DUP_ENTRY") {
-      return { error: "That faculty ID is already taken", status: 409 };
+      return {
+        error: String(error.message).includes("uq_users_email")
+          ? "This email is already registered"
+          : "That faculty ID is already taken",
+        status: 409,
+      };
     }
 
     throw error;

@@ -22,7 +22,8 @@ async function getInventoryReport({ from, to, itemType, outOnly }) {
     LEFT JOIN book b   ON b.itemID = i.itemID
     LEFT JOIN media m  ON m.itemID = i.itemID
     LEFT JOIN device d ON d.itemID = i.itemID
-    WHERE (? IS NULL OR i.item_type = ?)
+    WHERE i.is_active = 1
+    AND (? IS NULL OR i.item_type = ?)
     AND (? IS NULL OR EXISTS (SELECT 1
     FROM loans lx
     WHERE lx.itemID = i.itemID

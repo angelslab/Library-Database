@@ -156,8 +156,6 @@ function LibrarianLoans({ user }) {
   const activeTab = tabs.find((item) => item.key === tab);
   const visible = filtered.filter(activeTab.test);
 
-  const waitingCount = loans.filter(tabs[1].test).length;
-
   const dateLabel =
     !range.from && !range.to
       ? "All dates"
@@ -214,32 +212,6 @@ function LibrarianLoans({ user }) {
           </button>
         )}
       </form>
-
-      {waitingCount > 0 && tab !== "requests" && (
-        <p
-          style={{
-            marginTop: 16,
-            padding: "10px 12px",
-            border: "1px solid #9a6b00",
-            background: "rgba(229,191,109,0.12)",
-            borderRadius: 6,
-          }}
-        >
-          {waitingCount} return {waitingCount === 1 ? "request is" : "requests are"} waiting for
-          your approval.{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setTab("requests");
-              setPreset("all");
-              setKeyword("");
-              setKeywordInput("");
-            }}
-          >
-            View requests
-          </button>
-        </p>
-      )}
 
       {/* tabs */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 16 }}>

@@ -1,26 +1,4 @@
 const db = require("../db");
-// notify all librarians
-async function notifyLibrarians(conn, { type, message, loanID, itemID }) {
-  const [result] = await conn.query(
-    `INSERT INTO notifications (userID, type, message, loanID, itemID)
-      SELECT librarian.userID, ?, ?, ?, ?
-      FROM librarian
-      JOIN users ON users.userID = librarian.userID`,
-    [type, message, loanID, itemID],
-  );
-
-  return result.affectedRows;
-}
-
-// notify one user
-async function notifyUser(conn, { userID, type, message, loanID, itemID }) {
-  await conn.query(
-    `INSERT INTO notifications (userID, type, message, loanID, itemID)
-      VALUES (?, ?, ?, ?, ?)`,
-    [userID, type, message, loanID, itemID],
-  );
-}
-
 // user notifications, newest first
 async function fetchNotifications(userID, countOnly = false) {
   const [unreadRows] = await db.query(
@@ -68,8 +46,6 @@ async function markNotificationsRead(userID, notificationID = null) {
 }
 
 module.exports = {
-  notifyLibrarians,
-  notifyUser,
   fetchNotifications,
   markNotificationsRead,
 };

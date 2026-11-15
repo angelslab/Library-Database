@@ -117,6 +117,16 @@ function App() {
 
       setMessage("");
       setPage(target);
+
+      // save for reload
+      try {
+        localStorage.setItem("page", target);
+        if (target === "itemDetails" && state.itemID) {
+          localStorage.setItem("itemID", String(state.itemID));
+        }
+      } catch {
+        // ignore
+      }
     }
 
     window.addEventListener("popstate", onPopState);
@@ -270,6 +280,7 @@ function App() {
     setCancelHold(null);
     setMessage(data.message);
     await refreshHolds();
+    setCatalogVersion((version) => version + 1);
   }
 
   function handleBorrowed(result) {
@@ -477,10 +488,14 @@ function App() {
 
           <main className="library-content">
             {topBar}
-            <Loans user={currentUser} onBrowse={() => goTo("catalog")} />
+            <Loans
+              user={currentUser}
+              onBrowse={() => goTo("catalog")}
+              onReturned={() => setCatalogVersion((version) => version + 1)}
+            />
 
             {/* fines */}
-            <Fines user={currentUser} />
+            <Fines user={currentUser} refreshKey={catalogVersion} />
           </main>
         </div>
       )}
@@ -602,6 +617,7 @@ function App() {
 
       {page === "editItem" && selectedItem && (
         <EditItemForm
+          key={selectedItem.itemID}
           item={selectedItem}
           onBack={() => goTo("catalog")}
           onItemUpdated={() => goTo("catalog")}

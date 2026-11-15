@@ -268,7 +268,7 @@ function FinesReport({ onBack }) {
         ],
     );
     downloadCSV(
-        `fines-report-${new Date().toISOString().slice(0, 10)}.csv`,
+        `fines-report-${new Date().toLocaleDateString("en-CA")}.csv`,
         header,
         data,
     );

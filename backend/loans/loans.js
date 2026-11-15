@@ -227,12 +227,6 @@ async function returnItem(userID, loanID) {
       [item.itemID],
     );
 
-    // clear old return requests
-    await conn.query(
-      "UPDATE notifications SET is_read = 1 WHERE loanID = ? AND type = 'return_request'",
-      [loanID],
-    );
-
     const [loanRows] = await conn.query(
       "SELECT DATE_FORMAT(returned_date, '%Y-%m-%d') AS returned_date FROM loans WHERE loanID = ?",
       [loanID],
@@ -351,7 +345,6 @@ async function fetchAllLoans(librarianID) {
 }
 
 module.exports = {
-  LOAN_POLICY,
   getLoanPolicy,
   LoanError,
   borrowItem,

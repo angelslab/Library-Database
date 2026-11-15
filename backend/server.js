@@ -24,7 +24,6 @@ const { login, register, createFaculty } = require("./auth/auth");
 const { getProfile } = require("./user/user");
 const { updateUserStatus } = require("./queries/manageUsers");
 
-const { searchItems } = require("./queries/inventory");
 const { manageUsers } = require("./queries/users");
 const { getUserDetails } = require("./queries/manageUsers");
 const { getFinesReport } = require("./reports/fines");
@@ -43,6 +42,71 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
+const COPIES_ERROR = "Total copies must be a whole number of at least 1";
+const ISBN_ERROR = "ISBN must be exactly 13 digits";
+
+// 400 response
+function badRequest(res, message) {
+  res.writeHead(400, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ message, error: message }));
+}
+
+// parse body
+function parseBody(body) {
+  const data = JSON.parse(body || "{}");
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new SyntaxError("Invalid JSON");
+  }
+
+  return data;
+}
+
+// error status
+function errorStatus(error) {
+  if (error instanceof SyntaxError) return 400;
+  return error.status || 500;
+}
+
+// error message
+function errorMessage(error, fallback) {
+  if (error instanceof SyntaxError) return "Invalid JSON";
+  return error.status ? error.message : fallback;
+}
+
+// validate item
+function itemError(kind, d) {
+  const text = (v) => typeof v === "string" && v.trim() !== "";
+
+  const tooLong = (v, max) => typeof v === "string" && v.trim().length > max;
+
+  if (!text(d.title)) return "Title is required";
+  if (tooLong(d.title, 100)) return "Title must be 100 characters or less";
+  if (tooLong(d.author, 100)) return "Author must be 100 characters or less";
+  if (tooLong(d.brand, 20)) return "Brand must be 20 characters or less";
+  if (tooLong(d.device_type, 50)) return "Device type must be 50 characters or less";
+  if (tooLong(d.image_url, 500)) return "Image URL must be 500 characters or less";
+
+  if ((kind === "book" || kind === "media") && !text(d.author)) {
+    return "Author is required";
+  }
+
+  if (kind === "book") {
+    const year = d.publication_year;
+    const now = new Date().getFullYear();
+
+    if (!Number.isInteger(year) || year < 1 || year > now) {
+      return `Publication year must be between 1 and ${now}`;
+    }
+  }
+
+  if (kind === "device" && (!text(d.brand) || !text(d.device_type))) {
+    return "Brand and device type are required";
+  }
+
+  return null;
+}
+
 function sendJSON(res, status, body) {
   res.writeHead(status, {
     "Content-Type": "application/json",
@@ -51,7 +115,6 @@ function sendJSON(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-const hostname = "127.0.0.1";
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
@@ -129,13 +192,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error retrieving items:", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to retrieve catalog",
+              message: errorMessage(error, "Failed to retrieve catalog"),
               error: error.message,
               code: error.code,
             }),
@@ -188,13 +251,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error retrieving item:", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to retrieve item",
+              message: errorMessage(error, "Failed to retrieve item"),
             }),
           );
 
@@ -215,13 +278,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error retrieving books", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to retrieve book",
+              message: errorMessage(error, "Failed to retrieve book"),
             }),
           );
 
@@ -238,10 +301,21 @@ async function startServer() {
             body += chunk;
           }
 
-          const data = JSON.parse(body);
+          const data = parseBody(body);
+
           if (!Number.isInteger(data.total_copies) || data.total_copies < 1) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            badRequest(res, COPIES_ERROR);
+            return;
+          }
+
+          const invalid = itemError("book", data);
+          if (invalid) {
+            badRequest(res, invalid);
+            return;
+          }
+
+          if (!/^\d{13}$/.test(String(data.isbn || ""))) {
+            badRequest(res, ISBN_ERROR);
             return;
           }
 
@@ -267,13 +341,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error creating books", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to create book",
+              message: errorMessage(error, "Failed to create book"),
             }),
           );
         }
@@ -366,10 +440,21 @@ async function startServer() {
             body += chunk;
           }
 
-          const book = JSON.parse(body);
+          const book = parseBody(body);
+
           if (!Number.isInteger(book.total_copies) || book.total_copies < 1) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            badRequest(res, COPIES_ERROR);
+            return;
+          }
+
+          const invalid = itemError("book", book);
+          if (invalid) {
+            badRequest(res, invalid);
+            return;
+          }
+
+          if (!/^\d{13}$/.test(String(book.isbn || ""))) {
+            badRequest(res, ISBN_ERROR);
             return;
           }
 
@@ -384,12 +469,13 @@ async function startServer() {
           );
 
           if (!result) {
-            res.writeHead(400, {
+            res.writeHead(404, {
               "Content-Type": "application/json",
             });
 
             res.end(
               JSON.stringify({
+                message: "Book item not found",
                 error: "Book item not found",
               }),
             );
@@ -408,13 +494,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error updating book", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to update book",
+              message: errorMessage(error, "Failed to update book"),
             }),
           );
 
@@ -435,13 +521,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error retrieving medias", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to retrieve medias",
+              message: errorMessage(error, "Failed to retrieve medias"),
             }),
           );
         }
@@ -456,10 +542,16 @@ async function startServer() {
             body += chunk;
           }
 
-          const media = JSON.parse(body);
+          const media = parseBody(body);
+
           if (!Number.isInteger(media.total_copies) || media.total_copies < 1) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            badRequest(res, COPIES_ERROR);
+            return;
+          }
+
+          const invalid = itemError("media", media);
+          if (invalid) {
+            badRequest(res, invalid);
             return;
           }
 
@@ -483,13 +575,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error adding media", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to add media",
+              message: errorMessage(error, "Failed to add media"),
             }),
           );
         }
@@ -580,7 +672,8 @@ async function startServer() {
             body += chunk;
           }
 
-          const data = JSON.parse(body);
+          const data = parseBody(body);
+
 
           if (
             typeof data.title != "string" ||
@@ -602,6 +695,12 @@ async function startServer() {
             return;
           }
 
+          const invalid = itemError("media", data);
+          if (invalid) {
+            badRequest(res, invalid);
+            return;
+          }
+
           const edited = await editMedia(
             itemID,
             data.title,
@@ -611,12 +710,13 @@ async function startServer() {
           );
 
           if (!edited) {
-            res.writeHead(400, {
+            res.writeHead(404, {
               "Content-Type": "application/json",
             });
 
             res.end(
               JSON.stringify({
+                message: "Media item not found",
                 error: "Media item not found",
               }),
             );
@@ -635,13 +735,13 @@ async function startServer() {
         } catch (error) {
           console.error(error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "content-type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to update media",
+              message: errorMessage(error, "Failed to update media"),
             }),
           );
         }
@@ -660,13 +760,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error retrieving devices", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to retrieve devices",
+              message: errorMessage(error, "Failed to retrieve devices"),
             }),
           );
         }
@@ -681,10 +781,16 @@ async function startServer() {
             body += chunk;
           }
 
-          const device = JSON.parse(body);
+          const device = parseBody(body);
+
           if (!Number.isInteger(device.total_copies) || device.total_copies < 1) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            badRequest(res, COPIES_ERROR);
+            return;
+          }
+
+          const invalid = itemError("device", device);
+          if (invalid) {
+            badRequest(res, invalid);
             return;
           }
 
@@ -709,13 +815,13 @@ async function startServer() {
         } catch (error) {
           console.error("Error adding device", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to add device",
+              message: errorMessage(error, "Failed to add device"),
             }),
           );
         }
@@ -806,10 +912,16 @@ async function startServer() {
             body += chunk;
           }
 
-          const data = JSON.parse(body);
+          const data = parseBody(body);
+
           if (!Number.isInteger(data.total_copies) || data.total_copies < 1) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Total copies must be a whole number of at least 1", error: "Total copies must be a whole number of at least 1" }));
+            badRequest(res, COPIES_ERROR);
+            return;
+          }
+
+          const invalid = itemError("device", data);
+          if (invalid) {
+            badRequest(res, invalid);
             return;
           }
 
@@ -823,12 +935,13 @@ async function startServer() {
           );
 
           if (!result) {
-            res.writeHead(400, {
+            res.writeHead(404, {
               "Content-Type": "application/json",
             });
 
             res.end(
               JSON.stringify({
+                message: "Device item not found",
                 error: "Device item not found",
               }),
             );
@@ -847,13 +960,13 @@ async function startServer() {
         } catch (error) {
           console.error(error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "content-type": "application/json",
           });
 
           res.end(
             JSON.stringify({
-              message: "Failed to update device",
+              message: errorMessage(error, "Failed to update device"),
             }),
           );
         }
@@ -868,7 +981,7 @@ async function startServer() {
             body += chunk;
           }
 
-          const data = JSON.parse(body);
+          const data = parseBody(body);
 
           const user = await login(data.email, data.password);
 
@@ -910,14 +1023,14 @@ async function startServer() {
         } catch (error) {
           console.error("Error logging in:", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
 
           res.end(
             JSON.stringify({
-              error: "Failed to log in",
+              error: errorMessage(error, "Failed to log in"),
             }),
           );
         }
@@ -934,7 +1047,7 @@ async function startServer() {
             body += chunk;
           }
 
-          const result = await createFaculty(JSON.parse(body || "{}"));
+          const result = await createFaculty(parseBody(body));
 
           res.writeHead(result.error ? result.status || 400 : 201, {
             "Content-Type": "application/json",
@@ -945,12 +1058,12 @@ async function startServer() {
         } catch (error) {
           console.error("Error creating faculty:", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
 
-          res.end(JSON.stringify({ error: "Failed to create faculty account" }));
+          res.end(JSON.stringify({ error: errorMessage(error, "Failed to create faculty account") }));
         }
 
         return;
@@ -965,7 +1078,7 @@ async function startServer() {
             body += chunk;
           }
 
-          const data = JSON.parse(body);
+          const data = parseBody(body);
 
           const result = await register(data);
 
@@ -993,14 +1106,14 @@ async function startServer() {
         } catch (error) {
           console.error("Error registering:", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
 
           res.end(
             JSON.stringify({
-              error: "Failed to register",
+              error: errorMessage(error, "Failed to register"),
             }),
           );
         }
@@ -1054,14 +1167,14 @@ async function startServer() {
         } catch (error) {
           console.error("Error load profile:", error);
 
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
 
           res.end(
             JSON.stringify({
-              error: "Failed to load profile",
+              error: errorMessage(error, "Failed to load profile"),
             }),
           );
         }
@@ -1069,29 +1182,6 @@ async function startServer() {
         return;
       }
 
-      // librarian item search
-      if (req.method === "GET" && req.url.startsWith("/api/items")) {
-        try {
-          const url = new URL(req.url, "http://localhost");
-          const q = (url.searchParams.get("q") || "").trim();
-
-          const rows = await searchItems(q);
-
-          res.writeHead(200, {
-            "Content-Type": "application/json",
-            ...CORS_HEADERS,
-          });
-          res.end(JSON.stringify(rows));
-        } catch (error) {
-          console.error("Error searching item:", error);
-          res.writeHead(500, {
-            "Content-Type": "application/json",
-            ...CORS_HEADERS,
-          });
-          res.end(JSON.stringify({ error: "Failed to search item" }));
-        }
-        return;
-      }
       // find user
       if (req.method === "GET" && req.url.startsWith("/api/users?")) {
         try {
@@ -1107,11 +1197,11 @@ async function startServer() {
           res.end(JSON.stringify(rows));
         } catch (error) {
           console.error("Error searching user:", error);
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
-          res.end(JSON.stringify({ error: "Failed to search user" }));
+          res.end(JSON.stringify({ error: errorMessage(error, "Failed to search user") }));
         }
         return;
       }
@@ -1147,11 +1237,11 @@ async function startServer() {
           res.end(JSON.stringify(rows));
         } catch (error) {
           console.error("Error getting user detail:", error);
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
-          res.end(JSON.stringify({ error: "Failed to get user detail" }));
+          res.end(JSON.stringify({ error: errorMessage(error, "Failed to get user detail") }));
         }
         return;
       }
@@ -1175,7 +1265,8 @@ async function startServer() {
             body += chunk;
           }
 
-          const data = JSON.parse(body);
+          const data = parseBody(body);
+
 
           if (data.is_active !== 0 && data.is_active !== 1) {
             res.writeHead(400, {
@@ -1221,11 +1312,11 @@ async function startServer() {
           );
         } catch (error) {
           console.error("Error updating user status:", error);
-          res.writeHead(500, {
+          res.writeHead(errorStatus(error), {
             "Content-Type": "application/json",
             ...CORS_HEADERS,
           });
-          res.end(JSON.stringify({ error: "Failed to update user status" }));
+          res.end(JSON.stringify({ error: errorMessage(error, "Failed to update user status") }));
         }
         return;
       }
@@ -1259,7 +1350,7 @@ async function startServer() {
           sendJSON(res, 200, rows);
         } catch (error) {
           console.error("Error running fines report:", error);
-          sendJSON(res, 500, { error: "Failed to run fines report" });
+          sendJSON(res, 500, { error: errorMessage(error, "Failed to run fines report") });
         }
         return;
       }
@@ -1300,7 +1391,7 @@ async function startServer() {
           sendJSON(res, 200, rows);
         } catch (error) {
           console.error("Error running loans report:", error);
-          sendJSON(res, 500, { error: "Failed to run loans report" });
+          sendJSON(res, 500, { error: errorMessage(error, "Failed to run loans report") });
         }
         return;
       }
@@ -1341,7 +1432,7 @@ async function startServer() {
           sendJSON(res, 200, rows);
         } catch (error) {
           console.error("Error running inventory report:", error);
-          sendJSON(res, 500, { error: "Failed to run inventory report" });
+          sendJSON(res, 500, { error: errorMessage(error, "Failed to run inventory report") });
         }
         return;
       }
@@ -1353,7 +1444,7 @@ async function startServer() {
           sendJSON(res, 200, rows);
         } catch (error) {
           console.error("Error running activity log report:", error);
-          sendJSON(res, 500, { error: "Failed to run activity log report" });
+          sendJSON(res, 500, { error: errorMessage(error, "Failed to run activity log report") });
         }
         return;
       }

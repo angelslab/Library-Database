@@ -60,80 +60,8 @@
 }
 
 /* ========================================
-   STANDALONE PAGES
-   Login, item details, add/edit forms
-======================================== */
-
-.app-standalone-page {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-.app-back-button {
-  margin-bottom: 20px;
-  padding: 10px 16px;
-  color: #c9d4df;
-  background: transparent;
-  border: 1px solid #263e59;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 14px;
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease;
-}
-
-.app-back-button:hover {
-  background: #193550;
-  border-color: #4075aa;
-}
-
-.app-back-button:focus-visible {
-  outline: 2px solid #e5bf6d;
-  outline-offset: 3px;
-}
-
-/* ========================================
    EXISTING LIBRARY COMPONENT STYLES
 ======================================== */
-
-.library-sidebar {
-  background: #10253e;
-  border-right: 1px solid #263e59;
-}
-
-.library-panel {
-  background: #10253e;
-  border: 1px solid #263e59;
-  border-radius: 8px;
-}
-
-.library-item-cover {
-  aspect-ratio: 3 / 4;
-  overflow: hidden;
-  border-radius: 5px;
-}
-
-.library-item-card {
-  min-width: 0;
-  background: #10253e;
-  border: 1px solid #263e59;
-  border-radius: 8px;
-  padding: 8px;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
-}
-
-.library-item-card:hover {
-  border-color: #4075aa;
-  box-shadow: 0 5px 16px rgb(0 0 0 / 15%);
-  transform: translateY(-2px);
-}
 
 .library-search input {
   display: block;
@@ -179,7 +107,4 @@
     padding: 14px;
   }
 
-  .app-standalone-page {
-    padding: 0;
-  }
 }

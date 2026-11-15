@@ -1,5 +1,12 @@
 const db = require("../db");
 
+// 409 error
+function userError(message) {
+  const error = new Error(message);
+  error.status = 409;
+  return error;
+}
+
 async function fetchMedia() {
   const result = await db.query(`
     SELECT 
@@ -39,7 +46,7 @@ async function addMedia(title, totalCopies, author, image_url) {
 
     // no duplicates
     if (existingMedia.length > 0) {
-      throw new Error(
+      throw userError(
         "This media item already exists with the same title and author.",
       );
     }
@@ -100,9 +107,21 @@ async function deleteMedia(itemID) {
       WHERE itemID = ?
         AND item_type = 'Media'
         AND is_active = 1
+      AND NOT EXISTS (
+        SELECT 1 FROM loans
+        WHERE loans.itemID = items.itemID AND loans.returned_date IS NULL
+      )
     `,
     [itemID],
   );
+
+  // cancel holds
+  if (result[0].affectedRows > 0) {
+    await db.query(
+      "UPDATE holds SET status = 'cancelled' WHERE itemID = ? AND status = 'waiting'",
+      [itemID],
+    );
+  }
 
   return result[0].affectedRows;
 }
@@ -121,6 +140,7 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
         WHERE itemID = ?
           AND item_type = 'Media'
           AND is_active = 1
+          FOR UPDATE
       `,
       [itemID],
     );
@@ -145,7 +165,7 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
     );
 
     if (existingMedia.length > 0) {
-      throw new Error(
+      throw userError(
         "This media item already exists with the same title and author.",
       );
     }
@@ -155,7 +175,7 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
 
     // total >= borrowed
     if (totalCopies < borrowedCopies) {
-      throw new Error(
+      throw userError(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
       );
     }

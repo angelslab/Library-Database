@@ -1,5 +1,31 @@
 const db = require("../db");
 
+// 409 error
+function userError(message) {
+  const error = new Error(message);
+  error.status = 409;
+  return error;
+}
+
+// duplicate ISBN?
+async function checkIsbn(connection, isbn, itemID) {
+  const [rows] = await connection.query(
+    `SELECT b.itemID, i.is_active
+      FROM book b
+      JOIN items i ON i.itemID = b.itemID
+      WHERE b.isbn = ? AND b.itemID != ?`,
+    [isbn, itemID],
+  );
+
+  if (rows.some((row) => Number(row.is_active) === 1)) {
+    throw userError("A book with this ISBN already exists.");
+  }
+
+  if (rows.length > 0) {
+    await connection.query("DELETE FROM book WHERE isbn = ? AND itemID != ?", [isbn, itemID]);
+  }
+}
+
 async function fetchBooks() {
   const result = await db.query(`SELECT 
             items.itemID,
@@ -34,6 +60,8 @@ async function addBook(
 
   try {
     await connection.beginTransaction();
+
+    await checkIsbn(connection, isbn, 0);
 
     // items table
     const result = await connection.query(
@@ -82,10 +110,22 @@ async function deleteBook(itemID) {
      WHERE itemID = ?
       AND item_type = 'Book'
       AND is_active = 1
+      AND NOT EXISTS (
+        SELECT 1 FROM loans
+        WHERE loans.itemID = items.itemID AND loans.returned_date IS NULL
+      )
     
     `,
     [itemID],
   );
+
+  // cancel holds
+  if (result[0].affectedRows > 0) {
+    await db.query(
+      "UPDATE holds SET status = 'cancelled' WHERE itemID = ? AND status = 'waiting'",
+      [itemID],
+    );
+  }
 
   return result[0].affectedRows;
 }
@@ -112,6 +152,7 @@ async function updateBook(
         WHERE itemID = ?
           AND item_type = 'Book'
           AND is_active = 1
+          FOR UPDATE
       `,
       [itemID],
     );
@@ -121,27 +162,14 @@ async function updateBook(
       return false;
     }
 
-    // duplicate ISBN?
-    const [existingBook] = await connection.query(
-      `
-        SELECT itemID
-        FROM book
-        WHERE isbn = ?
-          AND itemID != ?
-      `,
-      [isbn, itemID],
-    );
-
-    if (existingBook.length > 0) {
-      throw new Error("A book with this ISBN already exists.");
-    }
+    await checkIsbn(connection, isbn, itemID);
 
     // borrowed copies
     const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
     // total >= borrowed
     if (totalCopies < borrowedCopies) {
-      throw new Error(
+      throw userError(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
       );
     }

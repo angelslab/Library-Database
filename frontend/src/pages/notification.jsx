@@ -16,23 +16,12 @@ function formatTime(value) {
   });
 }
 
-function NotifIcon({ type }) {
-  const paths =
-    type === "return_request" ? (
-      <>
-        <path d="M9 14l-4-4 4-4" />
-        <path d="M5 10h11a4 4 0 0 1 0 8h-2" />
-      </>
-    ) : (
-      <>
-        <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-      </>
-    );
+function NotifIcon() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
       strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {paths}
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
     </svg>
   );
 }
@@ -43,7 +32,7 @@ function Notification({ user, onChanged }) {
 
   const markRead = useCallback(
     async (notificationID) => {
-      await fetch(`${API}/api/notifications/read`, {
+      const response = await fetch(`${API}/api/notifications/read`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -51,6 +40,9 @@ function Notification({ user, onChanged }) {
           ...(notificationID ? { notificationID } : {}),
         }),
       });
+      if (!response.ok) {
+        throw new Error("Could not mark notifications as read.");
+      }
       onChanged?.();
     },
     [user.userID, onChanged],
@@ -78,8 +70,10 @@ function Notification({ user, onChanged }) {
     try {
       await markRead(null);
       setNotifications((current) => current.map((item) => ({ ...item, is_read: 1 })));
-    } catch {
-      setError("Cannot reach the server. Please try again.");
+    } catch (err) {
+      setError(
+        err instanceof TypeError ? "Cannot reach the server. Please try again." : err.message,
+      );
     }
   }
 
@@ -191,7 +185,7 @@ function Notification({ user, onChanged }) {
                   background: "#193550",
                 }}
               >
-                <NotifIcon type={item.type} />
+                <NotifIcon />
               </span>
 
               <div style={{ flex: 1, minWidth: 0 }}>

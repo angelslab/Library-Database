@@ -1,5 +1,12 @@
 const db = require("../db");
 
+// 409 error
+function userError(message) {
+  const error = new Error(message);
+  error.status = 409;
+  return error;
+}
+
 async function fetchDevices() {
   const results = await db.query(`
         SELECT
@@ -41,7 +48,7 @@ async function addDevice(title, totalCopies, brand, deviceType, image_url) {
     );
 
     if (existingDevice[0].length > 0) {
-      throw new Error(
+      throw userError(
         "This device already exists with the same title, brand, and device type.",
       );
     }
@@ -100,9 +107,21 @@ async function deleteDevice(itemID) {
     WHERE itemID = ?
       AND item_type = 'Device'
       AND is_active = 1
+      AND NOT EXISTS (
+        SELECT 1 FROM loans
+        WHERE loans.itemID = items.itemID AND loans.returned_date IS NULL
+      )
     `,
     [itemID],
   );
+
+  // cancel holds
+  if (result[0].affectedRows > 0) {
+    await db.query(
+      "UPDATE holds SET status = 'cancelled' WHERE itemID = ? AND status = 'waiting'",
+      [itemID],
+    );
+  }
 
   return result[0].affectedRows;
 }
@@ -128,6 +147,7 @@ async function editDevice(
         WHERE itemID = ?
           AND item_type = 'Device'
           AND is_active = 1
+          FOR UPDATE
       `,
       [itemID],
     );
@@ -153,7 +173,7 @@ async function editDevice(
     );
 
     if (existingDevice.length > 0) {
-      throw new Error(
+      throw userError(
         "This device already exists with the same title, brand, and device type.",
       );
     }
@@ -163,7 +183,7 @@ async function editDevice(
 
     // total >= borrowed
     if (totalCopies < borrowedCopies) {
-      throw new Error(
+      throw userError(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,
       );
     }

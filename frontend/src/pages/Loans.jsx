@@ -31,7 +31,7 @@ function getStatus(loan) {
   return { label: "On loan", className: "loans-status-ok" };
 }
 
-function Loans({ user, onBrowse }) {
+function Loans({ user, onBrowse, onReturned }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [returnLoan, setReturnLoan] = useState(null);
@@ -69,6 +69,7 @@ function Loans({ user, onBrowse }) {
     }));
     setNotice(result.message);
     setReturnLoan(null);
+    onReturned?.();
   }
 
   if (error) {

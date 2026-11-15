@@ -29,6 +29,11 @@ async function syncLateFines() {
   try {
     await writeLateFines();
   } catch (error) {
+    // deadlock, skip
+    if (error.errno === 1213 || error.errno === 1205) {
+      return;
+    }
+
     // CHECK constraint error: log it and continue
     if (error.errno === 3819 || error.errno === 4025) {
       const [rules] = await db.query(
@@ -54,7 +59,7 @@ async function syncLateFines() {
 
 async function writeLateFines() {
   await db.query(
-    `INSERT INTO fines (loanID, userID, itemID, charge_type, paid, issue_date, amount)
+    `INSERT IGNORE INTO fines (loanID, userID, itemID, charge_type, paid, issue_date, amount)
       SELECT l.loanID, l.userID, l.itemID, 'Late', 0,
         DATE_ADD(l.due_date, INTERVAL 1 DAY),
         ${LATE_FEE_AMOUNT}
@@ -200,7 +205,6 @@ async function payFine(userID, fineID) {
 }
 
 module.exports = {
-  LATE_FEE_RULES,
   FEE_PER_DAY_SQL,
   FEE_MAX_SQL,
   syncLateFines,

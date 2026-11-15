@@ -4,15 +4,15 @@ function Donut({ total, totalLabel, segments = [] }) {
   const C = 2 * Math.PI * R; // circumference
   const sum = segments.reduce((s, x) => s + (x.value || 0), 0);
 
-  let offset = 0;
+  // arc offsets
   const arcs = segments
     .filter((s) => s.value > 0)
-    .map((seg) => {
+    .reduce((list, seg) => {
+      const prev = list[list.length - 1];
+      const offset = prev ? prev.end : 0;
       const len = sum > 0 ? (seg.value / sum) * C : 0;
-      const arc = { ...seg, dash: `${len} ${C}`, dashoffset: -offset };
-      offset += len;
-      return arc;
-    });
+      return [...list, { ...seg, dash: `${len} ${C}`, dashoffset: -offset, end: offset + len }];
+    }, []);
 
   return (
     <div className="donut-row">

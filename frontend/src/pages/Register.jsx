@@ -15,6 +15,14 @@ function Register({ onLogin, onBack }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!form.first_name.trim() || !form.last_name.trim() || !form.major.trim()) {
+      setError('Please fill in all fields')
+      return
+    }
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
     if (form.password !== form.confirm) {
       setError('Passwords do not match')
       return
@@ -49,23 +57,23 @@ function Register({ onLogin, onBack }) {
           <div className="auth-row">
             <div className="auth-field">
               <label className="auth-label">First name</label>
-              <input className="auth-input" placeholder="First name" value={form.first_name} onChange={update('first_name')} required />
+              <input className="auth-input" placeholder="First name" maxLength={50} value={form.first_name} onChange={update('first_name')} required />
             </div>
             <div className="auth-field">
               <label className="auth-label">Last name</label>
-              <input className="auth-input" placeholder="Last name" value={form.last_name} onChange={update('last_name')} required />
+              <input className="auth-input" placeholder="Last name" maxLength={50} value={form.last_name} onChange={update('last_name')} required />
             </div>
           </div>
 
           <div className="auth-field">
             <label className="auth-label">Email</label>
-            <input className="auth-input" type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} required />
+            <input className="auth-input" type="email" placeholder="you@example.com" maxLength={100} value={form.email} onChange={update('email')} required />
           </div>
 
           <div className="auth-row">
             <div className="auth-field">
               <label className="auth-label">Password</label>
-              <input className="auth-input" type="password" placeholder="Password" value={form.password} onChange={update('password')} required />
+              <input className="auth-input" type="password" placeholder="At least 6 characters" minLength={6} value={form.password} onChange={update('password')} required />
             </div>
             <div className="auth-field">
               <label className="auth-label">Confirm password</label>
@@ -80,7 +88,7 @@ function Register({ onLogin, onBack }) {
             </div>
             <div className="auth-field">
               <label className="auth-label">Major</label>
-              <input className="auth-input" placeholder="e.g. CS" value={form.major} onChange={(e) => { setForm({ ...form, major: e.target.value.toUpperCase() }); setError('') }} required />
+              <input className="auth-input" placeholder="e.g. CS" maxLength={50} value={form.major} onChange={(e) => { setForm({ ...form, major: e.target.value.toUpperCase() }); setError('') }} required />
             </div>
           </div>
 

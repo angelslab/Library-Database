@@ -74,15 +74,15 @@ function AddFacultyForm({ librarianID, onCreated, onClose }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <label style={field}>
           First name
-          <input style={input} value={form.first_name} onChange={update("first_name")} required />
+          <input style={input} maxLength={50} value={form.first_name} onChange={update("first_name")} required />
         </label>
         <label style={field}>
           Last name
-          <input style={input} value={form.last_name} onChange={update("last_name")} required />
+          <input style={input} maxLength={50} value={form.last_name} onChange={update("last_name")} required />
         </label>
         <label style={{ ...field, gridColumn: "1 / span 2" }}>
           Email
-          <input style={input} type="email" value={form.email} onChange={update("email")} required />
+          <input style={input} type="email" maxLength={100} value={form.email} onChange={update("email")} required />
         </label>
         <label style={field}>
           Faculty ID
@@ -105,7 +105,7 @@ function AddFacultyForm({ librarianID, onCreated, onClose }) {
           <input
             style={input}
             placeholder="e.g. CS"
-            value={form.department}
+            maxLength={50} value={form.department}
             onChange={(e) => {
               setForm({ ...form, department: e.target.value.toUpperCase() });
               setError("");
@@ -115,7 +115,7 @@ function AddFacultyForm({ librarianID, onCreated, onClose }) {
         </label>
         <label style={{ ...field, gridColumn: "1 / span 2" }}>
           Password
-          <input style={input} type="text" value={form.password} onChange={update("password")} required />
+          <input style={input} type="text" minLength={6} value={form.password} onChange={update("password")} required />
         </label>
       </div>
 

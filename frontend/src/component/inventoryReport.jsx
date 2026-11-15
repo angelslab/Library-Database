@@ -271,7 +271,7 @@ function InventoryReport({ onBack }) {
       "",
     ]);
     downloadCSV(
-      `inventory-report-${new Date().toISOString().slice(0, 10)}.csv`,
+      `inventory-report-${new Date().toLocaleDateString("en-CA")}.csv`,
       header,
       data,
     );

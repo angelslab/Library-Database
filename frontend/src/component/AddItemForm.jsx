@@ -28,21 +28,52 @@ function AddItemForm() {
     setMessage("");
     setError("");
 
+    // required fields
+    const thisYear = new Date().getFullYear();
+    const year = Number(publicationYear);
+
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+
+    if ((itemType === "Book" || itemType === "Media") && !author.trim()) {
+      setError("Author is required.");
+      return;
+    }
+
+    if (itemType === "Book" && (!Number.isInteger(year) || year < 1 || year > thisYear)) {
+      setError(`Publication year must be between 1 and ${thisYear}.`);
+      return;
+    }
+
+    if (itemType === "Device" && (!brand.trim() || !deviceType.trim())) {
+      setError("Brand and device type are required.");
+      return;
+    }
+
     const itemData = {
-      title,
+      title: title.trim(),
       total_copies: Number(totalCopies),
       image_url: imageURL,
     };
 
     if (itemType === "Book") {
-      itemData.author = author;
-      itemData.isbn = isbn.replace(/[^0-9]/g, "").slice(0, 13);
-      itemData.publication_year = Number(publicationYear);
+      const isbnDigits = isbn.replace(/[^0-9]/g, "");
+
+      if (isbnDigits.length !== 13) {
+        setError("ISBN must be exactly 13 digits.");
+        return;
+      }
+
+      itemData.author = author.trim();
+      itemData.isbn = isbnDigits;
+      itemData.publication_year = year;
     } else if (itemType === "Media") {
-      itemData.author = author;
+      itemData.author = author.trim();
     } else if (itemType === "Device") {
-      itemData.brand = brand;
-      itemData.device_type = deviceType;
+      itemData.brand = brand.trim();
+      itemData.device_type = deviceType.trim();
     }
 
     try {
@@ -122,6 +153,7 @@ function AddItemForm() {
               <label htmlFor="title">Title:</label>
               <input
                 id="title"
+                maxLength={100}
                 type="text"
                 placeholder="Enter item title"
                 value={title}
@@ -154,6 +186,7 @@ function AddItemForm() {
                   <label htmlFor="author">Author:</label>
                   <input
                     id="author"
+                    maxLength={100}
                     type="text"
                     placeholder="Enter author name"
                     value={author}
@@ -180,6 +213,8 @@ function AddItemForm() {
                   <input
                     id="publicationYear"
                     type="number"
+                    min="1"
+                    max={new Date().getFullYear()}
                     placeholder="e.g. 2024"
                     value={publicationYear}
                     onChange={(e) => setPublicationYear(e.target.value)}
@@ -194,6 +229,7 @@ function AddItemForm() {
                 <label htmlFor="mediaAuthor">Author:</label>
                 <input
                   id="mediaAuthor"
+                  maxLength={100}
                   type="text"
                   placeholder="Enter author name"
                   value={author}
@@ -209,6 +245,7 @@ function AddItemForm() {
                   <label htmlFor="brand">Brand:</label>
                   <input
                     id="brand"
+                    maxLength={20}
                     type="text"
                     placeholder="e.g. Canon"
                     value={brand}
@@ -221,6 +258,7 @@ function AddItemForm() {
                   <label htmlFor="deviceType">Device Type:</label>
                   <input
                     id="deviceType"
+                    maxLength={50}
                     type="text"
                     placeholder="e.g. Laptop, Camera, Tablet"
                     value={deviceType}
@@ -237,6 +275,7 @@ function AddItemForm() {
 
             <input
               id="imageURL"
+              maxLength={500}
               type="url"
               placeholder="Paste image URL"
               value={imageURL}

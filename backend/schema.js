@@ -44,6 +44,23 @@ async function addColumn(table, column, definition) {
   }
 }
 
+// add unique index
+async function addUniqueIndex(table, name, columns) {
+  try {
+    const [rows] = await db.query(
+      `SELECT 1 FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?`,
+      [table, name],
+    );
+
+    if (rows.length === 0) {
+      await db.query(`ALTER TABLE ${table} ADD UNIQUE INDEX ${name} (${columns})`);
+    }
+  } catch (error) {
+    console.error(`Could not add unique index ${name}: ${error.message}`);
+  }
+}
+
 async function initDB() {
   // users
   await db.query(`
@@ -335,6 +352,9 @@ async function initDB() {
       AND userID NOT IN (SELECT userID FROM librarian)`,
   );
 
+  // drop hold trigger first
+  await db.query("DROP TRIGGER IF EXISTS trg_items_hold_ready");
+
   // fix available_copies
   await db.query(
     `UPDATE items i
@@ -346,6 +366,10 @@ async function initDB() {
   );
 
   console.log("Item copy counts reconciled");
+
+  // unique indexes
+  await addUniqueIndex("users", "uq_users_email", "email");
+  await addUniqueIndex("fines", "uq_fines_loan_charge", "loanID, charge_type");
 
   // triggers
   await createTriggers();

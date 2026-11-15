@@ -40,7 +40,7 @@ async function fetchFines(userID) {
   return result;
 }
 
-function Fines({ user }) {
+function Fines({ user, refreshKey }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("all");
@@ -53,7 +53,7 @@ function Fines({ user }) {
     fetchFines(user.userID)
       .then(setData)
       .catch((err) => setError(err.message));
-  }, [user.userID]);
+  }, [user.userID, refreshKey]);
 
   // open pay popup
   function handlePay(fine) {

@@ -17,7 +17,8 @@ function ItemDetails({
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [imageFailed, setImageFailed] = useState(false);
+  // failed image url
+  const [failedImage, setFailedImage] = useState(null);
 
   useEffect(() => {
     async function fetchItem() {
@@ -46,11 +47,6 @@ function ItemDetails({
     }
   }, [itemID, refreshKey]);
 
-  // reset image error
-  useEffect(() => {
-    setImageFailed(false);
-  }, [item?.image_url, itemID]);
-
   if (loading) {
     return (
       <div className="item-details-message">
@@ -77,13 +73,13 @@ function ItemDetails({
     );
   }
 
-  const author = item.book_author || item.media_author || item.device_author;
+  const author = item.book_author || item.media_author || item.brand;
 
-  const isAvailable = item.available_copies > 0;
   // copies not reserved by holds
-  const canBorrow = hold
-    ? hold.ready
-    : item.available_copies - Number(item.waiting_holds || 0) > 0;
+  const freeCopies = item.available_copies - Number(item.waiting_holds || 0);
+  const canBorrow = hold ? hold.ready : freeCopies > 0;
+  const reserved = item.available_copies > 0 && freeCopies <= 0 && !hold?.ready;
+  const isAvailable = item.available_copies > 0 && !reserved;
 
   return (
     <main className="item-details-page">
@@ -97,12 +93,12 @@ function ItemDetails({
             item.item_type || "default"
           ).toLowerCase()}`}
         >
-          {item.image_url && !imageFailed ? (
+          {item.image_url && failedImage !== item.image_url ? (
             <img
               src={item.image_url}
               alt={`${item.title} cover`}
               className="item-details-cover-image"
-              onError={() => setImageFailed(true)}
+              onError={() => setFailedImage(item.image_url)}
             />
           ) : (
             <>
@@ -128,7 +124,11 @@ function ItemDetails({
                 isAvailable ? "is-available" : "is-unavailable"
               }`}
             >
-              {isAvailable ? "Available" : "Currently unavailable"}
+              {isAvailable
+                ? "Available"
+                : reserved
+                  ? "Reserved for holds"
+                  : "Currently unavailable"}
             </span>
 
             <p>

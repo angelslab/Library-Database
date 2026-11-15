@@ -293,7 +293,7 @@ function LoansReport({ onBack }) {
       ],
     );
     downloadCSV(
-      `loans-report-${new Date().toISOString().slice(0, 10)}.csv`,
+      `loans-report-${new Date().toLocaleDateString("en-CA")}.csv`,
       header,
       data,
     );

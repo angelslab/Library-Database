@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "../styles/AddItemForm.css";
 import API_URL from "../api";
+import { formatISBN } from "../utils/isbn";
 
 function EditItemForm({ item, onBack, onItemUpdated }) {
-  const [itemType, setItemType] = useState(item?.item_type || "Book");
+  const itemType = item?.item_type || "Book";
   const [title, setTitle] = useState(item?.title || "");
   const [totalCopies, setTotalCopies] = useState(item?.total_copies ?? 1);
 
@@ -11,7 +12,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
   const [author, setAuthor] = useState(
     item?.author || item?.media_author || item?.book_author || "",
   );
-  const [isbn, setIsbn] = useState(item?.isbn || "");
+  const [isbn, setIsbn] = useState(formatISBN(item?.isbn || ""));
   const [publicationYear, setPublicationYear] = useState(
     item?.publication_year || "",
   );
@@ -26,22 +27,6 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!item) return;
-
-    setItemType(item.item_type || "Book");
-    setTitle(item.title || "");
-    setTotalCopies(item.total_copies ?? 1);
-    setAuthor(item.author || item.media_author || item.book_author || "");
-    setIsbn(item.isbn || "");
-    setPublicationYear(item.publication_year || "");
-    setBrand(item.brand || "");
-    setDeviceType(item.device_type || "");
-    setImageURL(item.image_url || "");
-    setMessage("");
-    setError("");
-  }, [item]);
-
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -53,21 +38,52 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
       return;
     }
 
+    // required fields
+    const thisYear = new Date().getFullYear();
+    const year = Number(publicationYear);
+
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+
+    if ((itemType === "Book" || itemType === "Media") && !author.trim()) {
+      setError("Author is required.");
+      return;
+    }
+
+    if (itemType === "Book" && (!Number.isInteger(year) || year < 1 || year > thisYear)) {
+      setError(`Publication year must be between 1 and ${thisYear}.`);
+      return;
+    }
+
+    if (itemType === "Device" && (!brand.trim() || !deviceType.trim())) {
+      setError("Brand and device type are required.");
+      return;
+    }
+
     const itemData = {
-      title,
+      title: title.trim(),
       total_copies: Number(totalCopies),
       image_url: imageURL,
     };
 
     if (itemType === "Book") {
-      itemData.author = author;
-      itemData.isbn = isbn.replace(/[^0-9]/g, "").slice(0, 13);
-      itemData.publication_year = Number(publicationYear);
+      const isbnDigits = isbn.replace(/[^0-9]/g, "");
+
+      if (isbnDigits.length !== 13) {
+        setError("ISBN must be exactly 13 digits.");
+        return;
+      }
+
+      itemData.author = author.trim();
+      itemData.isbn = isbnDigits;
+      itemData.publication_year = year;
     } else if (itemType === "Media") {
-      itemData.author = author;
+      itemData.author = author.trim();
     } else if (itemType === "Device") {
-      itemData.brand = brand;
-      itemData.device_type = deviceType;
+      itemData.brand = brand.trim();
+      itemData.device_type = deviceType.trim();
     }
 
     try {
@@ -148,6 +164,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
               <label htmlFor="title">Title:</label>
               <input
                 id="title"
+                maxLength={100}
                 type="text"
                 placeholder="Enter item title"
                 value={title}
@@ -180,6 +197,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
                   <label htmlFor="author">Author:</label>
                   <input
                     id="author"
+                    maxLength={100}
                     type="text"
                     placeholder="Enter author name"
                     value={author}
@@ -195,7 +213,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
                     type="text"
                     placeholder="Enter ISBN"
                     value={isbn}
-                    onChange={(e) => setIsbn(e.target.value)}
+                    onChange={(e) => setIsbn(formatISBN(e.target.value))}
                     required
                   />
                 </div>
@@ -205,6 +223,8 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
                   <input
                     id="publicationYear"
                     type="number"
+                    min="1"
+                    max={new Date().getFullYear()}
                     placeholder="e.g. 2024"
                     value={publicationYear}
                     onChange={(e) => setPublicationYear(e.target.value)}
@@ -219,6 +239,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
                 <label htmlFor="mediaAuthor">Author:</label>
                 <input
                   id="mediaAuthor"
+                  maxLength={100}
                   type="text"
                   placeholder="Enter author name"
                   value={author}
@@ -234,6 +255,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
                   <label htmlFor="brand">Brand:</label>
                   <input
                     id="brand"
+                    maxLength={20}
                     type="text"
                     placeholder="e.g. Canon"
                     value={brand}
@@ -246,6 +268,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
                   <label htmlFor="deviceType">Device Type:</label>
                   <input
                     id="deviceType"
+                    maxLength={50}
                     type="text"
                     placeholder="e.g. Laptop, Camera, Tablet"
                     value={deviceType}
@@ -263,6 +286,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
 
             <input
               id="imageUrl"
+              maxLength={500}
               type="url"
               placeholder="Paste image URL"
               value={imageURL}

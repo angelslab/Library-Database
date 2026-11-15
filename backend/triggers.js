@@ -33,7 +33,7 @@ const LATE_FEE_TRIGGER = `
         IF NOT EXISTS (
           SELECT 1 FROM fines WHERE loanID = NEW.loanID AND charge_type = 'Late'
         ) THEN
-          INSERT INTO fines (loanID, userID, itemID, charge_type, paid, issue_date, amount)
+          INSERT IGNORE INTO fines (loanID, userID, itemID, charge_type, paid, issue_date, amount)
             VALUES (
               NEW.loanID,
               NEW.userID,
@@ -48,22 +48,28 @@ const LATE_FEE_TRIGGER = `
     END IF;
   END`;
 
-// 2) Notify first in line when a copy is back
+// 2) Notify people in line when copies are back
 const HOLD_READY_TRIGGER = `
   CREATE TRIGGER trg_items_hold_ready
   AFTER UPDATE ON items
   FOR EACH ROW
   BEGIN
-    IF OLD.available_copies <= 0 AND NEW.available_copies > 0 THEN
+    DECLARE skip_n INT DEFAULT 0;
+    DECLARE take_n INT DEFAULT 0;
+
+    IF NEW.available_copies > OLD.available_copies AND NEW.available_copies > 0 THEN
+      SET skip_n = GREATEST(OLD.available_copies, 0);
+      SET take_n = NEW.available_copies - skip_n;
+
       INSERT INTO notifications (userID, type, message, itemID)
         SELECT h.userID,
           'hold_ready',
-          CONCAT('A copy of "', NEW.title, '" is back. You are first in line, borrow it now!'),
+          CONCAT('A copy of "', NEW.title, '" is ready for you. Borrow it now!'),
           NEW.itemID
         FROM holds h
         WHERE h.itemID = NEW.itemID AND h.status = 'waiting'
         ORDER BY h.holdID
-        LIMIT 1;
+        LIMIT skip_n, take_n;
     END IF;
   END`;
 

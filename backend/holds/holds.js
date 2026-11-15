@@ -15,7 +15,7 @@ async function fulfillBorrowedHolds(userID) {
         SELECT 1 FROM loans l
         WHERE l.userID = h.userID
         AND l.itemID = h.itemID
-        AND l.borrow_date >= h.requestDate
+        AND l.returned_date IS NULL
       )`,
     [userID],
   );
@@ -134,6 +134,56 @@ async function placeHold(userID, itemID) {
   }
 }
 
+// cancel hold + notify next
+async function cancelAndNotify(conn, holdID, itemID) {
+  const [pos] = await conn.query(
+    `SELECT COUNT(*) AS position FROM holds
+      WHERE itemID = ? AND status = 'waiting' AND holdID <= ?`,
+    [itemID, holdID],
+  );
+
+  await conn.query("UPDATE holds SET status = 'cancelled' WHERE holdID = ?", [holdID]);
+
+  const [items] = await conn.query(
+    "SELECT title, available_copies FROM items WHERE itemID = ? AND is_active = 1",
+    [itemID],
+  );
+
+  if (items.length === 0) return;
+
+  const available = Number(items[0].available_copies);
+
+  if (available <= 0 || Number(pos[0].position) > available) return;
+
+  const [next] = await conn.query(
+    `SELECT userID FROM holds
+      WHERE itemID = ? AND status = 'waiting'
+      ORDER BY holdID
+      LIMIT ?, 1`,
+    [itemID, available - 1],
+  );
+
+  if (next.length > 0) {
+    await conn.query(
+      `INSERT INTO notifications (userID, type, message, itemID)
+        VALUES (?, 'hold_ready', ?, ?)`,
+      [next[0].userID, `A copy of "${items[0].title}" is ready for you. Borrow it now!`, itemID],
+    );
+  }
+}
+
+// cancel user holds
+async function cancelUserHolds(conn, userID) {
+  const [holds] = await conn.query(
+    "SELECT holdID, itemID FROM holds WHERE userID = ? AND status = 'waiting' ORDER BY holdID",
+    [userID],
+  );
+
+  for (const hold of holds) {
+    await cancelAndNotify(conn, hold.holdID, hold.itemID);
+  }
+}
+
 // cancel a hold
 async function cancelHold(userID, holdID) {
   const conn = await db.getConnection();
@@ -161,9 +211,7 @@ async function cancelHold(userID, holdID) {
       throw new LoanError(409, `This hold is already ${hold.status}`);
     }
 
-    await conn.query("UPDATE holds SET status = 'cancelled' WHERE holdID = ?", [
-      holdID,
-    ]);
+    await cancelAndNotify(conn, holdID, hold.itemID);
 
     await conn.commit();
 
@@ -205,6 +253,7 @@ async function fetchUserHolds(userID) {
         items.item_type,
         items.total_copies,
         items.available_copies,
+        items.is_active,
         COALESCE(book.author, media.author, device.brand) AS creator,
         CASE WHEN h.status = 'waiting' THEN
           (SELECT COUNT(*) FROM holds ahead
@@ -235,7 +284,9 @@ async function fetchUserHolds(userID) {
 
     // copy available for this user
     hold.ready =
-      hold.status === "waiting" && hold.queue_position <= hold.available_copies;
+      hold.status === "waiting" &&
+      Number(hold.is_active) === 1 &&
+      hold.queue_position <= hold.available_copies;
   }
 
   return {
@@ -247,9 +298,9 @@ async function fetchUserHolds(userID) {
 }
 
 module.exports = {
-  MAX_WAITING_HOLDS,
   fulfillBorrowedHolds,
   placeHold,
   cancelHold,
+  cancelUserHolds,
   fetchUserHolds,
 };

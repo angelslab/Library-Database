@@ -71,9 +71,8 @@ function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
   // cancel then reload
   async function handleCancel(hold) {
     try {
-      if (await onCancelHold(hold)) {
-        setData(await fetchHolds(user.userID));
-      }
+      // App reloads holds
+      await onCancelHold(hold);
     } catch (err) {
       setError(err.message);
     }

@@ -195,8 +195,6 @@ async function fetchPrintPayments(librarianID) {
 }
 
 module.exports = {
-  PRINT_RATES,
-  calculateCents,
   createPrintPayment,
   fetchPrintPayments,
 };

@@ -16,12 +16,14 @@ function ItemCard({
 }) {
   const isLowStock = item.available_copies <= 1;
   // copies not reserved by holds
-  const canBorrow = hold
-    ? hold.ready
-    : item.available_copies - Number(item.waiting_holds || 0) > 0;
+  const freeCopies = item.available_copies - Number(item.waiting_holds || 0);
+  const canBorrow = hold ? hold.ready : freeCopies > 0;
+  const reserved = item.available_copies > 0 && freeCopies <= 0 && !hold?.ready;
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
+  // failed image url
+  const [failedImage, setFailedImage] = useState(null);
+  const imageFailed = failedImage === item.image_url;
   const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef(null);
 
@@ -46,11 +48,6 @@ function ItemCard({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  // image
-  useEffect(() => {
-    setImageFailed(false);
-  }, [item.image_url]);
 
   // delete popup
   const handleDelete = () => {
@@ -104,7 +101,7 @@ function ItemCard({
                   ? "cover"
                   : "contain",
             }}
-            onError={() => setImageFailed(true)}
+            onError={() => setFailedImage(item.image_url)}
           />
         ) : (
           <>
@@ -147,6 +144,7 @@ function ItemCard({
           } ${item.item_type === "Media" ? "item-stock-media" : ""}`}
         >
           {item.available_copies}/{item.total_copies} available
+          {reserved && " · reserved"}
         </span>
       </div>
 
