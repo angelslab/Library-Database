@@ -27,7 +27,7 @@ function ItemCard({
     Device: "item-cover-device",
   };
 
-  //closing menu when clicking outside
+  // close menu on outside click
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -43,12 +43,12 @@ function ItemCard({
     };
   }, []);
 
-  //image
+  // image
   useEffect(() => {
     setImageFailed(false);
   }, [item.image_url]);
 
-  // opens the in-app "delete this item?" popup
+  // delete popup
   const handleDelete = () => {
     setMenuOpen(false);
     setConfirmDelete(true);
@@ -146,7 +146,7 @@ function ItemCard({
         </span>
       </div>
 
-      {/* the user's hold on this item and their place in line */}
+      {/* hold */}
       {hold && (
         <p className={`item-hold-note ${hold.ready ? "item-hold-ready" : ""}`}>
           {hold.ready

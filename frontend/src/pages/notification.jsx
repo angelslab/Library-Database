@@ -87,7 +87,7 @@ function Notification({ user, onReviewLoan, onChanged }) {
     try {
       await markRead(notification.notificationID);
     } catch {
-      // opening the loan matters more than the unread dot
+      // ignore
     }
     onReviewLoan(notification.loanID);
   }

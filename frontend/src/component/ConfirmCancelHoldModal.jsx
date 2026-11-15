@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "../styles/ConfirmBorrowModal.css";
 
-// In-app "are you sure?" popup for cancelling a hold (replaces window.confirm).
+// cancel hold popup
 function ConfirmCancelHoldModal({ user, hold, onClose, onCancelled }) {
   const dialogRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "../styles/ConfirmBorrowModal.css";
 
-// Keep in sync with LOAN_POLICY in backend/loans/loans.js.
-// The server is the one that actually enforces these, this is only for the preview.
+// same as LOAN_POLICY in backend/loans/loans.js
 const LOAN_DAYS = { student: 7, faculty: 14 };
 const MAX_LOANS = { student: 3, faculty: 5 };
 

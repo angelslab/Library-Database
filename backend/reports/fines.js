@@ -1,10 +1,6 @@
 const db = require("../db");
 
-// Fines and Charges report: one row per charge, joined to the borrower,
-// the item, and (when there is one) the loan it came from.
-// Print payments recorded by the librarian (print_payments table) are added as
-// "Printer" charges that are already collected, so they show in the same
-// table and pie charts. A walk-in payer has no userID and no role.
+// fines report (includes print payments)
 
 const FINES_SQL = `
     SELECT u.userID,
@@ -64,9 +60,7 @@ async function getFinesReport({ type, paid, from, to, borrower }) {
         );
         return rows;
     } catch (error) {
-        // the print_payments table doesn't exist yet (backend not restarted with the
-        // new schema, or it could not be created): show the fines on their own
-        // instead of breaking the whole report
+        // no print_payments table: skip it
         if (error.code !== "ER_NO_SUCH_TABLE") {
             throw error;
         }

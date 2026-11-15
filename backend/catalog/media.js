@@ -26,7 +26,7 @@ async function addMedia(title, totalCopies, author, image_url) {
   try {
     await connection.beginTransaction();
 
-    // Check whether this media already exists
+    // media exists?
     const [existingMedia] = await connection.query(
       `SELECT items.itemID
        FROM items
@@ -37,14 +37,14 @@ async function addMedia(title, totalCopies, author, image_url) {
       [title, author],
     );
 
-    // Prevent duplicate media
+    // no duplicates
     if (existingMedia.length > 0) {
       throw new Error(
         "This media item already exists with the same title and author.",
       );
     }
 
-    //items table
+    // items table
     const result = await connection.query(
       `
             INSERT into items (title, item_type, total_copies, available_copies, image_url)
@@ -56,7 +56,7 @@ async function addMedia(title, totalCopies, author, image_url) {
 
     const itemID = result[0].insertId;
 
-    //media table
+    // media table
 
     await connection.query(
       `
@@ -79,7 +79,7 @@ async function addMedia(title, totalCopies, author, image_url) {
 }
 
 async function deleteMedia(itemID) {
-  // block deleting an item that is still checked out
+  // can't delete if checked out
   const [activeLoans] = await db.query(
     `SELECT COUNT(*) AS count FROM loans WHERE itemID = ? AND returned_date IS NULL`,
     [itemID],
@@ -113,7 +113,7 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
   try {
     await connection.beginTransaction();
 
-    // Check whether the media exists
+    // media exists?
     const [rows] = await connection.query(
       `
         SELECT total_copies, available_copies
@@ -130,7 +130,7 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
       return false;
     }
 
-    // Check for duplicate media, excluding the current item
+    // duplicate media?
     const [existingMedia] = await connection.query(
       `
         SELECT items.itemID
@@ -150,10 +150,10 @@ async function editMedia(itemID, title, totalCopies, author, image_url) {
       );
     }
 
-    // Calculate currently borrowed copies
+    // borrowed copies
     const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
-    // Prevent total copies from going below borrowed copies
+    // total >= borrowed
     if (totalCopies < borrowedCopies) {
       throw new Error(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,

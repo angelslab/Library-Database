@@ -8,12 +8,12 @@ function AddItemForm() {
   const [title, setTitle] = useState("");
   const [totalCopies, setTotalCopies] = useState(1);
 
-  // Book and Media fields
+  // book/media fields
   const [author, setAuthor] = useState("");
   const [isbn, setIsbn] = useState("");
   const [publicationYear, setPublicationYear] = useState("");
 
-  // Device fields
+  // device fields
   const [brand, setBrand] = useState("");
   const [deviceType, setDeviceType] = useState("");
 
@@ -82,7 +82,7 @@ function AddItemForm() {
 
       setMessage(`${itemType} added successfully!`);
 
-      // Clear the form
+      // reset form
       setTitle("");
       setTotalCopies(1);
       setAuthor("");

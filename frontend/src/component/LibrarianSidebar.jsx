@@ -83,7 +83,7 @@ function Icon({ name }) {
   );
 }
 
-// Persistent navigation sidebar for the librarian.
+// librarian sidebar
 function LibrarianSidebar({
   activeView,
   onSelect,

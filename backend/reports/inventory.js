@@ -1,8 +1,6 @@
 const db = require("../db");
 
-// Inventory and Circulation: one row per item with its copy counts.
-// "Out now" is counted from the loans themselves (not from the stored
-// available_copies counter) so the report can flag a counter that is off.
+// inventory report
 async function getInventoryReport({ from, to, itemType, outOnly }) {
   const [rows] = await db.query(
     `SELECT i.itemID,

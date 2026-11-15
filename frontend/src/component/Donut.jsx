@@ -1,4 +1,4 @@
-// Reusable SVG donut chart (no dependency). Pass segments [{label, value, color}].
+// donut chart
 function Donut({ total, totalLabel, segments = [] }) {
   const R = 52;
   const C = 2 * Math.PI * R; // circumference

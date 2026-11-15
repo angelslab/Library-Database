@@ -63,7 +63,7 @@ function Catalog({
     return <p className="catalog-error">Error: {error}</p>;
   }
 
-  // shared props so Recommended cards behave exactly like the grid cards
+  // shared card props
   const cardProps = (item) => ({
     item,
     onSelectItem,
@@ -80,7 +80,7 @@ function Catalog({
     it?.book_author || it?.media_author || it?.device_author || "";
 
   const recommended = items.slice(0, 4);
-  // featured = first item with a copy available, else the first item
+  // featured item
   const featured = items.find((i) => i.available_copies > 0) || items[0];
   const isLibrarian = user?.role === "librarian";
 
@@ -93,7 +93,7 @@ function Catalog({
 
   return (
     <div className="catalog-container">
-      {/* Top bar: search + user chip + notification bell */}
+      {/* Top bar */}
       <TopBar
         name={user?.first_name}
         unreadCount={unreadCount}
@@ -123,7 +123,7 @@ function Catalog({
           }
         >
           <div className="browse-main">
-            {/* Recommended — users only (not librarian inventory view) */}
+            {/* Recommended */}
             {!isLibrarian && recommended.length > 0 && (
               <section className="browse-recommended">
                 <h2 className="browse-section-label">Recommended</h2>

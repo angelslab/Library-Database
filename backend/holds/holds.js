@@ -1,15 +1,10 @@
 const db = require("../db");
 const { getLoanPolicy, LoanError } = require("../loans/loans");
 
-// How many holds one person can have waiting at the same time.
+// max waiting holds per user
 const MAX_WAITING_HOLDS = 5;
 
-// A hold is "waiting" until the person borrows the item ("fulfilled")
-// or cancels it ("cancelled").
-//
-// Nothing in loans.js knows about holds, so when someone borrows an item they
-// were waiting for, their hold is marked fulfilled here, the next time holds
-// are read.
+// hold status: waiting -> fulfilled / cancelled
 async function fulfillBorrowedHolds(userID) {
   await db.query(
     `UPDATE holds h
@@ -26,14 +21,14 @@ async function fulfillBorrowedHolds(userID) {
   );
 }
 
-// A student or faculty member gets in line for an item that has no copies left.
+// place a hold
 async function placeHold(userID, itemID) {
   const conn = await db.getConnection();
 
   try {
     await conn.beginTransaction();
 
-    // lock the user's row so two quick clicks can't create two holds
+    // lock user row
     const [users] = await conn.query(
       "SELECT userID, role FROM users WHERE userID = ? FOR UPDATE",
       [userID],
@@ -104,7 +99,7 @@ async function placeHold(userID, itemID) {
       [userID, itemID],
     );
 
-    // place in line = waiting holds on this item that were placed before or at the same time as this one
+    // place in line
     const [position] = await conn.query(
       `SELECT COUNT(*) AS position FROM holds
         WHERE itemID = ? AND status = 'waiting' AND holdID <= ?`,
@@ -130,7 +125,7 @@ async function placeHold(userID, itemID) {
   }
 }
 
-// A user cancels one of their own waiting holds. Everyone behind them moves up one spot.
+// cancel a hold
 async function cancelHold(userID, holdID) {
   const conn = await db.getConnection();
 
@@ -146,7 +141,7 @@ async function cancelHold(userID, holdID) {
       [holdID],
     );
 
-    // a user can only cancel their own holds
+    // own holds only
     if (holds.length === 0 || Number(holds[0].userID) !== userID) {
       throw new LoanError(404, "Hold not found");
     }
@@ -179,8 +174,7 @@ async function cancelHold(userID, holdID) {
   }
 }
 
-// Every hold for one user (waiting, cancelled and fulfilled), newest first.
-// Waiting holds also get their place in line and how many people are waiting in total.
+// holds for one user
 async function fetchUserHolds(userID) {
   const [users] = await db.query("SELECT userID FROM users WHERE userID = ?", [
     userID,
@@ -230,7 +224,7 @@ async function fetchUserHolds(userID) {
     hold.queue_length =
       hold.queue_length === null ? null : Number(hold.queue_length);
 
-    // a copy came back and this person is close enough to the front of the line to get it
+    // copy available for this user
     hold.ready =
       hold.status === "waiting" && hold.queue_position <= hold.available_copies;
   }

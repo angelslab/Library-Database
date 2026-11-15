@@ -47,7 +47,7 @@ function Icon({ name }) {
   );
 }
 
-// Persistent navigation sidebar for student / faculty members.
+// student/faculty sidebar
 function Sidebar({
   activePage,
   name,

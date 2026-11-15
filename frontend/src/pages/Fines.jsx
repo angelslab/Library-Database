@@ -9,7 +9,7 @@ const TABS = [
   { key: "paid", label: "Paid" },
 ];
 
-// "2026-10-25" -> "Oct 25, 2026" (built from parts so the timezone can't shift the day)
+// "2026-10-25" -> "Oct 25, 2026"
 function formatDate(value) {
   if (!value) return "-";
 
@@ -26,7 +26,7 @@ function money(value) {
   return `$${Number(value).toFixed(2)}`;
 }
 
-// asks the server for every fine of one user
+// fetch fines
 async function fetchFines(userID) {
   const response = await fetch(
     `http://localhost:3000/api/fines/user/${userID}`,
@@ -46,23 +46,23 @@ function Fines({ user }) {
   const [tab, setTab] = useState("all");
   const [notice, setNotice] = useState("");
   const [actionError, setActionError] = useState("");
-  const [payFine, setPayFine] = useState(null); // fine shown in the "pay?" popup
+  const [payFine, setPayFine] = useState(null);
 
-  // load when the page opens
+  // load
   useEffect(() => {
     fetchFines(user.userID)
       .then(setData)
       .catch((err) => setError(err.message));
   }, [user.userID]);
 
-  // opens the in-app "pay this fine?" popup
+  // open pay popup
   function handlePay(fine) {
     setNotice("");
     setActionError("");
     setPayFine(fine);
   }
 
-  // runs when the user confirms in the popup; errors show inside the popup
+  // pay
   async function confirmPay() {
     const response = await fetch("http://localhost:3000/api/fines/pay", {
       method: "POST",

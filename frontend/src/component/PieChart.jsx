@@ -2,11 +2,11 @@ import { useState } from "react";
 import "../styles/PieChart.css";
 
 const SIZE = 180;
-const R = 84; // radius (leaves room for the hovered slice to pop out)
+const R = 84; // radius
 const C = SIZE / 2;
-const POP = 5; // how far a hovered slice moves out, in px
+const POP = 5; // hover offset
 
-// whole-number percentages that always add up to 100 (largest remainder)
+// percentages that sum to 100
 function percentages(segments, sum) {
   if (sum === 0) return segments.map(() => 0);
   const raw = segments.map((s) => (s.value / sum) * 100);
@@ -24,7 +24,7 @@ function percentages(segments, sum) {
   return out;
 }
 
-// point on the circle at a fraction (0..1) of the way round, starting at 12 o'clock
+// point on circle
 function point(frac, r = R) {
   const a = frac * 2 * Math.PI - Math.PI / 2;
   return [C + r * Math.cos(a), C + r * Math.sin(a)];
@@ -37,10 +37,7 @@ function slicePath(start, end) {
   return `M ${C} ${C} L ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} Z`;
 }
 
-// Reusable SVG pie chart (no dependency).
-// segments: [{ label, value, color }] in a fixed order, so a colour always
-// means the same thing no matter how the numbers change.
-// format: how to show a value, e.g. (v) => "$" + v.toFixed(2); defaults to "N unit"
+// pie chart. segments: [{ label, value, color }]
 function PieChart({ title, unit = "items", format, segments = [] }) {
   // "1 item" / "3 items"
   const show =
@@ -68,7 +65,7 @@ function PieChart({ title, unit = "items", format, segments = [] }) {
       const box = e.currentTarget.ownerSVGElement.getBoundingClientRect();
       setTip({ x: e.clientX - box.left, y: e.clientY - box.top });
     } else {
-      setTip({ x: C, y: C }); // keyboard focus: centre of the pie
+      setTip({ x: C, y: C });
     }
   };
   const hideTip = () => {
@@ -102,7 +99,7 @@ function PieChart({ title, unit = "items", format, segments = [] }) {
               {slices.map((s) => {
                 const isOn = active === s.label;
                 const dim = active && !isOn;
-                // move the hovered slice out along its middle angle
+                // pop out hovered slice
                 const [mx, my] = point((s.start + s.end) / 2, POP);
                 const shift = isOn && slices.length > 1
                   ? `translate(${mx - C}px, ${my - C}px)`

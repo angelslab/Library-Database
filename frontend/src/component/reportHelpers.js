@@ -31,18 +31,16 @@ export function downloadCSV(filename, headerRow, dataRows) {
     link.remove();
     URL.revokeObjectURL(url);
 }
-// Fixed chart colours for the report pie charts. Each set was checked for
-// contrast and colour-blind safety on the dark chart card (#10253e).
-// A colour always means the same category, whatever the numbers are.
+// chart colors
 export const CHART_COLORS = {
-    pair: ["#3987e5", "#c98500"], // two-way splits (role, collected/outstanding)
-    trio: ["#199e70", "#d95926", "#9085e9"], // three-way splits (item type, charge type)
-    other: "#898781", // anything outside the known categories
+    pair: ["#3987e5", "#c98500"],
+    trio: ["#199e70", "#d95926", "#9085e9"],
+    other: "#898781",
 };
 
 export const ITEM_TYPES = ["Book", "Media", "Device"];
 
-// count (or sum) rows per key; `valueOf` defaults to counting rows
+// count rows per key
 export function tally(rows, keyOf, valueOf = () => 1) {
     const out = {};
     rows.forEach((r) => {
@@ -52,7 +50,7 @@ export function tally(rows, keyOf, valueOf = () => 1) {
     return out;
 }
 
-// pie segments for known categories in a fixed order (+ "Other" if needed)
+// pie segments
 export function segmentsFor(counts, labels, colors) {
     const known = labels.map((label, i) => ({
         label,

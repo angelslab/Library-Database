@@ -5,7 +5,7 @@ import { Sheet, Stats, Section, Tag } from "./ReportSheet";
 
 const EMPTY_PARAMS = { search: "", itemType: "", outOnly: false, from: "", to: "" };
 
-// add one item row's numbers into a running total
+// add to total
 function addTo(total, row) {
   total.items += 1;
   total.copies += row.copies;
@@ -21,7 +21,7 @@ const newTotal = () => ({
   loans: 0,
 });
 
-// Item type -> items. The query sorts the rows, so types come out in order.
+// group by item type
 function buildGroups(rows) {
   const groups = [];
   const byType = new Map();
@@ -35,7 +35,7 @@ function buildGroups(rows) {
       available: Number(r.total_copies) - Number(r.out_now),
       loans: Number(r.loans_in_period),
     };
-    // the stored counter should equal total copies minus unreturned loans
+    // check available count
     item.counterOk = Number(r.stored_available) === item.available;
 
     let group = byType.get(r.type_name);
@@ -215,7 +215,7 @@ function InventoryReport({ onBack }) {
 
   const { groups, grand } = buildGroups(shownRows);
 
-  // items and loans (circulation) by type for the pie charts
+  // pie chart data
   const typeOf = (r) => r.type_name || "Other";
   const itemSegments = segmentsFor(tally(shownRows, typeOf), ITEM_TYPES, CHART_COLORS.trio);
   const loanSegments = segmentsFor(
@@ -298,7 +298,7 @@ function InventoryReport({ onBack }) {
         <button onClick={() => window.print()}>Print / PDF</button>
       </div>
 
-      {/* on-screen chart (not included when printing the sheet) */}
+      {/* chart */}
       <div className="report-screen pie-charts" style={{ marginBottom: 18 }}>
         <PieChart title="Items by type" unit="items" segments={itemSegments} />
         <PieChart title="Loans by item type" unit="loans" segments={loanSegments} />

@@ -2,9 +2,9 @@ const db = require("../db");
 const { getLoanPolicy } = require("../loans/loans");
 const { syncLateFines } = require("../fines/fines");
 
-// profile: basic info + student/faculty details + loan and fine totals
+// profile
 async function getProfile(userID) {
-  // late fees grow every day an item is overdue, update them before adding them up
+  // update late fees first
   await syncLateFines();
 
   const result = await db.query(
@@ -44,7 +44,7 @@ async function getProfile(userID) {
 
   const profile = rows[0];
 
-  // the borrow limit comes from the loan rules (students 3, faculty 5)
+  // borrow limit
   const policy = getLoanPolicy(profile.role);
   profile.max_limit = policy ? policy.maxLoans : null;
 

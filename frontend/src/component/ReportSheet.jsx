@@ -1,9 +1,8 @@
 import "../styles/ReportSheet.css";
 
-// Shared building blocks for the printable report sheets, so every report
-// reads the same way: header -> key numbers -> summary table -> details.
+// shared report components
 
-// White sheet with the report title, period, filters and run time.
+// report header
 export function Sheet({ title, period, filters, when, children }) {
   return (
     <div className="report-sheet rs">
@@ -23,7 +22,7 @@ export function Sheet({ title, period, filters, when, children }) {
   );
 }
 
-// Row of key numbers: [{ label, value, tone? }] (tone: "bad" for overdue etc.)
+// key numbers
 export function Stats({ items }) {
   return (
     <div className="rs-stats">
@@ -37,7 +36,7 @@ export function Stats({ items }) {
   );
 }
 
-// A titled block holding one table.
+// section
 export function Section({ title, note, children }) {
   return (
     <section className="rs-section">
@@ -50,7 +49,7 @@ export function Section({ title, note, children }) {
   );
 }
 
-// Status label with text (never colour alone).
+// status label
 const TONES = {
   Overdue: "bad",
   Outstanding: "warn",

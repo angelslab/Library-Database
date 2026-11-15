@@ -1,8 +1,4 @@
-// Adds dummy books to the catalog for testing.
-//   Run from the backend folder:  node seed-dummy-books.js
-// Safe to run more than once: a book whose ISBN already exists is skipped.
-// The ISBNs are made up (they all start with 999) so they never clash with real ones,
-// and they make the seeded books easy to find later.
+// Add test books. Usage: node seed-dummy-books.js
 
 const db = require("./db");
 const { addBook } = require("./catalog/book");

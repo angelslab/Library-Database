@@ -36,7 +36,7 @@ const { handleHoldRoutes } = require("./holds/routes");
 const { handleFineRoutes } = require("./fines/routes");
 const { handlePrintRoutes } = require("./printing/routes");
 
-// lets the React app (different port) call the API
+// CORS
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
@@ -56,13 +56,13 @@ const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
-    //initialize db
+    // init db
 
     await initDB();
     console.log("Database initialized successfully");
 
     const server = http.createServer(async (req, res) => {
-      // browser asks permission before sending JSON from another port
+      // CORS preflight
       if (req.method === "OPTIONS") {
         res.writeHead(204, CORS_HEADERS);
         res.end();
@@ -76,7 +76,7 @@ async function startServer() {
         return;
       }
 
-      // Allow requests from the React frontend
+      // CORS
       res.setHeader("Access-Control-Allow-Origin", "*");
 
       res.setHeader(
@@ -131,7 +131,7 @@ async function startServer() {
         }
       }
 
-      //fetch catalog item by ITEMID
+      // fetch catalog item by id
       if (req.method === "GET" && req.url.startsWith("/items/")) {
         try {
           const itemID = Number(req.url.split("/")[2]);
@@ -188,7 +188,7 @@ async function startServer() {
         }
       }
 
-      //fetch all books
+      // fetch all books
       if (req.method === "GET" && req.url === "/books") {
         try {
           const books = await fetchBooks();
@@ -215,7 +215,7 @@ async function startServer() {
         }
       }
 
-      //create book
+      // add book
       if (req.method === "POST" && req.url === "/books") {
         try {
           let body = "";
@@ -262,7 +262,7 @@ async function startServer() {
         return;
       }
 
-      //delete book
+      // delete book
       if (req.method === "DELETE" && req.url.startsWith("/books/")) {
         try {
           const itemID = Number(req.url.split("/")[2]);
@@ -322,7 +322,7 @@ async function startServer() {
         }
       }
 
-      //updateBook
+      // update book
       if (req.method === "PUT" && req.url.startsWith("/books/")) {
         try {
           const itemID = Number(req.url.split("/")[2]);
@@ -398,7 +398,7 @@ async function startServer() {
         }
       }
 
-      //fetch all media
+      // fetch all media
       if (req.method === "GET" && req.url === "/media") {
         try {
           const media = await fetchMedia();
@@ -423,7 +423,7 @@ async function startServer() {
         }
       }
 
-      //addMedia
+      // add media
       if (req.method === "POST" && req.url === "/media") {
         try {
           let body = "";
@@ -466,7 +466,7 @@ async function startServer() {
         }
       }
 
-      //deleteMedia
+      // delete media
       if (req.method === "DELETE" && req.url.startsWith("/media/")) {
         try {
           const itemID = Number(req.url.split("/")[2]);
@@ -526,7 +526,7 @@ async function startServer() {
         }
       }
 
-      //editMedia
+      // update media
       if (req.method === "PUT" && req.url.startsWith("/media/")) {
         const itemID = Number(req.url.split("/")[2]);
 
@@ -618,7 +618,7 @@ async function startServer() {
         }
       }
 
-      //fetch all devices
+      // fetch all devices
       if (req.method === "GET" && req.url === "/device") {
         try {
           const device = await fetchDevices();
@@ -643,7 +643,7 @@ async function startServer() {
         }
       }
 
-      //device addition
+      // add device
       if (req.method === "POST" && req.url === "/device") {
         try {
           let body = "";
@@ -687,7 +687,7 @@ async function startServer() {
         }
       }
 
-      //delete device
+      // delete device
       if (req.method === "DELETE" && req.url.startsWith("/device/")) {
         try {
           const itemID = Number(req.url.split("/")[2]);
@@ -747,7 +747,7 @@ async function startServer() {
         }
       }
 
-      //editDevice
+      // update device
       if (req.method === "PUT" && req.url.startsWith("/device/")) {
         try {
           const itemID = Number(req.url.split("/")[2]);
@@ -820,7 +820,7 @@ async function startServer() {
         }
       }
 
-      //login
+      // login
       if (req.method === "POST" && req.url === "/api/login") {
         try {
           let body = "";
@@ -886,7 +886,7 @@ async function startServer() {
         return;
       }
 
-      // a librarian creates a faculty account
+      // add faculty
       if (req.method === "POST" && req.url === "/api/users/faculty") {
         try {
           let body = "";
@@ -917,7 +917,7 @@ async function startServer() {
         return;
       }
 
-      //register
+      // register
       if (req.method === "POST" && req.url === "/api/register") {
         try {
           let body = "";
@@ -969,7 +969,7 @@ async function startServer() {
         return;
       }
 
-      //profile
+      // profile
       if (req.method === "GET" && req.url.startsWith("/api/profile/")) {
         try {
           const userID = Number(req.url.split("/")[3]);
@@ -1053,7 +1053,7 @@ async function startServer() {
         }
         return;
       }
-      // librian find user
+      // find user
       if (req.method === "GET" && req.url.startsWith("/api/users?")) {
         try {
           const url = new URL(req.url, "http://localhost");
@@ -1076,7 +1076,7 @@ async function startServer() {
         }
         return;
       }
-      // detail about selected user
+      // user detail
       if (req.method === "GET" && req.url.startsWith("/api/users/")) {
         try {
           const userID = Number(req.url.split("/")[3]);
@@ -1147,7 +1147,7 @@ async function startServer() {
             return;
           }
 
-          //updateUserStatus is in backend/queries/manageuser.js
+          // see queries/manageUsers.js
           const result = await updateUserStatus(userID, data.is_active);
 
           if (result.hasActiveLoans) {
@@ -1319,7 +1319,7 @@ async function startServer() {
         return;
       }
 
-      // nothing above answered this request, so reply instead of leaving it hanging
+      // 404
       if (!res.headersSent && !res.writableEnded) {
         res.writeHead(404, {
           "Content-Type": "application/json",

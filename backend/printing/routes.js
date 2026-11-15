@@ -1,8 +1,7 @@
 const { LoanError } = require("../loans/loans");
 const { createPrintPayment, fetchPrintPayments } = require("./printing");
 
-// Routes for print payments (librarian only).
-// server.js calls handlePrintRoutes; it returns true when it answered the request.
+// print payment routes (librarian)
 
 function isID(value) {
   return Number.isInteger(value) && value > 0;
@@ -39,7 +38,7 @@ async function handlePrintRoutes(req, res, CORS_HEADERS) {
   }
 
   try {
-    // rates, today's totals and the latest payments
+    // rates and payments
     if (req.method === "GET") {
       const librarianID = Number(url.searchParams.get("userID"));
 

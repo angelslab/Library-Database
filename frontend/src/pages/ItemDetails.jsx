@@ -46,7 +46,7 @@ function ItemDetails({
     }
   }, [itemID, refreshKey]);
 
-  // Reset image failure when the item or its image URL changes
+  // reset image error
   useEffect(() => {
     setImageFailed(false);
   }, [item?.image_url, itemID]);

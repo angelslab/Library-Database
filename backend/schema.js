@@ -1,8 +1,7 @@
 const db = require("./db");
 const { createTriggers } = require("./triggers");
 
-// removes CHECK rules on a table. schema.js does not create any, but some databases
-// got extra ones added by hand (e.g. holds_chk_1, fines_chk_1) that block holds and fines
+// drop CHECK constraints
 async function dropCheckRules(table) {
   const [rules] = await db.query(
     `SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
@@ -17,7 +16,7 @@ async function dropCheckRules(table) {
   }
 }
 
-// adds AUTO_INCREMENT to an id column made without it (tables created before the fix)
+// add AUTO_INCREMENT
 async function addAutoIncrement(table, column) {
   const [rows] = await db.query(
     `SELECT EXTRA FROM information_schema.COLUMNS
@@ -32,7 +31,7 @@ async function addAutoIncrement(table, column) {
   }
 }
 
-// adds a column to a table that was created before the column existed
+// add column if missing
 async function addColumn(table, column, definition) {
   const [rows] = await db.query(
     `SELECT COLUMN_NAME FROM information_schema.COLUMNS
@@ -46,7 +45,7 @@ async function addColumn(table, column, definition) {
 }
 
 async function initDB() {
-  //users
+  // users
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       userID INT AUTO_INCREMENT PRIMARY KEY,
@@ -57,12 +56,12 @@ async function initDB() {
     )
   `);
 
-  // accounts can be deactivated by a librarian; older databases need the column added
+  // is_active column
   await addColumn("users", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
 
   console.log("Users table created");
 
-  //user_credentials (one password per user)
+  // user_credentials
   await db.query(`
     CREATE TABLE IF NOT EXISTS user_credentials (
       userID INT PRIMARY KEY NOT NULL,
@@ -74,7 +73,7 @@ async function initDB() {
 
   console.log("User_credentials table created");
 
-  //items
+  // items
   await db.query(`
     CREATE TABLE IF NOT EXISTS items (
       itemID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -90,15 +89,14 @@ async function initDB() {
 
   console.log("Items table created");
 
-  // older databases made the items table before these columns existed, add them once
+  // add missing columns
   await addColumn("items", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
   await addColumn("items", "image_url", "VARCHAR(500) NULL");
 
-  // some databases got CHECK rules added by hand (e.g. items_chk_4) that block
-  // normal copy-count updates on return; schema.js does not create any, so drop them
+  // drop CHECK constraints
   await dropCheckRules("items");
 
-  //student
+  // student
   await db.query(`
     CREATE TABLE IF NOT EXISTS student (
       userID INT NOT NULL UNIQUE,
@@ -112,7 +110,7 @@ async function initDB() {
 
   console.log("Student table created");
 
-  //faculty
+  // faculty
   await db.query(`
     CREATE TABLE IF NOT EXISTS faculty (
       userID INT NOT NULL UNIQUE,
@@ -127,7 +125,7 @@ async function initDB() {
 
   console.log("Faculty table created");
 
-  //librarian
+  // librarian
   await db.query(`
     CREATE TABLE IF NOT EXISTS librarian (
       userID INT PRIMARY KEY NOT NULL,
@@ -138,7 +136,7 @@ async function initDB() {
 
   console.log("Librarian table created");
 
-  //book
+  // book
   await db.query(`
     CREATE TABLE IF NOT EXISTS book (
       author VARCHAR(100) NOT NULL,
@@ -152,7 +150,7 @@ async function initDB() {
 
   console.log("Book table created");
 
-  //device
+  // device
   await db.query(`
     CREATE TABLE IF NOT EXISTS device (
       itemID INT PRIMARY KEY NOT NULL,
@@ -165,7 +163,7 @@ async function initDB() {
 
   console.log("Device table created");
 
-  //media
+  // media
   await db.query(`
     CREATE TABLE IF NOT EXISTS media (
       author VARCHAR(100),
@@ -177,7 +175,7 @@ async function initDB() {
 
   console.log("Media table created");
 
-  //loans
+  // loans
   await db.query(`
     CREATE TABLE IF NOT EXISTS loans (
       loanID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -215,7 +213,7 @@ async function initDB() {
 
   console.log("Loans table created");
 
-  //holds
+  // holds
   await db.query(`
     CREATE TABLE IF NOT EXISTS holds (
       userID INT NOT NULL,
@@ -232,13 +230,13 @@ async function initDB() {
     )
   `);
 
-  // older databases made holdID without AUTO_INCREMENT, fix it once
+  // fix holdID
   await addAutoIncrement("holds", "holdID");
   await dropCheckRules("holds");
 
   console.log("Holds table created");
 
-  //fines
+  // fines
   await db.query(`
     CREATE TABLE IF NOT EXISTS fines (
       loanID INT,
@@ -257,13 +255,13 @@ async function initDB() {
     )
   `);
 
-  // older databases made fineID without AUTO_INCREMENT, fix it once
+  // fix fineID
   await addAutoIncrement("fines", "fineID");
   await dropCheckRules("fines");
 
   console.log("Fines table created");
 
-  //notifications (return requests for librarians, approvals for students/faculty)
+  // notifications
   await db.query(`
     CREATE TABLE IF NOT EXISTS notifications (
       notificationID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -285,7 +283,7 @@ async function initDB() {
 
   console.log("Notifications table created");
 
-  //audit_log (history of every borrow and return, written by the triggers)
+  // audit_log
   await db.query(`
     CREATE TABLE IF NOT EXISTS audit_log (
       auditID INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -299,8 +297,7 @@ async function initDB() {
 
   console.log("Audit_log table created");
 
-  //print_payments (librarian records what a person paid for printing)
-  // A failure here is logged but does not stop the server, so the rest of the app keeps working.
+  // print_payments
   try {
     await db.query(`
       CREATE TABLE IF NOT EXISTS print_payments (
@@ -330,8 +327,7 @@ async function initDB() {
     );
   }
 
-  // every librarian account needs a row in the librarian table,
-  // otherwise they never get return-request notifications
+  // make sure every librarian has a librarian row
   await db.query(
     `INSERT INTO librarian (userID)
       SELECT userID FROM users
@@ -339,8 +335,7 @@ async function initDB() {
       AND userID NOT IN (SELECT userID FROM librarian)`,
   );
 
-  // repair any item whose available copy count drifted out of sync:
-  // available should be total copies minus the copies currently checked out
+  // fix available_copies
   await db.query(
     `UPDATE items i
       SET i.available_copies = GREATEST(0, LEAST(i.total_copies,
@@ -352,7 +347,7 @@ async function initDB() {
 
   console.log("Item copy counts reconciled");
 
-  // late fee, hold-ready and audit triggers (see triggers.js)
+  // triggers
   await createTriggers();
 }
 

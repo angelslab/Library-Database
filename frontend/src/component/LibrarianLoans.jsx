@@ -4,7 +4,7 @@ import ConfirmApproveModal from "./ConfirmApproveModal";
 
 const API = "http://localhost:3000";
 
-// which loans each tab shows
+// tabs
 const tabs = [
   { key: "current", label: "Current loans", test: (loan) => !loan.returned_date },
   {
@@ -16,7 +16,7 @@ const tabs = [
   { key: "all", label: "All loans", test: () => true },
 ];
 
-// which date the range applies to
+// date field
 const dateFields = [
   { key: "borrow_date", label: "Borrowed date" },
   { key: "due_date", label: "Due date" },
@@ -31,7 +31,7 @@ const presets = [
   { key: "custom", label: "Custom range" },
 ];
 
-// "2026-10-25" from a Date, in the browser's time zone
+// Date -> "YYYY-MM-DD"
 function toISODate(date) {
   return [
     date.getFullYear(),
@@ -119,7 +119,7 @@ function LibrarianLoans({ user, focusLoanID = null }) {
 
         setLoans(data.loans);
 
-        // coming from a notification: show that loan (it may already have been handled)
+        // from notification
         if (focusLoanID) {
           const focused = data.loans.find((loan) => loan.loanID === focusLoanID);
           const waiting =
@@ -137,14 +137,14 @@ function LibrarianLoans({ user, focusLoanID = null }) {
     fetchLoans();
   }, [user.userID, focusLoanID]);
 
-  // scroll the loan from the notification into view
+  // scroll to loan
   useEffect(() => {
     if (loans && focusRef.current) {
       focusRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   }, [loans, tab]);
 
-  // called by the popup after the server approved the return
+  // after approve
   function handleApproved(data) {
     const loanID = approveLoan.loanID;
 
@@ -172,7 +172,7 @@ function LibrarianLoans({ user, focusLoanID = null }) {
     return <p style={{ marginTop: 20 }}>Loading loans...</p>;
   }
 
-  // search + date range first, then the tab
+  // filter
   const range = getRange(preset, customFrom, customTo);
   const dateFieldLabel = dateFields.find((field) => field.key === dateField).label;
 
@@ -185,8 +185,7 @@ function LibrarianLoans({ user, focusLoanID = null }) {
 
       if (!value) return false;
 
-      // normalize to YYYY-MM-DD so a time component (e.g. "2026-10-20T00:00:00Z")
-      // doesn't push a same-day loan past the "to" boundary
+      // compare dates only
       const day = String(value).slice(0, 10);
 
       if (range.from && day < range.from) return false;

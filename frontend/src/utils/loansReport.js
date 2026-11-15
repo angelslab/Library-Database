@@ -1,4 +1,4 @@
-// What a loan is called on screen and in the PDF
+// loan status labels
 export function getLoanStatus(loan) {
   if (loan.returned_date) return "Returned";
   if (loan.status === "return_requested") return "Return requested";
@@ -18,9 +18,7 @@ export function formatLoanDate(value) {
   });
 }
 
-/*
- * Builds a PDF of the loans that are on screen and downloads it.
- */
+// download loans PDF
 export async function downloadLoansReport({
   loans,
   viewLabel,
@@ -28,7 +26,7 @@ export async function downloadLoansReport({
   keyword,
   generatedBy,
 }) {
-  // loaded only when the button is clicked, so the PDF library doesn't slow down the rest of the site
+  // lazy load jsPDF
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import("jspdf"),
     import("jspdf-autotable"),

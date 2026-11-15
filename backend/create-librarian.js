@@ -1,8 +1,5 @@
-// Creates a librarian account (the Register page only makes student and faculty).
-//   Run from the backend folder:
-//     node create-librarian.js [email] [password] [first name] [last name]
-// With no arguments it makes librarian@library.test and prints a random password.
-// If that email already exists nothing is changed.
+// Create a librarian account.
+// Usage: node create-librarian.js [email] [password] [first] [last]
 
 const crypto = require("crypto");
 const db = require("./db");
@@ -13,7 +10,7 @@ const givenPassword = process.argv[3] || process.env.LIBRARIAN_PASSWORD;
 const firstName = process.argv[4] || "Test";
 const lastName = process.argv[5] || "Librarian";
 
-// no password given: make a random one and show it once in this terminal
+// no password: generate one
 const password = givenPassword || crypto.randomBytes(9).toString("base64url");
 
 async function main() {

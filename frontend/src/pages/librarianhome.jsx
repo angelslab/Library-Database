@@ -13,11 +13,10 @@ import API_URL from "../api";
 
 const API = "http://localhost:3000";
 
-// sub-views that are safe to restore after a reload
-// (inventory now lives on the catalog page, not as a view here)
+// views to restore on reload
 const KEEP_VIEWS = ["users", "reports", "loans", "activity", "printing"];
 
-// --- small inline icons for the quick-action cards ---
+// icons
 function ActionIcon({ name }) {
   const paths = {
     inv: (
@@ -145,7 +144,7 @@ function LibrarianHome({
     };
   }, [user.userID]);
 
-  // remember the current sub-view so a reload keeps it
+  // save view
   function go(next) {
     setView(next);
     try {
@@ -153,7 +152,7 @@ function LibrarianHome({
       localStorage.removeItem("reportView");
       localStorage.removeItem("userDetailID");
     } catch {
-      // ignore: storage blocked
+      // ignore
     }
   }
 

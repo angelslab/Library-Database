@@ -1,15 +1,9 @@
 const db = require("./db");
 const { FEE_PER_DAY_SQL, FEE_MAX_SQL } = require("./fines/fines");
 
-// The database triggers. schema.js calls createTriggers() on startup.
-// Each one is dropped and made again, so a change here reaches every database.
+// database triggers (recreated on startup)
 
-// 1) Late fee: when a loan gets its returned_date and it came back after the
-//    due date, MySQL charges the late fee in the fines table by itself.
-//    The rate and the maximum depend on the item (see LATE_FEE_RULES in fines.js:
-//    books and laptops are charged, other items are not).
-//    If a late fine already exists for the loan (it was overdue while still
-//    checked out), the unpaid amount is set to the final amount.
+// 1) late fee on late return
 const LATE_FEE_TRIGGER = `
   CREATE TRIGGER trg_loans_late_fee
   AFTER UPDATE ON loans
@@ -54,8 +48,7 @@ const LATE_FEE_TRIGGER = `
     END IF;
   END`;
 
-// 2) Hold ready: when an item goes from no copies to a copy being available
-//    (a return was approved), MySQL notifies the person first in line.
+// 2) Notify first in line when a copy is back
 const HOLD_READY_TRIGGER = `
   CREATE TRIGGER trg_items_hold_ready
   AFTER UPDATE ON items
@@ -74,9 +67,7 @@ const HOLD_READY_TRIGGER = `
     END IF;
   END`;
 
-// 3) Audit log: record every borrow (a new loan) and every return (a loan
-//    getting its returned_date) in the audit_log table, so there is a full
-//    history of who took out and returned each item and when.
+// 3) Audit log for borrows and returns
 const AUDIT_BORROW_TRIGGER = `
   CREATE TRIGGER trg_loans_audit_borrow
   AFTER INSERT ON loans
@@ -105,7 +96,7 @@ const TRIGGERS = [
 ];
 
 async function createTriggers() {
-  // the low stock trigger was removed; drop it from databases that still have it
+  // drop old low stock trigger
   await db.query("DROP TRIGGER IF EXISTS trg_items_low_stock").catch(() => {});
 
   for (const trigger of TRIGGERS) {
@@ -114,8 +105,7 @@ async function createTriggers() {
       await db.query(trigger.sql);
       console.log(`Trigger ${trigger.name} created`);
     } catch (error) {
-      // Azure MySQL can refuse triggers until the server setting
-      // log_bin_trust_function_creators is ON. Don't stop the server for it.
+      // Azure may block triggers, don't crash
       console.error(
         `Could not create trigger ${trigger.name}: ${error.message}` +
           (error.errno === 1419

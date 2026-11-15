@@ -1,5 +1,5 @@
 const db = require("../db");
-// one notification for every librarian
+// notify all librarians
 async function notifyLibrarians(conn, { type, message, loanID, itemID }) {
   const [result] = await conn.query(
     `INSERT INTO notifications (userID, type, message, loanID, itemID)
@@ -12,7 +12,7 @@ async function notifyLibrarians(conn, { type, message, loanID, itemID }) {
   return result.affectedRows;
 }
 
-// one notification for one user
+// notify one user
 async function notifyUser(conn, { userID, type, message, loanID, itemID }) {
   await conn.query(
     `INSERT INTO notifications (userID, type, message, loanID, itemID)
@@ -21,7 +21,7 @@ async function notifyUser(conn, { userID, type, message, loanID, itemID }) {
   );
 }
 
-// newest first. loan_pending is 1 while the return request is still waiting for a librarian
+// user notifications, newest first
 async function fetchNotifications(userID, countOnly = false) {
   const [unreadRows] = await db.query(
     "SELECT COUNT(*) AS count FROM notifications WHERE userID = ? AND is_read = 0",
@@ -55,7 +55,7 @@ async function fetchNotifications(userID, countOnly = false) {
   return { unread: unreadRows[0].count, notifications };
 }
 
-// mark one notification as read, or all of them when notificationID is null
+// mark read (all if id is null)
 async function markNotificationsRead(userID, notificationID = null) {
   const [result] =
     notificationID === null

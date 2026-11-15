@@ -1,16 +1,13 @@
 const db = require("../db");
 const { LoanError } = require("../loans/loans");
 
-// Late fee rules: a fee for each day an item is kept past its due date, up to a maximum.
-// Items that are not a book or a laptop are not charged a late fee.
+// late fee per day, with a max (books and laptops only)
 const LATE_FEE_RULES = {
   book: { per_day: 0.2, max: 12 },
   laptop: { per_day: 1, max: 60 },
 };
 
-// SQL that picks the rate and the maximum for an item. They expect the items table
-// as "i" and the device table as "d" (LEFT JOIN device d ON d.itemID = i.itemID).
-// triggers.js uses the same two pieces, so the rules live in one place.
+// SQL for rate and max (i = items, d = device), also used in triggers.js
 const FEE_PER_DAY_SQL = `CASE
     WHEN i.item_type = 'Book' THEN ${LATE_FEE_RULES.book.per_day}
     WHEN i.item_type = 'Device' AND d.device_type = 'Laptop' THEN ${LATE_FEE_RULES.laptop.per_day}
@@ -21,26 +18,18 @@ const FEE_MAX_SQL = `CASE
     WHEN i.item_type = 'Device' AND d.device_type = 'Laptop' THEN ${LATE_FEE_RULES.laptop.max}
   END`;
 
-// Days late: until the return date if it came back, otherwise until today.
+// days late
 const DAYS_LATE = "DATEDIFF(COALESCE(l.returned_date, CURDATE()), l.due_date)";
 
-// Fine for a loan: days late times the rate, never more than the maximum.
+// fine = days late * rate, capped
 const LATE_FEE_AMOUNT = `LEAST(${DAYS_LATE} * (${FEE_PER_DAY_SQL}), ${FEE_MAX_SQL})`;
 
-// Makes sure every late loan has a "Late" fine with the right amount.
-// - a loan that is (or was) returned after its due date gets one fine
-// - while the item is still out the unpaid amount keeps growing each day
-// - once a fine is paid it is never changed again
-// Called before fines are read, so the numbers are always up to date
-// without anything having to run on a timer.
+// create/update late fines (paid fines are not changed)
 async function syncLateFines() {
   try {
     await writeLateFines();
   } catch (error) {
-    // An extra CHECK rule on the fines table (not part of schema.js) can block this.
-    // Log what the rule is so it can be fixed, but still let the page show the fines
-    // that already exist instead of failing.
-    // 3819 = MySQL, 4025 = MariaDB
+    // CHECK constraint error: log it and continue
     if (error.errno === 3819 || error.errno === 4025) {
       const [rules] = await db.query(
         `SELECT cc.CONSTRAINT_NAME, cc.CHECK_CLAUSE
@@ -93,7 +82,7 @@ async function writeLateFines() {
   );
 }
 
-// Every fine for one user: amount, issue date and whether it is paid.
+// fines for one user
 async function fetchUserFines(userID) {
   const [users] = await db.query("SELECT userID FROM users WHERE userID = ?", [
     userID,
@@ -153,7 +142,7 @@ async function fetchUserFines(userID) {
   };
 }
 
-// A user pays one of their own fines.
+// pay a fine
 async function payFine(userID, fineID) {
   const conn = await db.getConnection();
 
@@ -171,7 +160,7 @@ async function payFine(userID, fineID) {
       [fineID],
     );
 
-    // a user can only pay their own fines
+    // own fines only
     if (rows.length === 0 || Number(rows[0].userID) !== userID) {
       throw new LoanError(404, "Fine not found");
     }
@@ -182,7 +171,7 @@ async function payFine(userID, fineID) {
       throw new LoanError(409, "This fine is already paid");
     }
 
-    // the late fee is still going up every day, so it can only be paid once the item is back
+    // item must be returned first
     if (fine.charge_type === "Late" && fine.still_out) {
       throw new LoanError(
         409,

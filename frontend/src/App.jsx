@@ -43,7 +43,7 @@ function App() {
         "librarianLoans",
         "itemDetails",
       ];
-      // itemDetails can only be restored if we also know which item
+      // need item to restore itemDetails
       if (saved === "itemDetails" && !localStorage.getItem("itemID")) {
         return "catalog";
       }
@@ -63,7 +63,7 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [message, setMessage] = useState("");
   const [borrowItem, setBorrowItem] = useState(null);
-  const [cancelHold, setCancelHold] = useState(null); // { hold, resolve } while the cancel popup is open
+  const [cancelHold, setCancelHold] = useState(null); // { hold, resolve }
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [focusLoanID, setFocusLoanID] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -76,23 +76,23 @@ function App() {
     setPage(nextPage);
     try {
       localStorage.setItem("page", nextPage);
-      // remember the item so a reload stays on its details page
+      // save item for reload
       if (nextPage === "itemDetails" && itemID != null) {
         localStorage.setItem("itemID", String(itemID));
       }
     } catch {
-      // ignore: private mode / storage blocked
+      // ignore
     }
     try {
       window.history.pushState({ page: nextPage, itemID }, "");
     } catch {
-      // ignore: history not available
+      // ignore
     }
   }
 
-  // make the browser Back / Forward buttons move between pages
+  // browser back/forward
   useEffect(() => {
-    // remember the starting page so Back can return to it
+    // save starting page
     try {
       window.history.replaceState({ page, itemID: selectedItemID }, "");
     } catch {
@@ -124,11 +124,11 @@ function App() {
 
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-    // run once on mount
+    // on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // librarian clicked "Review return" on a notification: open the Loans page on that loan
+  // open loan from notification
   function handleReviewLoan(loanID) {
     setMessage("");
     setFocusLoanID(loanID);
@@ -140,14 +140,14 @@ function App() {
     }
   }
 
-  // messages show at the top of the page, so scroll up to make sure they are seen
+  // scroll to message
   useEffect(() => {
     if (message) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [message]);
 
-  // the student/faculty member's active holds, shown on the item cards
+  // user's active holds
   const refreshHolds = useCallback(async () => {
     if (!currentUser || currentUser.role === "librarian") return;
 
@@ -161,11 +161,11 @@ function App() {
         setMyHolds(data.active);
       }
     } catch {
-      // the cards just keep showing the last holds if the server can't be reached
+      // ignore
     }
   }, [currentUser]);
 
-  // reload on login and whenever the catalog reloads (after a borrow)
+  // reload holds
   useEffect(() => {
     const first = setTimeout(refreshHolds, 0);
 
@@ -177,7 +177,7 @@ function App() {
     holdsByItem[hold.itemID] = hold;
   }
 
-  // number shown on the menu badge
+  // unread count
   const refreshUnread = useCallback(async () => {
     if (!currentUser) return;
 
@@ -191,11 +191,11 @@ function App() {
         setUnreadCount(data.unread);
       }
     } catch {
-      // the badge just keeps its old number if the server can't be reached
+      // ignore
     }
   }, [currentUser]);
 
-  // check on login, on every page change, and every 30 seconds
+  // refresh every 30s
   useEffect(() => {
     if (!currentUser) return undefined;
 
@@ -230,11 +230,11 @@ function App() {
       return;
     }
 
-    // opens the confirm popup, the loan is only created when the user confirms
+    // open borrow popup
     setBorrowItem(item);
   }
 
-  // gets in line for an item with no copies left
+  // place hold
   async function handlePlaceHold(item) {
     if (!currentUser) {
       setMessage(`Please log in to place a hold on "${item.title}".`);
@@ -268,9 +268,7 @@ function App() {
     }
   }
 
-  // leaves the line for an item (from the item card, item details or the My holds page)
-  // opens the in-app confirm popup; resolves true once the hold is cancelled,
-  // false if the user keeps it
+  // cancel hold (returns true if cancelled)
   function handleCancelHold(hold) {
     return new Promise((resolve) => {
       setCancelHold({ hold, resolve });
@@ -293,7 +291,7 @@ function App() {
     setBorrowItem(null);
     setMessage(result.message);
 
-    // makes the catalog / item details reload so the available copies are up to date
+    // reload catalog
     setCatalogVersion((version) => version + 1);
   }
 
@@ -363,7 +361,7 @@ function App() {
     />
   );
 
-  // student / faculty get the persistent sidebar; librarian keeps the dropdown menu
+  // sidebar for student/faculty
   const sidebar = currentUser && currentUser.role !== "librarian" && (
     <Sidebar
       activePage={page}
@@ -375,7 +373,7 @@ function App() {
     />
   );
 
-  // top bar (user chip + bell) for student / faculty pages without their own search
+  // top bar
   const topBar = currentUser && currentUser.role !== "librarian" && (
     <TopBar
       name={currentUser.first_name}
@@ -384,14 +382,13 @@ function App() {
     />
   );
 
-  // the catalog page IS the librarian's "Manage Inventory", so it shows the
-  // librarian sidebar (Manage Inventory active) instead of the dropdown menu
+  // librarian sidebar on catalog page
   const librarianCatalogNav = currentUser &&
     currentUser.role === "librarian" && (
       <LibrarianSidebar
         activeView="inventory"
         onSelect={(target) => {
-          if (target === "inventory") return; // already on the catalog page
+          if (target === "inventory") return;
           try {
             localStorage.setItem("librarianView", target);
           } catch {
@@ -501,7 +498,7 @@ function App() {
             {topBar}
             <Loans user={currentUser} onBrowse={() => goTo("catalog")} />
 
-            {/* fines live on the same page, under the loans */}
+            {/* fines */}
             <Fines user={currentUser} />
           </main>
         </div>

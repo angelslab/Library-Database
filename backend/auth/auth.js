@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const db = require("../db");
 
-// check email + password, return the user (without password) or null
+// check login, return user or null
 async function login(email, password) {
   const result = await db.query(
     `SELECT
@@ -40,7 +40,7 @@ async function login(email, password) {
     return null;
   }
 
-  //check whether account is active)
+  // check account is active
   if (Number(user.is_active) === 0) {
     return {
       error: "Your account has been disabled. Please contact the librarian.",
@@ -52,7 +52,7 @@ async function login(email, password) {
   return user;
 }
 
-// create or change a user's password (stores only the bcrypt hash)
+// save password hash
 async function setPassword(userID, password) {
   const hash = await bcrypt.hash(password, 10);
 
@@ -64,8 +64,7 @@ async function setPassword(userID, password) {
   );
 }
 
-// create a new student or faculty account (users + user_credentials + student/faculty)
-// returns { user } on success or { error } if something is wrong
+// register student or faculty
 async function register(data) {
   const { first_name, last_name, email, password, role } = data;
 
@@ -85,7 +84,7 @@ async function register(data) {
     return { error: "Student ID and major are required" };
   }
 
-  // the student ID must be a positive whole number that fits the INT column
+  // student ID must be a positive integer
   const studentID = Number(data.studentID);
 
   if (
@@ -109,7 +108,7 @@ async function register(data) {
 
   const hash = await bcrypt.hash(password, 10);
 
-  // all inserts succeed together or none of them are saved
+  // transaction
   const conn = await db.getConnection();
 
   try {
@@ -172,8 +171,7 @@ async function register(data) {
   }
 }
 
-// A librarian creates a faculty account (faculty cannot sign themselves up).
-// returns { user } on success or { error, status } if something is wrong
+// librarian creates faculty account
 async function createFaculty(data) {
   const { librarianID, first_name, last_name, email, password, department } = data;
   const facultyID = Number(data.facultyID);

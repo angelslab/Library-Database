@@ -1,8 +1,7 @@
 const { LoanError } = require("../loans/loans");
 const { syncLateFines, fetchUserFines, payFine } = require("./fines");
 
-// Routes for fines (late fees and other charges).
-// server.js calls handleFineRoutes; it returns true when it answered the request.
+// fine routes
 
 function isID(value) {
   return Number.isInteger(value) && value > 0;
@@ -35,8 +34,7 @@ async function handleFineRoutes(req, res, CORS_HEADERS) {
   }
 
   try {
-    // the librarian's fines report and user details read the fines table too,
-    // so bring late fees up to date first (their own routes still answer the request)
+    // update late fees before reports
     if (
       req.method === "GET" &&
       (path.startsWith("/api/reports/fines") ||
@@ -46,7 +44,7 @@ async function handleFineRoutes(req, res, CORS_HEADERS) {
       return false;
     }
 
-    // every fine for one user, with totals
+    // user fines
     if (req.method === "GET" && path.startsWith("/api/fines/user/")) {
       const userID = Number(path.split("/")[4]);
 
@@ -66,7 +64,7 @@ async function handleFineRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // a user pays one of their fines
+    // pay fine
     if (req.method === "POST" && path === "/api/fines/pay") {
       const { userID, fineID } = await readJSON(req);
 

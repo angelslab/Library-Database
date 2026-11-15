@@ -6,8 +6,7 @@ const {
   fetchUserHolds,
 } = require("./holds");
 
-// Routes for holds (getting in line for an item with no copies left).
-// server.js calls handleHoldRoutes; it returns true when it answered the request.
+// hold routes
 
 function isID(value) {
   return Number.isInteger(value) && value > 0;
@@ -40,8 +39,7 @@ async function handleHoldRoutes(req, res, CORS_HEADERS) {
   }
 
   try {
-    // the My loans page shows how many holds are waiting, so mark the ones
-    // that were already borrowed first (the loans route still answers the request)
+    // update holds before loading loans
     if (req.method === "GET" && path.startsWith("/api/loans/user/")) {
       const userID = Number(path.split("/")[4]);
 
@@ -52,7 +50,7 @@ async function handleHoldRoutes(req, res, CORS_HEADERS) {
       return false;
     }
 
-    // a student/faculty member places a hold on an item with no copies left
+    // place hold
     if (req.method === "POST" && path === "/api/holds/place") {
       const { userID, itemID } = await readJSON(req);
 
@@ -71,7 +69,7 @@ async function handleHoldRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // a student/faculty member cancels one of their holds
+    // cancel hold
     if (req.method === "POST" && path === "/api/holds/cancel") {
       const { userID, holdID } = await readJSON(req);
 
@@ -89,7 +87,7 @@ async function handleHoldRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // every hold for one user (active, cancelled, fulfilled)
+    // user holds
     if (req.method === "GET" && path.startsWith("/api/holds/user/")) {
       const userID = Number(path.split("/")[4]);
 

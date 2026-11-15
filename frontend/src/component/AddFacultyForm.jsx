@@ -10,7 +10,7 @@ const EMPTY = {
   department: "",
 };
 
-// Librarian-only form: faculty cannot sign themselves up, a librarian creates the account.
+// add faculty form (librarian)
 function AddFacultyForm({ librarianID, onCreated, onClose }) {
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");

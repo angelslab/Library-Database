@@ -8,12 +8,12 @@ const EMPTY_PARAMS = { search: "", type: "", paid: "", from: "", to: "" };
 
 const statusOf = (row) => (row.paid === 1 ? "Collected" : "Outstanding");
 
-// one group per borrower, in the order the rows arrive (the query sorts them)
+// group by borrower
 function groupByBorrower(rows) {
     const groups = [];
     const byUser = new Map();
     for (const row of rows) {
-        // a walk-in print payment has no userID, so group those by the name given
+        // walk-in: group by name
         const key = row.userID ?? `walk-in:${row.borrower}`;
         if (!byUser.has(key)) {
             const group = {
@@ -54,7 +54,7 @@ function describeFilters(p) {
 function FinesReport({ onBack }) {
     const [params, setParams] = useState(EMPTY_PARAMS);
     const [rows, setRows] = useState(null); // null = show the request form
-    const [ran, setRan] = useState(null); // { when, params } for the output header
+    const [ran, setRan] = useState(null); // { when, params }
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -201,7 +201,7 @@ function FinesReport({ onBack }) {
 
     const groups = groupByBorrower(shownRows);
 
-    // amounts by status and by charge type for the pie charts
+    // pie chart data
     const amountOf = (r) => Number(r.amount) || 0;
     const statusSegments = segmentsFor(
         tally(shownRows, statusOf, amountOf),
@@ -291,7 +291,7 @@ return (
             <button onClick={() => window.print()}>Print / PDF</button>
         </div>
 
-        {/* on-screen charts (not included when printing the sheet) */}
+        {/* charts */}
         <div className="report-screen pie-charts" style={{ marginBottom: 18 }}>
             <PieChart title="Amount by status" format={money} segments={statusSegments} />
             <PieChart title="Amount by charge type" format={money} segments={typeSegments} />

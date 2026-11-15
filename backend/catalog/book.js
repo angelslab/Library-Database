@@ -35,7 +35,7 @@ async function addBook(
   try {
     await connection.beginTransaction();
 
-    //items table
+    // items table
     const result = await connection.query(
       `INSERT into items (title, item_type, total_copies, available_copies, image_url)
         VALUES (?, 'Book', ?, ?, ?)`,
@@ -44,7 +44,7 @@ async function addBook(
 
     const itemID = result[0].insertId;
 
-    //book table
+    // book table
     await connection.query(
       `INSERT into book(author, itemID, isbn, publication_year) 
     VALUES (?, ?, ?, ?)`,
@@ -62,7 +62,7 @@ async function addBook(
 }
 
 async function deleteBook(itemID) {
-  // block deleting an item that is still checked out
+  // can't delete if checked out
   const [activeLoans] = await db.query(
     `SELECT COUNT(*) AS count FROM loans WHERE itemID = ? AND returned_date IS NULL`,
     [itemID],
@@ -104,7 +104,7 @@ async function updateBook(
   try {
     await connection.beginTransaction();
 
-    // Check whether the book exists
+    // book exists?
     const [rows] = await connection.query(
       `
         SELECT total_copies, available_copies
@@ -121,7 +121,7 @@ async function updateBook(
       return false;
     }
 
-    // Check for duplicate ISBN, excluding the current book
+    // duplicate ISBN?
     const [existingBook] = await connection.query(
       `
         SELECT itemID
@@ -136,10 +136,10 @@ async function updateBook(
       throw new Error("A book with this ISBN already exists.");
     }
 
-    // Calculate currently borrowed copies
+    // borrowed copies
     const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
-    // Prevent total copies from going below borrowed copies
+    // total >= borrowed
     if (totalCopies < borrowedCopies) {
       throw new Error(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,

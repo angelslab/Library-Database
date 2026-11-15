@@ -1,8 +1,7 @@
 const db = require("../db");
 const { LoanError } = require("../loans/loans");
 
-// Printing rates, one place to change them. Money is kept in cents inside the
-// code so sums like 0.10 + 0.20 never pick up floating point errors.
+// print rates (in cents)
 const PRINT_RATES = {
   bw_cents: 10, // black ink: $0.10 per sheet
   color_cents: 20, // colored ink: $0.20 per sheet
@@ -10,7 +9,7 @@ const PRINT_RATES = {
 
 const PAYMENT_METHODS = ["cash", "card", "other"];
 const MAX_SHEETS = 10000;
-const MAX_CHARGE_CENTS = 100000; // $1,000.00 sanity cap for one payment
+const MAX_CHARGE_CENTS = 100000; // $1000 max
 
 function toCents(dollars) {
   return Math.round(dollars * 100);
@@ -42,9 +41,7 @@ async function requireLibrarian(conn, librarianID) {
   }
 }
 
-// Records one print payment. The server works out the price itself from the sheet
-// counts, so the page can't send a wrong total. A librarian may charge a custom
-// amount instead (for example a discount), but then a note is required.
+// record a print payment (custom amount needs a note)
 async function createPrintPayment({
   librarianID,
   userID,
@@ -156,7 +153,7 @@ async function createPrintPayment({
   }
 }
 
-// Newest payments first, plus today's totals for the page header.
+// recent payments + today's totals
 async function fetchPrintPayments(librarianID) {
   await requireLibrarian(db, librarianID);
 

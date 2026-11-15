@@ -5,7 +5,7 @@ import "./App.css";
 import App from "./App.jsx";
 import API_URL from "./api";
 
-// Sends every request that points at localhost:3000 to the real backend address instead
+// redirect localhost:3000 to API_URL
 const LOCAL_API = "http://localhost:3000";
 const originalFetch = window.fetch;
 window.fetch = (input, init) => {

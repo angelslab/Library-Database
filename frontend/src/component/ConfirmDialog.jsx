@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "../styles/ConfirmBorrowModal.css";
 
-// Generic in-app "are you sure?" popup (use instead of window.confirm).
-//
-// details:  [{ label, value }] shown as a small table (optional)
-// note:     warning text under the details (optional)
-// onConfirm: async; throw an Error to show its message inside the popup.
-//            The parent closes the popup when it succeeds.
+// confirm popup
 function ConfirmDialog({
   title,
   details = [],

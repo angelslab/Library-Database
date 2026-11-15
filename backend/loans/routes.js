@@ -11,8 +11,7 @@ const {
   markNotificationsRead,
 } = require("../notifications/notifications");
 
-// Routes for borrowing, returning and notifications.
-// server.js calls handleLoanRoutes first; it returns true when it answered the request.
+// loan and notification routes
 
 function isID(value) {
   return Number.isInteger(value) && value > 0;
@@ -42,7 +41,7 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
   }
 
   try {
-    // a student/faculty member borrows an item
+    // borrow
     if (req.method === "POST" && path === "/api/loans/borrow") {
       const { userID, itemID } = await readJSON(req);
 
@@ -60,7 +59,7 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // a student/faculty member asks to return an item (the librarian has to approve it)
+    // request return
     if (req.method === "POST" && path === "/api/loans/request-return") {
       const { userID, loanID } = await readJSON(req);
 
@@ -78,7 +77,7 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // a librarian approves a return request
+    // approve return
     if (req.method === "POST" && path === "/api/loans/approve-return") {
       const { librarianID, loanID } = await readJSON(req);
 
@@ -96,7 +95,7 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // loans for one user (student/faculty My loans page)
+    // user loans
     if (req.method === "GET" && path.startsWith("/api/loans/user/")) {
       const userID = Number(path.split("/")[4]);
 
@@ -116,7 +115,7 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // every loan (librarian Loans page)
+    // all loans
     if (req.method === "GET" && path === "/api/loans/all") {
       const librarianID = Number(url.searchParams.get("userID"));
 
@@ -141,7 +140,7 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // mark one notification as read, or all of them when notificationID is left out
+    // mark notification(s) read
     if (req.method === "POST" && path === "/api/notifications/read") {
       const { userID, notificationID } = await readJSON(req);
 

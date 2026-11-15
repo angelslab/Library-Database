@@ -15,8 +15,7 @@ const EMPTY_PARAMS = {
 const cap = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 const loanWord = (n) => (n === 1 ? "loan" : "loans");
 
-// Role -> major/department -> item type -> loans.
-// The query sorts the rows, so groups come out in order.
+// group: role -> major/department -> item type
 function buildTree(rows) {
   const roles = [];
   const roleMap = new Map();
@@ -243,7 +242,7 @@ function LoansReport({ onBack }) {
     { count: 0, out: 0 },
   );
 
-  // loans by role and by item type for the pie charts
+  // pie chart data
   const byRole = tally(shownRows, (r) => String(r.role || "other").toLowerCase());
   const roleSegments = segmentsFor(
     { Students: byRole.student, Faculty: byRole.faculty },
@@ -300,7 +299,7 @@ function LoansReport({ onBack }) {
     );
   };
 
-  // summary: one row per role, item types as columns
+  // summary table
   const typeCols = [
     ...ITEM_TYPES,
     ...(shownRows.some((r) => !ITEM_TYPES.includes(r.item_type)) ? ["Other"] : []),
@@ -335,7 +334,7 @@ function LoansReport({ onBack }) {
         <button onClick={() => window.print()}>Print / PDF</button>
       </div>
 
-      {/* on-screen chart (not included when printing the sheet) */}
+      {/* chart */}
       <div className="report-screen pie-charts" style={{ marginBottom: 18 }}>
         <PieChart title="Loans by role" unit="loans" segments={roleSegments} />
         <PieChart title="Loans by item type" unit="loans" segments={typeSegments} />

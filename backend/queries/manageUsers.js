@@ -33,7 +33,7 @@ WHERE u.userID = ?;`,
 }
 
 async function updateUserStatus(userID, isActive) {
-  // Before deactivating, check for outstanding loans
+  // check open loans
   if (Number(isActive) === 0) {
     const [loans] = await db.query(
       `SELECT COUNT(*) AS activeLoans
@@ -48,7 +48,7 @@ async function updateUserStatus(userID, isActive) {
     }
   }
 
-  // Update the user's status
+  // update status
   const [result] = await db.query(
     `UPDATE users
      SET is_active = ?

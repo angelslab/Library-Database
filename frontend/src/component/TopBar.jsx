@@ -1,7 +1,6 @@
 import "../styles/TopBar.css";
 
-// Top bar for student / faculty pages: optional left slot (e.g. search)
-// plus the user chip and a notification bell on the right.
+// top bar
 function TopBar({ name, unreadCount = 0, onBell, children }) {
   return (
     <div className="user-topbar">

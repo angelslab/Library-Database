@@ -58,7 +58,7 @@ async function addDevice(title, totalCopies, brand, deviceType, image_url) {
 
     const itemID = results[0].insertId;
 
-    //device table
+    // device table
     await connection.query(
       `
     INSERT into device(itemID, device_type, brand)
@@ -79,7 +79,7 @@ async function addDevice(title, totalCopies, brand, deviceType, image_url) {
 }
 
 async function deleteDevice(itemID) {
-  // block deleting an item that is still checked out
+  // can't delete if checked out
   const [activeLoans] = await db.query(
     `SELECT COUNT(*) AS count FROM loans WHERE itemID = ? AND returned_date IS NULL`,
     [itemID],
@@ -120,7 +120,7 @@ async function editDevice(
   try {
     await connection.beginTransaction();
 
-    // Check whether the device exists
+    // device exists?
     const [rows] = await connection.query(
       `
         SELECT total_copies, available_copies
@@ -137,7 +137,7 @@ async function editDevice(
       return false;
     }
 
-    // Check for duplicate devices, excluding the current item
+    // duplicate device?
     const [existingDevice] = await connection.query(
       `
         SELECT items.itemID
@@ -158,10 +158,10 @@ async function editDevice(
       );
     }
 
-    // Calculate currently borrowed copies
+    // borrowed copies
     const borrowedCopies = rows[0].total_copies - rows[0].available_copies;
 
-    // Prevent total copies from going below borrowed copies
+    // total >= borrowed
     if (totalCopies < borrowedCopies) {
       throw new Error(
         `Cannot reduce total copies below ${borrowedCopies} because those copies are currently borrowed.`,

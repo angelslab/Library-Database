@@ -2,16 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import API_URL from "../api";
 import "../styles/PrintPayments.css";
 
-// Printing rates are shown from the server's answer; these are only the fallback
-// used for the live total until the first response arrives. The server always
-// recalculates the real price when a payment is recorded.
+// default rates (server has the real ones)
 const FALLBACK_RATES = { bw: 0.1, color: 0.2 };
 
 function money(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
-// whole cents, so 0.10 + 0.20 never shows as 0.30000000000000004
+// use cents
 function totalFor(bw, color, rates) {
   const cents = bw * Math.round(rates.bw * 100) + color * Math.round(rates.color * 100);
   return cents / 100;
@@ -30,7 +28,7 @@ function PrintPayments({ user }) {
   const [users, setUsers] = useState([]);
 
   const [search, setSearch] = useState("");
-  const [payer, setPayer] = useState(null); // a library user, or null for walk-in
+  const [payer, setPayer] = useState(null); // null = walk-in
   const [walkInName, setWalkInName] = useState("");
   const [bwText, setBwText] = useState("");
   const [colorText, setColorText] = useState("");
@@ -66,7 +64,7 @@ function PrintPayments({ user }) {
     return () => clearTimeout(first);
   }, [loadPayments]);
 
-  // all users once, filtered on the page while typing
+  // load users
   useEffect(() => {
     let cancelled = false;
 
@@ -79,7 +77,7 @@ function PrintPayments({ user }) {
           setUsers(data);
         }
       } catch {
-        // the librarian can still record a walk-in payment
+        // ignore
       }
     }
 

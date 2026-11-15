@@ -8,7 +8,7 @@ const coverClasses = {
   Device: "loans-cover-device",
 };
 
-// "2026-10-25" -> "Oct 25, 2026" (built from parts so the timezone can't shift the day)
+// "2026-10-25" -> "Oct 25, 2026"
 function formatDueDate(value) {
   const [year, month, day] = value.split("-").map(Number);
 
@@ -62,12 +62,11 @@ function Loans({ user, onBrowse }) {
     fetchLoans();
   }, [user.userID]);
 
-  // The popup sends the request. The item stays on this account (and counts
-  // toward the borrow limit) until a librarian approves it.
+  // request return
   function handleRequested(result) {
     const loanID = returnLoan.loanID;
 
-    // the row stays in the table, it just shows that it is waiting for approval
+    // mark as pending
     setData((current) => ({
       ...current,
       loans: current.loans.map((item) =>

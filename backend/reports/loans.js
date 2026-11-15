@@ -1,7 +1,6 @@
 const db = require("../db");
 
-// Loans by Role and Item Type: one row per loan, joined to the borrower,
-// their student or faculty record, and the item.
+// loans report
 async function getLoansReport({ from, to, role, itemType, status, dept }) {
     const deptLike = dept ? `%${dept}%` : null;
 

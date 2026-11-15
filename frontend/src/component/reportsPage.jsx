@@ -34,7 +34,7 @@ function RIcon({ name }) {
   );
 }
 
-// Add a report here as it gets built: give it a component.
+// reports
 const REPORTS = [
   {
     key: "fines",
@@ -66,14 +66,14 @@ function Reports() {
     }
   });
 
-  // remember which report is open so a reload keeps it
+  // save open report
   function openReport(key) {
     setActive(key);
     try {
       if (key) localStorage.setItem("reportView", key);
       else localStorage.removeItem("reportView");
     } catch {
-      // ignore: storage blocked
+      // ignore
     }
   }
 

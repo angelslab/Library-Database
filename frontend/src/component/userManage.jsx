@@ -18,18 +18,18 @@ function UserManagment({ onToggleActive, librarianID }) {
     }
   });
 
-  // remember which user is open so a reload keeps the detail page
+  // save open user
   const openUser = (id) => {
     setSelectedUserID(id);
     try {
       if (id) localStorage.setItem("userDetailID", String(id));
       else localStorage.removeItem("userDetailID");
     } catch {
-      // ignore: storage blocked
+      // ignore
     }
   };
 
-  // Load every user once when the page opens (empty q => backend returns all).
+  // load all users
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -49,7 +49,7 @@ function UserManagment({ onToggleActive, librarianID }) {
     loadUsers();
   }, [reloadKey]);
 
-  // Live client-side filter — no extra server call while typing.
+  // filter
   const term = keyword.trim().toLowerCase();
   const match = (u) => {
     if (!term) return true;
@@ -70,7 +70,7 @@ function UserManagment({ onToggleActive, librarianID }) {
   const faculty = visible.filter((u) => role(u) === "faculty");
   const students = visible.filter((u) => role(u) === "student");
 
-  // --- styles (match the dark navy / gold theme) ---
+  // styles
   const C = {
     card: "#10253e",
     border: "#263e59",

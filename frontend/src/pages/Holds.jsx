@@ -14,7 +14,7 @@ const TABS = [
   { key: "fulfilled", label: "Picked up" },
 ];
 
-// "2026-10-25" -> "Oct 25, 2026" (built from parts so the timezone can't shift the day)
+// "2026-10-25" -> "Oct 25, 2026"
 function formatDate(value) {
   const [year, month, day] = value.split("-").map(Number);
 
@@ -25,7 +25,7 @@ function formatDate(value) {
   });
 }
 
-// asks the server for every hold of one user
+// fetch holds
 async function fetchHolds(userID) {
   const response = await fetch(
     `http://localhost:3000/api/holds/user/${userID}`,
@@ -51,25 +51,24 @@ function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
     }
   });
 
-  // remember the chosen tab so a reload keeps it
+  // save tab
   function selectTab(key) {
     setTab(key);
     try {
       localStorage.setItem("holdsTab", key);
     } catch {
-      // ignore: storage blocked
+      // ignore
     }
   }
 
-  // load when the page opens (and again after a borrow, when refreshKey changes)
+  // load
   useEffect(() => {
     fetchHolds(user.userID)
       .then(setData)
       .catch((err) => setError(err.message));
   }, [user.userID, refreshKey]);
 
-  // App shows the in-app "cancel hold?" popup (which also sends the request
-  // and shows the message at the top); reload the list once it is cancelled
+  // cancel then reload
   async function handleCancel(hold) {
     try {
       if (await onCancelHold(hold)) {
@@ -80,7 +79,7 @@ function Holds({ user, onBrowse, onBorrow, onCancelHold, refreshKey }) {
     }
   }
 
-  // the borrow popup needs the same fields as a catalog item
+  // map to catalog item
   function borrowFromHold(hold) {
     onBorrow({
       itemID: hold.itemID,

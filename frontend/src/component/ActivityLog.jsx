@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { downloadCSV } from "./reportHelpers";
 
-// Activity Log: shows the audit_log table (written automatically by the
-// database triggers) plus print payments, so you can see every borrow,
-// return, and printer use in the app.
+// activity log
 function ActivityLog() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState("");
@@ -61,7 +59,7 @@ function ActivityLog() {
 
   return (
     <div style={{ marginTop: 20, textAlign: "left", maxWidth: 860 }}>
-      {/* in print / PDF, show only the sheet on a white background */}
+      {/* print styles */}
       <style>{`
         @media print {
           body * { visibility: hidden; }

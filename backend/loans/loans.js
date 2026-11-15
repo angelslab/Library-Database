@@ -1,7 +1,7 @@
 const db = require("../db");
 const { notifyLibrarians, notifyUser } = require("../notifications/notifications");
 
-// Borrowing rules, one place to change them.
+// loan rules
 const LOAN_POLICY = {
   student: { maxLoans: 3, loanDays: 7 },
   faculty: { maxLoans: 5, loanDays: 14 },
@@ -24,7 +24,7 @@ async function borrowItem(userID, itemID) {
   try {
     await conn.beginTransaction();
 
-    // lock the user's row so two quick clicks can't slip past the limit
+    // lock user row
     const [users] = await conn.query(
       "SELECT userID, role FROM users WHERE userID = ? FOR UPDATE",
       [userID],
@@ -41,8 +41,7 @@ async function borrowItem(userID, itemID) {
       throw new LoanError(403, "Only student and faculty accounts can borrow items");
     }
 
-    // an overdue item blocks new borrows until it is returned. A loan that already
-    // has a return request waiting for the librarian is not counted against the user.
+    // block if overdue (pending returns don't count)
     const [overdueRows] = await conn.query(
       `SELECT items.title, DATE_FORMAT(loans.due_date, '%Y-%m-%d') AS due_date
         FROM loans
@@ -78,7 +77,7 @@ async function borrowItem(userID, itemID) {
       );
     }
 
-    // lock the item row so two people can't take the last copy
+    // lock item row
     const [items] = await conn.query(
       "SELECT itemID, title, total_copies, available_copies FROM items WHERE itemID = ? FOR UPDATE",
       [itemID],
@@ -136,22 +135,20 @@ async function borrowItem(userID, itemID) {
   }
 }
 
-// A student or faculty member asks to return an item.
-// Nothing is returned yet: the loan is only flagged and every librarian gets a
-// notification. The item stays checked out until a librarian approves it.
+// request return (librarian must approve)
 async function requestReturn(userID, loanID) {
   const conn = await db.getConnection();
 
   try {
     await conn.beginTransaction();
 
-    // lock the loan row so the request can't be sent twice at the same time
+    // lock loan row
     const [loans] = await conn.query(
       "SELECT loanID, userID, itemID, returned_date, status FROM loans WHERE loanID = ? FOR UPDATE",
       [loanID],
     );
 
-    // a user can only ask to return their own loans
+    // own loans only
     if (loans.length === 0 || Number(loans[0].userID) !== userID) {
       throw new LoanError(404, "Loan not found");
     }
@@ -199,8 +196,7 @@ async function requestReturn(userID, loanID) {
   }
 }
 
-// A librarian approves a return request: the loan is closed, the copy goes back
-// on the shelf and the borrower gets a notification.
+// approve return
 async function approveReturn(librarianID, loanID) {
   const conn = await db.getConnection();
 
@@ -215,7 +211,7 @@ async function approveReturn(librarianID, loanID) {
       throw new LoanError(403, "Only librarians can approve returns");
     }
 
-    // lock the loan row so it can't be approved twice at the same time
+    // lock loan row
     const [loans] = await conn.query(
       "SELECT loanID, userID, itemID, returned_date, status FROM loans WHERE loanID = ? FOR UPDATE",
       [loanID],
@@ -256,7 +252,7 @@ async function approveReturn(librarianID, loanID) {
       [item.itemID],
     );
 
-    // the request is handled, so it no longer shows as new for any librarian
+    // mark notifications as handled
     await conn.query(
       "UPDATE notifications SET is_read = 1 WHERE loanID = ? AND type = 'return_request'",
       [loanID],
@@ -299,7 +295,7 @@ async function approveReturn(librarianID, loanID) {
   }
 }
 
-// Everything the student/faculty "My loans" page needs for one user
+// My loans data
 async function fetchUserLoans(userID) {
   const [users] = await db.query("SELECT userID, role FROM users WHERE userID = ?", [
     userID,
@@ -332,7 +328,7 @@ async function fetchUserLoans(userID) {
     [userID],
   );
 
-  // holds that are still waiting (nothing in the app creates holds yet, so this is usually 0)
+  // waiting holds
   const [holds] = await db.query(
     `SELECT COUNT(*) AS count FROM holds
       WHERE userID = ? AND status NOT IN ('fulfilled', 'cancelled', 'expired')`,
@@ -348,8 +344,7 @@ async function fetchUserLoans(userID) {
   };
 }
 
-// Every loan (current and past) for the librarian's Loans page.
-// The page filters it by tab, date range and search, and builds the PDF from what is on screen.
+// all loans (librarian)
 async function fetchAllLoans(librarianID) {
   const [users] = await db.query("SELECT role FROM users WHERE userID = ?", [
     librarianID,

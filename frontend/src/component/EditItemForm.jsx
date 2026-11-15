@@ -7,7 +7,7 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
   const [title, setTitle] = useState(item?.title || "");
   const [totalCopies, setTotalCopies] = useState(item?.total_copies ?? 1);
 
-  // Book and Media fields
+  // book/media fields
   const [author, setAuthor] = useState(
     item?.author || item?.media_author || item?.book_author || "",
   );
@@ -16,11 +16,11 @@ function EditItemForm({ item, onBack, onItemUpdated }) {
     item?.publication_year || "",
   );
 
-  // Device fields
+  // device fields
   const [brand, setBrand] = useState(item?.brand || "");
   const [deviceType, setDeviceType] = useState(item?.device_type || "");
 
-  // Image URL field
+  // image URL
   const [imageURL, setImageURL] = useState(item?.image_url || "");
 
   const [message, setMessage] = useState("");

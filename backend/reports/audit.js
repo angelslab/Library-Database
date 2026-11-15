@@ -1,9 +1,6 @@
 const db = require("../db");
 
-// Activity log: every borrow and return recorded by the audit_log triggers,
-// plus every print payment a librarian recorded (print_payments table),
-// newest first. A print payment shows as action "print", with Device as its
-// type, because the printer is a device. A walk-in payer shows by the name given.
+// activity log: borrows, returns and print payments
 
 const AUDIT_SQL = `
     SELECT CONCAT('A', a.auditID) AS row_key,
@@ -42,8 +39,7 @@ async function getAuditReport() {
     );
     return rows;
   } catch (error) {
-    // the print_payments table doesn't exist yet: show borrows and returns on
-    // their own instead of breaking the whole log
+    // no print_payments table: skip it
     if (error.code !== "ER_NO_SUCH_TABLE") {
       throw error;
     }
