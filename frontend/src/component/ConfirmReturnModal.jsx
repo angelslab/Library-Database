@@ -12,7 +12,7 @@ function formatDate(value) {
   });
 }
 
-function ConfirmReturnModal({ user, loan, onClose, onRequested }) {
+function ConfirmReturnModal({ user, loan, onClose, onReturned }) {
   const dialogRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +35,7 @@ function ConfirmReturnModal({ user, loan, onClose, onRequested }) {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/loans/request-return", {
+      const response = await fetch("http://localhost:3000/api/loans/return", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userID: user.userID, loanID: loan.loanID }),
@@ -44,10 +44,10 @@ function ConfirmReturnModal({ user, loan, onClose, onRequested }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Could not send the return request.");
+        throw new Error(data.error || "Could not return this item.");
       }
 
-      onRequested(data);
+      onReturned(data);
     } catch (err) {
       setError(
         err instanceof TypeError
@@ -69,7 +69,7 @@ function ConfirmReturnModal({ user, loan, onClose, onRequested }) {
       }}
     >
       <h2 id="return-modal-title" className="borrow-modal-title">
-        Request return
+        Return item
       </h2>
 
       <section className="borrow-modal-section">
@@ -109,9 +109,8 @@ function ConfirmReturnModal({ user, loan, onClose, onRequested }) {
       </section>
 
       <p className="borrow-modal-due">
-        This sends a return request to the librarian. The item stays on your
-        account, and still counts toward your borrow limit, until the librarian
-        approves it. You will get a notification when it is approved.
+        Drop the item off at the library. It will be removed from your loans
+        right away.
       </p>
 
       {error && (
@@ -136,7 +135,7 @@ function ConfirmReturnModal({ user, loan, onClose, onRequested }) {
           onClick={handleConfirm}
           disabled={submitting}
         >
-          {submitting ? "Sending..." : "Send return request"}
+          {submitting ? "Returning..." : "Return item"}
         </button>
       </div>
     </dialog>

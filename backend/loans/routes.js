@@ -1,7 +1,6 @@
 const {
   borrowItem,
-  requestReturn,
-  approveReturn,
+  returnItem,
   fetchUserLoans,
   fetchAllLoans,
   LoanError,
@@ -59,8 +58,8 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
       return true;
     }
 
-    // request return
-    if (req.method === "POST" && path === "/api/loans/request-return") {
+    // return item
+    if (req.method === "POST" && path === "/api/loans/return") {
       const { userID, loanID } = await readJSON(req);
 
       if (!isID(userID) || !isID(loanID)) {
@@ -68,28 +67,10 @@ async function handleLoanRoutes(req, res, CORS_HEADERS) {
         return true;
       }
 
-      const result = await requestReturn(userID, loanID);
+      const result = await returnItem(userID, loanID);
 
       send(200, {
-        message: `Return request sent for "${result.loan.title}". It stays on your loans until the librarian approves it.`,
-        ...result,
-      });
-      return true;
-    }
-
-    // approve return
-    if (req.method === "POST" && path === "/api/loans/approve-return") {
-      const { librarianID, loanID } = await readJSON(req);
-
-      if (!isID(librarianID) || !isID(loanID)) {
-        send(400, { error: "Invalid librarianID or loanID" });
-        return true;
-      }
-
-      const result = await approveReturn(librarianID, loanID);
-
-      send(200, {
-        message: `Return approved for "${result.loan.title}".`,
+        message: `You returned "${result.loan.title}". Thank you!`,
         ...result,
       });
       return true;

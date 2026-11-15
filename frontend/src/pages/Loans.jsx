@@ -20,10 +20,6 @@ function formatDueDate(value) {
 }
 
 function getStatus(loan) {
-  if (loan.status === "return_requested") {
-    return { label: "Return requested", className: "loans-status-requested" };
-  }
-
   if (loan.days_left < 0) {
     return { label: "Overdue", className: "loans-status-overdue" };
   }
@@ -62,16 +58,14 @@ function Loans({ user, onBrowse }) {
     fetchLoans();
   }, [user.userID]);
 
-  // request return
-  function handleRequested(result) {
+  // item returned
+  function handleReturned(result) {
     const loanID = returnLoan.loanID;
 
-    // mark as pending
     setData((current) => ({
       ...current,
-      loans: current.loans.map((item) =>
-        item.loanID === loanID ? { ...item, status: "return_requested" } : item,
-      ),
+      loans: current.loans.filter((item) => item.loanID !== loanID),
+      active_loans: Math.max(0, current.active_loans - 1),
     }));
     setNotice(result.message);
     setReturnLoan(null);
@@ -154,7 +148,6 @@ function Loans({ user, onBrowse }) {
             <tbody>
               {data.loans.map((loan) => {
                 const status = getStatus(loan);
-                const requested = loan.status === "return_requested";
 
                 return (
                   <tr key={loan.loanID}>
@@ -189,9 +182,8 @@ function Loans({ user, onBrowse }) {
                         type="button"
                         className="loans-return-button"
                         onClick={() => setReturnLoan(loan)}
-                        disabled={requested}
                       >
-                        {requested ? "Request sent" : "Request return"}
+                        Return
                       </button>
                     </td>
                   </tr>
@@ -207,7 +199,7 @@ function Loans({ user, onBrowse }) {
           user={user}
           loan={returnLoan}
           onClose={() => setReturnLoan(null)}
-          onRequested={handleRequested}
+          onReturned={handleReturned}
         />
       )}
     </div>

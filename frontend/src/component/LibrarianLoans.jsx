@@ -1,17 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { downloadLoansReport, formatLoanDate, getLoanStatus,} from "../utils/loansReport";
-import ConfirmApproveModal from "./ConfirmApproveModal";
 
 const API = "http://localhost:3000";
 
 // tabs
 const tabs = [
   { key: "current", label: "Current loans", test: (loan) => !loan.returned_date },
-  {
-    key: "requests",
-    label: "Return requests",
-    test: (loan) => !loan.returned_date && loan.status === "return_requested",
-  },
   { key: "past", label: "Past loans", test: (loan) => Boolean(loan.returned_date) },
   { key: "all", label: "All loans", test: () => true },
 ];
@@ -84,28 +78,23 @@ const cell = {
 const statusColors = {
   "On loan": "#1f6f3f",
   Overdue: "#8a2d2d",
-  "Return requested": "#9a6b00",
   Returned: "#555",
 };
 
 const smallText = { display: "block", fontSize: 12, opacity: 0.75 };
 
-function LibrarianLoans({ user, focusLoanID = null }) {
+function LibrarianLoans({ user }) {
   const [loans, setLoans] = useState(null);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [actionError, setActionError] = useState("");
-  const [approveLoan, setApproveLoan] = useState(null);
 
-  const [tab, setTab] = useState(focusLoanID ? "requests" : "current");
+  const [tab, setTab] = useState("current");
   const [keywordInput, setKeywordInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [dateField, setDateField] = useState("borrow_date");
   const [preset, setPreset] = useState("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
-
-  const focusRef = useRef(null);
 
   useEffect(() => {
     async function fetchLoans() {
@@ -119,14 +108,6 @@ function LibrarianLoans({ user, focusLoanID = null }) {
 
         setLoans(data.loans);
 
-        // from notification
-        if (focusLoanID) {
-          const focused = data.loans.find((loan) => loan.loanID === focusLoanID);
-          const waiting =
-            focused && !focused.returned_date && focused.status === "return_requested";
-
-          setTab(waiting ? "requests" : "all");
-        }
       } catch (err) {
         setError(
           err instanceof TypeError ? "Cannot reach the server. Please try again." : err.message,
@@ -135,29 +116,7 @@ function LibrarianLoans({ user, focusLoanID = null }) {
     }
 
     fetchLoans();
-  }, [user.userID, focusLoanID]);
-
-  // scroll to loan
-  useEffect(() => {
-    if (loans && focusRef.current) {
-      focusRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
-  }, [loans, tab]);
-
-  // after approve
-  function handleApproved(data) {
-    const loanID = approveLoan.loanID;
-
-    setLoans((current) =>
-      current.map((item) =>
-        item.loanID === loanID
-          ? { ...item, status: "returned", returned_date: data.loan.returned_date }
-          : item,
-      ),
-    );
-    setNotice(`${data.message} The borrower has been notified.`);
-    setApproveLoan(null);
-  }
+  }, [user.userID]);
 
   function handleSearch(event) {
     event.preventDefault();
@@ -396,20 +355,6 @@ function LibrarianLoans({ user, focusLoanID = null }) {
         </button>
       </div>
 
-      {notice && (
-        <p
-          style={{
-            marginTop: 16,
-            padding: "10px 12px",
-            border: "1px solid #2f7a55",
-            background: "rgba(95,191,138,0.12)",
-            borderRadius: 6,
-          }}
-        >
-          {notice}
-        </p>
-      )}
-
       {actionError && (
         <p
           role="alert"
@@ -446,28 +391,15 @@ function LibrarianLoans({ user, focusLoanID = null }) {
                 <th style={cell}>Due</th>
                 <th style={cell}>Returned</th>
                 <th style={cell}>Status</th>
-                <th style={cell}>Action</th>
               </tr>
             </thead>
 
             <tbody>
               {visible.map((loan) => {
                 const status = getLoanStatus(loan);
-                const isFocused = loan.loanID === focusLoanID;
 
                 return (
-                  <tr
-                    key={loan.loanID}
-                    ref={isFocused ? focusRef : undefined}
-                    style={
-                      isFocused
-                        ? {
-                            background: "rgba(229,191,109,0.18)",
-                            outline: "2px solid #e5bf6d",
-                          }
-                        : undefined
-                    }
-                  >
+                  <tr key={loan.loanID}>
                     <td style={cell}>{loan.loanID}</td>
                     <td style={cell}>
                       {loan.borrower}
@@ -498,33 +430,12 @@ function LibrarianLoans({ user, focusLoanID = null }) {
                         {status}
                       </span>
                     </td>
-                    <td style={cell}>
-                      {status === "Return requested" ? (
-                        <button
-                          type="button"
-                          onClick={() => setApproveLoan(loan)}
-                        >
-                          Approve return
-                        </button>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-      )}
-
-      {approveLoan && (
-        <ConfirmApproveModal
-          librarian={user}
-          loan={approveLoan}
-          onClose={() => setApproveLoan(null)}
-          onApproved={handleApproved}
-        />
       )}
 
     </div>

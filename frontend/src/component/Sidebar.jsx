@@ -50,8 +50,6 @@ function Icon({ name }) {
 // student/faculty sidebar
 function Sidebar({
   activePage,
-  name,
-  role,
   onNavigate,
   onLogout,
   unreadCount = 0,

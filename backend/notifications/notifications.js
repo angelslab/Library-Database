@@ -40,12 +40,8 @@ async function fetchNotifications(userID, countOnly = false) {
         n.loanID,
         n.itemID,
         n.is_read,
-        DATE_FORMAT(n.created_at, '%Y-%m-%d %H:%i:%s') AS created_at,
-        (l.loanID IS NOT NULL
-          AND l.returned_date IS NULL
-          AND l.status = 'return_requested') AS loan_pending
+        DATE_FORMAT(n.created_at, '%Y-%m-%d %H:%i:%s') AS created_at
       FROM notifications n
-      LEFT JOIN loans l ON l.loanID = n.loanID
       WHERE n.userID = ?
       ORDER BY n.created_at DESC, n.notificationID DESC
       LIMIT 100`,

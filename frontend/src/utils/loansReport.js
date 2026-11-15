@@ -1,7 +1,6 @@
 // loan status labels
 export function getLoanStatus(loan) {
   if (loan.returned_date) return "Returned";
-  if (loan.status === "return_requested") return "Return requested";
   if (loan.days_left !== null && loan.days_left < 0) return "Overdue";
   return "On loan";
 }

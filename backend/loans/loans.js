@@ -1,5 +1,4 @@
 const db = require("../db");
-const { notifyLibrarians, notifyUser } = require("../notifications/notifications");
 
 // loan rules
 const LOAN_POLICY = {
@@ -45,14 +44,13 @@ async function borrowItem(userID, itemID) {
       throw new LoanError(403, "Only student and faculty accounts can borrow items");
     }
 
-    // block if overdue (pending returns don't count)
+    // block if overdue
     const [overdueRows] = await conn.query(
       `SELECT items.title, DATE_FORMAT(loans.due_date, '%Y-%m-%d') AS due_date
         FROM loans
         JOIN items ON items.itemID = loans.itemID
         WHERE loans.userID = ?
         AND loans.returned_date IS NULL
-        AND loans.status <> 'return_requested'
         AND loans.due_date < CURDATE()
         ORDER BY loans.due_date`,
       [userID],
@@ -184,8 +182,8 @@ async function borrowItem(userID, itemID) {
   }
 }
 
-// request return (librarian must approve)
-async function requestReturn(userID, loanID) {
+// return an item (no approval needed)
+async function returnItem(userID, loanID) {
   const conn = await db.getConnection();
 
   try {
@@ -193,7 +191,7 @@ async function requestReturn(userID, loanID) {
 
     // lock loan row
     const [loans] = await conn.query(
-      "SELECT loanID, userID, itemID, returned_date, status FROM loans WHERE loanID = ? FOR UPDATE",
+      "SELECT loanID, userID, itemID, returned_date FROM loans WHERE loanID = ? FOR UPDATE",
       [loanID],
     );
 
@@ -206,78 +204,6 @@ async function requestReturn(userID, loanID) {
 
     if (loan.returned_date !== null) {
       throw new LoanError(409, "This item was already returned");
-    }
-
-    if (loan.status === "return_requested") {
-      throw new LoanError(409, "A return request for this item is already waiting for the librarian");
-    }
-
-    const [info] = await conn.query(
-      `SELECT items.title, users.first_name, users.last_name, users.role
-        FROM items, users
-        WHERE items.itemID = ? AND users.userID = ?`,
-      [loan.itemID, userID],
-    );
-
-    const { title, first_name, last_name, role } = info[0];
-
-    await conn.query("UPDATE loans SET status = 'return_requested' WHERE loanID = ?", [
-      loanID,
-    ]);
-
-    await notifyLibrarians(conn, {
-      type: "return_request",
-      message: `${first_name} ${last_name} (${role}) asked to return "${title}".`,
-      loanID,
-      itemID: loan.itemID,
-    });
-
-    await conn.commit();
-
-    return {
-      loan: { loanID, itemID: loan.itemID, title, status: "return_requested" },
-    };
-  } catch (error) {
-    await conn.rollback();
-    throw error;
-  } finally {
-    conn.release();
-  }
-}
-
-// approve return
-async function approveReturn(librarianID, loanID) {
-  const conn = await db.getConnection();
-
-  try {
-    await conn.beginTransaction();
-
-    const [librarians] = await conn.query("SELECT role FROM users WHERE userID = ?", [
-      librarianID,
-    ]);
-
-    if (librarians.length === 0 || librarians[0].role !== "librarian") {
-      throw new LoanError(403, "Only librarians can approve returns");
-    }
-
-    // lock loan row
-    const [loans] = await conn.query(
-      "SELECT loanID, userID, itemID, returned_date, status FROM loans WHERE loanID = ? FOR UPDATE",
-      [loanID],
-    );
-
-    if (loans.length === 0) {
-      throw new LoanError(404, "Loan not found");
-    }
-
-    const loan = loans[0];
-
-    if (loan.returned_date !== null) {
-      throw new LoanError(409, "This item was already returned");
-    }
-
-    if (loan.status !== "return_requested") {
-      throw new LoanError(409, "There is no return request for this loan");
     }
 
     const [items] = await conn.query(
@@ -301,19 +227,11 @@ async function approveReturn(librarianID, loanID) {
       [item.itemID],
     );
 
-    // mark notifications as handled
+    // clear old return requests
     await conn.query(
       "UPDATE notifications SET is_read = 1 WHERE loanID = ? AND type = 'return_request'",
       [loanID],
     );
-
-    await notifyUser(conn, {
-      userID: Number(loan.userID),
-      type: "return_approved",
-      message: `Your return of "${item.title}" was approved. Thank you!`,
-      loanID,
-      itemID: item.itemID,
-    });
 
     const [loanRows] = await conn.query(
       "SELECT DATE_FORMAT(returned_date, '%Y-%m-%d') AS returned_date FROM loans WHERE loanID = ?",
@@ -333,7 +251,7 @@ async function approveReturn(librarianID, loanID) {
       item: {
         itemID: item.itemID,
         total_copies: item.total_copies,
-        available_copies: item.available_copies + 1,
+        available_copies: Math.min(item.available_copies + 1, item.total_copies),
       },
     };
   } catch (error) {
@@ -437,8 +355,7 @@ module.exports = {
   getLoanPolicy,
   LoanError,
   borrowItem,
-  requestReturn,
-  approveReturn,
+  returnItem,
   fetchUserLoans,
   fetchAllLoans,
 };

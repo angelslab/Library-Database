@@ -37,7 +37,7 @@ function NotifIcon({ type }) {
   );
 }
 
-function Notification({ user, onReviewLoan, onChanged }) {
+function Notification({ user, onChanged }) {
   const [notifications, setNotifications] = useState(null);
   const [error, setError] = useState("");
 
@@ -81,15 +81,6 @@ function Notification({ user, onReviewLoan, onChanged }) {
     } catch {
       setError("Cannot reach the server. Please try again.");
     }
-  }
-
-  async function handleReview(notification) {
-    try {
-      await markRead(notification.notificationID);
-    } catch {
-      // ignore
-    }
-    onReviewLoan(notification.loanID);
   }
 
   const C = {
@@ -173,14 +164,6 @@ function Notification({ user, onReviewLoan, onChanged }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {notifications.map((item) => {
           const isUnread = !item.is_read;
-          const pending =
-            item.type === "return_request" &&
-            user.role === "librarian" &&
-            Boolean(item.loan_pending);
-          const handled =
-            item.type === "return_request" &&
-            user.role === "librarian" &&
-            !item.loan_pending;
 
           return (
             <div
@@ -220,43 +203,7 @@ function Notification({ user, onReviewLoan, onChanged }) {
                 </div>
               </div>
 
-              {pending && (
-                <button
-                  type="button"
-                  onClick={() => handleReview(item)}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: 9,
-                    background: C.primary,
-                    border: "none",
-                    color: C.pfg,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    flexShrink: 0,
-                  }}
-                >
-                  Review return
-                </button>
-              )}
-
-              {handled && (
-                <span
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: 999,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: C.green,
-                    background: "rgb(95 191 138 / 14%)",
-                    flexShrink: 0,
-                  }}
-                >
-                  Handled
-                </span>
-              )}
-
-              {isUnread && !pending && !handled && (
+              {isUnread && (
                 <span
                   style={{
                     width: 9,

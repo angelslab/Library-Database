@@ -65,14 +65,12 @@ function App() {
   const [borrowItem, setBorrowItem] = useState(null);
   const [cancelHold, setCancelHold] = useState(null); // { hold, resolve }
   const [catalogVersion, setCatalogVersion] = useState(0);
-  const [focusLoanID, setFocusLoanID] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [myHolds, setMyHolds] = useState([]);
   const [deleteError, setDeleteError] = useState("");
 
   function goTo(nextPage, itemID = null) {
     setMessage("");
-    setFocusLoanID(null);
     setPage(nextPage);
     try {
       localStorage.setItem("page", nextPage);
@@ -118,7 +116,6 @@ function App() {
       }
 
       setMessage("");
-      setFocusLoanID(null);
       setPage(target);
     }
 
@@ -127,18 +124,6 @@ function App() {
     // on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // open loan from notification
-  function handleReviewLoan(loanID) {
-    setMessage("");
-    setFocusLoanID(loanID);
-    setPage("librarianLoans");
-    try {
-      localStorage.setItem("page", "librarianLoans");
-    } catch {
-      // ignore: storage blocked
-    }
-  }
 
   // scroll to message
   useEffect(() => {
@@ -365,8 +350,6 @@ function App() {
   const sidebar = currentUser && currentUser.role !== "librarian" && (
     <Sidebar
       activePage={page}
-      name={currentUser.first_name}
-      role={currentUser.role}
       onNavigate={goTo}
       onLogout={handleLogout}
       unreadCount={unreadCount}
@@ -446,7 +429,6 @@ function App() {
               {topBar}
               <Notification
                 user={currentUser}
-                onReviewLoan={handleReviewLoan}
                 onChanged={refreshUnread}
               />
             </main>
@@ -483,7 +465,6 @@ function App() {
               />
               <Notification
                 user={currentUser}
-                onReviewLoan={handleReviewLoan}
                 onChanged={refreshUnread}
               />
             </main>
@@ -533,13 +514,12 @@ function App() {
         currentUser.role === "librarian" &&
         (page === "home" || page === "librarianLoans") && (
           <LibrarianHome
-            key={`${page}-${focusLoanID}`}
+            key={page}
             user={currentUser}
             onNavigate={goTo}
             onLogout={handleLogout}
             unreadCount={unreadCount}
             initialView={page === "librarianLoans" ? "loans" : "menu"}
-            focusLoanID={focusLoanID}
           />
         )}
 

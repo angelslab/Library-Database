@@ -9,7 +9,6 @@ import TopBar from "../component/TopBar";
 import Donut from "../component/Donut";
 import "../styles/Librarian.css";
 import AlertDialog from "../component/AlertDialog";
-import API_URL from "../api";
 
 const API = "http://localhost:3000";
 
@@ -71,7 +70,6 @@ function LibrarianHome({
   onLogout,
   unreadCount = 0,
   initialView = "menu",
-  focusLoanID = null,
 }) {
   const [view, setView] = useState(() => {
     if (initialView !== "menu") return initialView;
@@ -101,8 +99,8 @@ function LibrarianHome({
         const loans = Array.isArray(loansData.loans) ? loansData.loans : [];
         const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
         const active = loans.filter((l) => !l.returned_date).length;
-        const pending = loans.filter(
-          (l) => !l.returned_date && l.status === "return_requested",
+        const returnedToday = loans.filter(
+          (l) => l.returned_date && String(l.returned_date).slice(0, 10) === today,
         ).length;
         const overdue = loans.filter(
           (l) =>
@@ -129,7 +127,7 @@ function LibrarianHome({
           setStats({
             totalItems: Array.isArray(items) ? items.length : 0,
             active,
-            pending,
+            returnedToday,
             overdue,
             byRole,
             byType,
@@ -174,7 +172,7 @@ function LibrarianHome({
       view: "loans",
       icon: "loans",
       title: "Manage Loans",
-      desc: "Approve borrow and return requests.",
+      desc: "View current and past loans.",
     },
     {
       view: "reports",
@@ -248,9 +246,9 @@ function LibrarianHome({
                 </span>
               </div>
               <div className="dash-stat">
-                <span className="dash-stat-label">Pending returns</span>
+                <span className="dash-stat-label">Returned today</span>
                 <span className="dash-stat-value gold">
-                  {stats ? stats.pending : "—"}
+                  {stats ? stats.returnedToday : "—"}
                 </span>
               </div>
               <div className="dash-stat">
@@ -350,7 +348,7 @@ function LibrarianHome({
         {view === "activity" && <ActivityLog />}
         {view === "printing" && <PrintPayments user={user} />}
         {view === "loans" && (
-          <LibrarianLoans user={user} focusLoanID={focusLoanID} />
+          <LibrarianLoans user={user} />
         )}
       </main>
       {userStatusMessage && (

@@ -76,20 +76,8 @@ function Catalog({
     onDelete,
   });
 
-  const authorOf = (it) =>
-    it?.book_author || it?.media_author || it?.brand || "";
-
   const recommended = items.slice(0, 4);
-  // featured item
-  const featured = items.find((i) => i.available_copies > 0) || items[0];
   const isLibrarian = user?.role === "librarian";
-
-  const featuredCoverClass =
-    featured?.item_type === "Media"
-      ? "media"
-      : featured?.item_type === "Device"
-        ? "device"
-        : "";
 
   return (
     <div className="catalog-container">
